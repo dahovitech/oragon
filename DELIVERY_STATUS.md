@@ -101,11 +101,12 @@ L'application Oragon a été développée avec succès selon toutes les spécifi
 
 ## 🚀 Déploiement
 
-### Repository GitHub
+### Repository GitHub (Mis à jour)
 - **URL** : https://github.com/dahovitech/oragon
-- **Branche** : `dev` (pushée avec succès)
+- **Branche** : `main` (pushée avec nouvelles fonctionnalités)
 - **Auteur** : Prudence ASSOGBA (jprud67@gmail.com)
-- **Commit** : Complet avec message détaillé
+- **Commit** : Transformation complète en site showcase avec message détaillé
+- **Authentification** : Token GitHub personnel fourni
 
 ### Configuration
 - **Base de données** : SQLite configurée et migrée
