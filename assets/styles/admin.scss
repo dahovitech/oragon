@@ -1,0 +1,95 @@
+// Import Bootstrap core first (includes all variables and dependencies)
+@use "bootstrap/scss/bootstrap" as *;
+@import "bootstrap-icons/font/bootstrap-icons.css";
+
+
+:root {
+    --bs-primary: #6f42c1;
+    --bs-secondary: #6c757d;
+    --admin-sidebar-width: 280px;
+}
+
+[data-bs-theme="dark"] {
+    --bs-body-bg: #1a1a1a;
+    --bs-body-color: #ffffff;
+    --bs-border-color: #333333;
+}
+
+.admin-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 100;
+    padding: 48px 0 0;
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.1);
+    width: var(--admin-sidebar-width);
+    background-color: var(--bs-light);
+}
+
+[data-bs-theme="dark"] .admin-sidebar {
+    background-color: var(--bs-dark);
+    box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.1);
+}
+
+.admin-sidebar .nav-link {
+    color: var(--bs-body-color);
+    border-radius: 0;
+}
+
+.admin-sidebar .nav-link:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+}
+
+.admin-sidebar .nav-link.active {
+    background-color: var(--bs-primary);
+    color: white;
+}
+
+.admin-main {
+    margin-left: var(--admin-sidebar-width);
+    min-height: 100vh;
+    padding-top: 48px;
+}
+
+.admin-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1030;
+    background-color: var(--bs-primary);
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.stats-card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+}
+
+.theme-toggle {
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1);
+}
+
+@media (max-width: 768px) {
+    .admin-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .admin-sidebar.show {
+        transform: translateX(0);
+    }
+
+    .admin-main {
+        margin-left: 0;
+    }
+}

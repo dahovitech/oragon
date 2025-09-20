@@ -21,6 +21,7 @@ Encore
      * and one CSS file (e.g. app.css) if your JavaScript imports CSS.
      */
     .addEntry('app', './assets/app.js')
+    .addEntry('admin', './assets/admin.js')
 
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
     .splitEntryChunks()
@@ -57,7 +58,12 @@ Encore
     })
 
     // enables Sass/SCSS support
-    //.enableSassLoader()
+    .enableSassLoader(function(options) {
+        options.implementation = require('sass');
+        options.sassOptions = {
+            quietDeps: true  // Suppresses deprecation warnings from dependencies
+        };
+    })
 
     // uncomment if you use TypeScript
     //.enableTypeScriptLoader()
@@ -70,7 +76,9 @@ Encore
     //.enableIntegrityHashes(Encore.isProduction())
 
     // uncomment if you're having problems with a jQuery plugin
-    //.autoProvidejQuery()
+    .autoProvidejQuery()
+    .enableStimulusBridge('./assets/controllers.json')
+
 ;
 
 module.exports = Encore.getWebpackConfig();
