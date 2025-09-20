@@ -40,7 +40,7 @@ class LocaleListener
         }
         
         // If still no locale, get the default language from database
-        if (!$locale || $locale === 'en') {
+        if (!$locale) {
             $defaultLanguage = $this->languageRepository->findDefaultLanguage();
             
             if ($defaultLanguage) {
