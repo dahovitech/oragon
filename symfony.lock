@@ -262,10 +262,10 @@
             "ref": "c30f782a8910ae9f12e7a1399db607d172d23da6"
         },
         "files": [
-            "assets/bootstrap.js",
-            "assets/controllers.json",
-            "assets/controllers/csrf_protection_controller.js",
-            "assets/controllers/hello_controller.js"
+            "./assets/bootstrap.js",
+            "./assets/controllers.json",
+            "./assets/controllers/csrf_protection_controller.js",
+            "./assets/controllers/hello_controller.js"
         ]
     },
     "symfony/translation": {
@@ -315,7 +315,7 @@
             "ref": "287f7c6eb6e9b65e422d34c00795b360a787380b"
         },
         "files": [
-            "config/packages/ux_turbo.yaml"
+            "./config/packages/ux_turbo.yaml"
         ]
     },
     "symfony/validator": {
