@@ -26,6 +26,7 @@ class AdminController extends AbstractController
             'services' => $services,
             'languages' => $languages,
             'stats' => $stats,
+            'admin_languages' => $languageRepository->findActiveLanguages(), // Ensure admin_languages is available
         ]);
     }
 }

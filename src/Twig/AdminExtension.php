@@ -14,8 +14,16 @@ class AdminExtension extends AbstractExtension implements GlobalsInterface
 
     public function getGlobals(): array
     {
-        return [
-            'admin_languages' => $this->languageRepository->findActiveLanguages()
-        ];
+        try {
+            $adminLanguages = $this->languageRepository->findActiveLanguages();
+            return [
+                'admin_languages' => $adminLanguages
+            ];
+        } catch (\Exception $e) {
+            // In case of database error or during migration
+            return [
+                'admin_languages' => []
+            ];
+        }
     }
 }

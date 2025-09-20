@@ -126,30 +126,42 @@
                 
                 <div class="d-flex align-items-center">
                     {# Language Selector #}
-                    <div class="dropdown me-3">
-                        <button class="btn btn-outline-light dropdown-toggle" type="button" 
-                                id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false"
-                                title="{{ 'language.change_interface'|trans({}, 'admin') }}">
-                            <i class="bi bi-translate me-1"></i>
-                            <span id="currentLanguageCode">{{ app.request.locale|upper }}</span>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
-                            {% for language in admin_languages %}
-                                <li>
-                                    <a class="dropdown-item{{ app.request.locale == language.code ? ' active' : '' }}" 
-                                       href="{{ path('admin_language_switch', {'locale': language.code}) }}">
-                                        <span class="badge bg-primary me-2">{{ language.code|upper }}</span>
-                                        {{ language.nativeName }}
-                                        {% if language.isDefault %}
-                                            <i class="bi bi-star-fill text-warning ms-1" title="Langue par défaut"></i>
-                                        {% endif %}
-                                    </a>
-                                </li>
-                            {% else %}
-                                <li><span class="dropdown-item-text">Aucune langue disponible</span></li>
-                            {% endfor %}
-                        </ul>
-                    </div>
+                    {% if admin_languages is defined and admin_languages|length > 0 %}
+                        <div class="dropdown me-3">
+                            <button class="btn btn-outline-light dropdown-toggle" type="button" 
+                                    id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false"
+                                    title="{{ 'language.change_interface'|trans({}, 'admin') }}">
+                                <i class="bi bi-translate me-1"></i>
+                                <span id="currentLanguageCode">{{ app.request.locale|upper }}</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+                                {% if admin_languages is defined and admin_languages|length > 0 %}
+                                    {% for language in admin_languages %}
+                                        <li>
+                                            <a class="dropdown-item{{ app.request.locale == language.code ? ' active' : '' }}" 
+                                               href="{{ path('admin_language_switch', {'locale': language.code}) }}">
+                                                <span class="badge bg-primary me-2">{{ language.code|upper }}</span>
+                                                {{ language.nativeName }}
+                                                {% if language.isDefault() %}
+                                                    <i class="bi bi-star-fill text-warning ms-1" title="Langue par défaut"></i>
+                                                {% endif %}
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                {% else %}
+                                    <li><span class="dropdown-item-text text-muted">Aucune langue disponible</span></li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    {% else %}
+                        {# Fallback when no languages are available - show current locale only #}
+                        <div class="me-3">
+                            <span class="btn btn-outline-light disabled">
+                                <i class="bi bi-translate me-1"></i>
+                                <span>{{ app.request.locale|upper }}</span>
+                            </span>
+                        </div>
+                    {% endif %}
                     
                     <button id="themeToggle" class="btn btn-outline-light theme-toggle me-3" type="button" 
                             title="Basculer le thème">
