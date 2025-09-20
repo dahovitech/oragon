@@ -60,11 +60,21 @@ class ServiceController extends AbstractController
 
         $currentLanguage = $this->getCurrentLanguage($request, $languageRepository);
         $languages = $languageRepository->findActiveLanguages();
+        $defaultLanguage = $languageRepository->findDefaultLanguage();
+        
+        // Get translation for current language
+        $translation = $service->getTranslationForLanguage($currentLanguage);
+        if (!$translation || !$translation->getTitle()) {
+            // Fallback to default language
+            $translation = $service->getTranslationForLanguage($defaultLanguage);
+        }
 
         return $this->render('service/show.html.twig', [
             'service' => $service,
             'languages' => $languages,
             'currentLanguage' => $currentLanguage,
+            'defaultLanguage' => $defaultLanguage,
+            'translation' => $translation,
         ]);
     }
 
