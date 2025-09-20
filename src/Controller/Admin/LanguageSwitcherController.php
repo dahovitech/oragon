@@ -45,7 +45,7 @@ class LanguageSwitcherController extends AbstractController
                 return new JsonResponse([
                     'success' => true,
                     'locale' => $locale,
-                    'language' => $language->getName()
+                    'language' => $language->getNativeName()
                 ]);
             }
             
@@ -78,7 +78,7 @@ class LanguageSwitcherController extends AbstractController
 
         return new JsonResponse([
             'locale' => $locale,
-            'language' => $language ? $language->getName() : $locale
+            'language' => $language ? $language->getNativeName() : $locale
         ]);
     }
 
@@ -92,7 +92,7 @@ class LanguageSwitcherController extends AbstractController
         foreach ($languages as $language) {
             $result[] = [
                 'code' => $language->getCode(),
-                'name' => $language->getName(),
+                'name' => $language->getNativeName(),
                 'default' => $defaultLanguage && $defaultLanguage->getId() === $language->getId()
             ];
         }
