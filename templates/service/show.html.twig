@@ -102,18 +102,6 @@
             </ol>
         </nav>
 
-        {% set translation = service.getTranslationForLanguage(currentLanguage) %}
-        {% set defaultLanguage = null %}
-        {% for language in languages %}
-            {% if language.default %}
-                {% set defaultLanguage = language %}
-            {% endif %}
-        {% endfor %}
-        
-        {% if not translation or not translation.title %}
-            {% set translation = service.getTranslationForLanguage(defaultLanguage) %}
-        {% endif %}
-
         <div class="row align-items-center">
             <div class="col-lg-8">
                 <div class="d-flex align-items-center mb-3">
