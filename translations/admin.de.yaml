@@ -211,6 +211,12 @@ common:
     confirm: Bestätigen
     yes: Ja
     no: Nein
+    new_service: Neuer Service
+    new_language: Neue Sprache
+    manage_services: Services verwalten
+    view_site: Website ansehen
+    create_service: Service erstellen
+    actions: Aktionen
   status:
     active: Aktiv
     inactive: Inaktiv
