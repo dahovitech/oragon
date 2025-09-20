@@ -201,6 +201,7 @@ forms:
 
 common:
   actions:
+    title: Aktionen
     save: Speichern
     cancel: Abbrechen
     delete: Löschen

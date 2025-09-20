@@ -207,6 +207,7 @@ forms:
 
 common:
   actions:
+    title: Actions
     save: Enregistrer
     cancel: Annuler
     delete: Supprimer

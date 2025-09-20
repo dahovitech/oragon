@@ -200,6 +200,7 @@ forms:
 
 common:
   actions:
+    title: Actions
     save: Save
     cancel: Cancel
     delete: Delete
