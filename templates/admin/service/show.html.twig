@@ -11,7 +11,7 @@
         <a href="{{ path('admin_service_edit', {id: service.id}) }}" class="btn btn-primary me-2">
             <i class="bi bi-pencil me-2"></i>Modifier
         </a>
-        <a href="{{ path('service_show', {slug: service.slug}) }}" class="btn btn-outline-success me-2" target="_blank">
+        <a href="{{ path('admin_service_show', {id: service.id}) }}" class="btn btn-outline-success me-2" target="_blank">
             <i class="bi bi-eye me-2"></i>Voir sur le site
         </a>
         <a href="{{ path('admin_service_index') }}" class="btn btn-outline-secondary">
@@ -152,11 +152,11 @@
                         <i class="bi bi-pencil me-2"></i>Modifier
                     </a>
                     
-                    {% if service.active %}
+                    {#% if service.active %}
                         <a href="{{ path('service_show', {slug: service.slug}) }}" class="btn btn-success" target="_blank">
                             <i class="bi bi-eye me-2"></i>Voir sur le site
                         </a>
-                    {% endif %}
+                    {% endif %#}
                     
                     <form method="post" action="{{ path('admin_service_toggle_status', {id: service.id}) }}">
                         <input type="hidden" name="_token" value="{{ csrf_token('toggle_status' ~ service.id) }}">

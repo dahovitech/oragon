@@ -3,7 +3,7 @@ import 'bootstrap';
 import $ from 'jquery';
 
 // Rendre jQuery disponible globalement
-window.$ = window.jQuery = $;
+global.$ = global.jQuery = $;
 /*
  * Welcome to your app's main JavaScript file!
  *
