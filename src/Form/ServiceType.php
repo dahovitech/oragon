@@ -3,6 +3,7 @@
 namespace App\Form;
 
 use App\Entity\Service;
+use App\Form\Type\MediaSelectorType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
@@ -69,6 +70,18 @@ class ServiceType extends AbstractType
                 'allow_delete' => false,
                 'by_reference' => false,
                 'label' => false,
+            ])
+            ->add('medias', MediaSelectorType::class, [
+                'label' => 'forms.service.medias.label',
+                'help' => 'forms.service.medias.help',
+                'translation_domain' => 'admin',
+                'required' => false,
+                'multiple' => true,
+                'show_preview' => true,
+                'allow_upload' => true,
+                'attr' => [
+                    'class' => 'form-control',
+                ]
             ])
         ;
     }

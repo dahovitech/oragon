@@ -38,9 +38,14 @@ class Service
     #[ORM\OneToMany(mappedBy: 'service', targetEntity: ServiceTranslation::class, cascade: ['persist', 'remove'])]
     private Collection $translations;
 
+    #[ORM\ManyToMany(targetEntity: Media::class)]
+    #[ORM\JoinTable(name: 'service_media')]
+    private Collection $medias;
+
     public function __construct()
     {
         $this->translations = new ArrayCollection();
+        $this->medias = new ArrayCollection();
         $this->createdAt = new \DateTime();
         $this->updatedAt = new \DateTime();
     }
@@ -185,5 +190,29 @@ class Service
     {
         $firstTranslation = $this->translations->first();
         return $firstTranslation ? $firstTranslation->getTitle() ?? $this->slug : $this->slug;
+    }
+
+    /**
+     * @return Collection<int, Media>
+     */
+    public function getMedias(): Collection
+    {
+        return $this->medias;
+    }
+
+    public function addMedia(Media $media): static
+    {
+        if (!$this->medias->contains($media)) {
+            $this->medias->add($media);
+        }
+
+        return $this;
+    }
+
+    public function removeMedia(Media $media): static
+    {
+        $this->medias->removeElement($media);
+
+        return $this;
     }
 }

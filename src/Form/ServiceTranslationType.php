@@ -4,6 +4,7 @@ namespace App\Form;
 
 use App\Entity\ServiceTranslation;
 use App\Entity\Language;
+use App\Form\Type\MediaTextareaType;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -43,17 +44,20 @@ class ServiceTranslationType extends AbstractType
                     new Assert\Length(['max' => 1000])
                 ]
             ])
-            ->add('detail', TextareaType::class, [
+            ->add('detail', MediaTextareaType::class, [
                 'label' => 'forms.service_translation.detail.label',
                 'translation_domain' => 'admin',
                 'required' => false,
+                'enable_media' => true,
+                'enable_editor' => true,
+                'editor_height' => 400,
                 'attr' => [
                     'rows' => 8,
                     'placeholder' => 'forms.service_translation.detail.placeholder',
                     'class' => 'form-control',
                 ],
                 'constraints' => [
-                    new Assert\Length(['max' => 5000])
+                    new Assert\Length(['max' => 10000]) // Augmenté pour supporter le HTML
                 ]
             ])
         ;
