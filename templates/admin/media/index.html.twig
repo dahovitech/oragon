@@ -219,6 +219,12 @@
 
 {% block extra_javascripts %}
     {{ parent() }}
+    
+    <!-- jQuery CDN pour corriger l'erreur temporairement -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" 
+            integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" 
+            crossorigin="anonymous"></script>
+    
     <script>
         // Gestionnaire de médias
         class MediaManager {
