@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
-#[Route('/admin/media', name: 'admin_media_')]
+#[Route('/media', name: 'admin_media_')]
 class MediaController extends AbstractController
 {
     #[Route('/', name: 'index', methods: ['GET'])]
