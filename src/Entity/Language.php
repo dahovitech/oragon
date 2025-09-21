@@ -3,8 +3,6 @@
 namespace App\Entity;
 
 use App\Repository\LanguageRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -40,12 +38,8 @@ class Language
     #[ORM\Column(type: 'integer')]
     private int $sortOrder = 0;
 
-    #[ORM\OneToMany(mappedBy: 'language', targetEntity: ServiceTranslation::class, cascade: ['remove'])]
-    private Collection $serviceTranslations;
-
     public function __construct()
     {
-        $this->serviceTranslations = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -116,35 +110,6 @@ class Language
     public function setSortOrder(int $sortOrder): static
     {
         $this->sortOrder = $sortOrder;
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, ServiceTranslation>
-     */
-    public function getServiceTranslations(): Collection
-    {
-        return $this->serviceTranslations;
-    }
-
-    public function addServiceTranslation(ServiceTranslation $serviceTranslation): static
-    {
-        if (!$this->serviceTranslations->contains($serviceTranslation)) {
-            $this->serviceTranslations->add($serviceTranslation);
-            $serviceTranslation->setLanguage($this);
-        }
-
-        return $this;
-    }
-
-    public function removeServiceTranslation(ServiceTranslation $serviceTranslation): static
-    {
-        if ($this->serviceTranslations->removeElement($serviceTranslation)) {
-            if ($serviceTranslation->getLanguage() === $this) {
-                $serviceTranslation->setLanguage(null);
-            }
-        }
-
         return $this;
     }
 

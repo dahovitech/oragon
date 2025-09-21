@@ -113,6 +113,17 @@ $builder->add('medias', MediaSelectorType::class, [
 
 ### Base de Données
 
+#### Nouvelle table : `service_media`
+Table de liaison Many-to-Many entre services et médias :
+```sql
+CREATE TABLE service_media (
+    service_id INTEGER NOT NULL,
+    media_id INTEGER NOT NULL,
+    PRIMARY KEY(service_id, media_id)
+);
+```
+
+## 🎨 Styles et Interface
 
 ### CSS Intégré
 Tous les styles sont intégrés dans `assets/styles/admin.scss` :
@@ -145,6 +156,17 @@ Toutes les interfaces sont traduites dans `translations/admin.fr.yaml` :
 
 ### Migration
 ```bash
+# Appliquer la migration pour la table service_media
+php bin/console doctrine:migrations:migrate
+```
+
+### Compilation des Assets
+```bash
+# Installation des dépendances
+npm install
+
+# Compilation pour le développement
+npm run dev
 
 # Compilation pour la production
 npm run build
@@ -158,10 +180,12 @@ npm run build
 - Uploadez vos premiers médias
 
 ### 2. Utilisation de l'Éditeur
+- Créez ou modifiez un service
 - Le champ "Détails" utilise automatiquement l'éditeur enrichi
 - Cliquez sur l'icône médias pour insérer des images/fichiers
 
 ### 3. Association de Médias
+- Dans le formulaire de service, section "Médias associés"
 - Cliquez sur "Sélectionner des médias"
 - Choisissez vos médias dans la modal
 

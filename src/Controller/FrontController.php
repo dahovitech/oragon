@@ -14,6 +14,7 @@ use Symfony\Component\Routing\Annotation\Route;
  * @package App\Controller
  *
  */
+#[Route('/{_locale}')]
 class FrontController extends AbstractController
 {
     #[Route('/', name: 'homepage')]

@@ -11,23 +11,7 @@
 
 {# Statistics cards #}
 <div class="row mb-4">
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-primary shadow h-100 py-2 stats-card">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">{{ 'navigation.services'|trans({}, 'admin') }}</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ services|length }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="bi bi-list-ul fa-2x text-primary"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-xl-3 col-md-6 mb-4">
+    <div class="col-xl-4 col-md-6 mb-4">
         <div class="card border-left-success shadow h-100 py-2 stats-card">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
@@ -43,13 +27,13 @@
         </div>
     </div>
     
-    <div class="col-xl-3 col-md-6 mb-4">
+    <div class="col-xl-4 col-md-6 mb-4">
         <div class="card border-left-info shadow h-100 py-2 stats-card">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-info text-uppercase mb-1">{{ 'dashboard.translations_count'|trans({}, 'admin') }}</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.completedTranslations }}</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
                     </div>
                     <div class="col-auto">
                         <i class="bi bi-translate fa-2x text-info"></i>
@@ -59,13 +43,13 @@
         </div>
     </div>
     
-    <div class="col-xl-3 col-md-6 mb-4">
+    <div class="col-xl-4 col-md-6 mb-4">
         <div class="card border-left-warning shadow h-100 py-2 stats-card">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
                         <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">{{ 'dashboard.completion'|trans({}, 'admin') }}</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.completionPercentage }}%</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">100%</div>
                     </div>
                     <div class="col-auto">
                         <i class="bi bi-bar-chart fa-2x text-warning"></i>
@@ -87,22 +71,12 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-6 col-lg-3 mb-3">
-                        <a href="{{ path('admin_service_new') }}" class="btn btn-primary w-100">
-                            <i class="bi bi-plus-circle me-2"></i>{{ 'common.actions.new_service'|trans({}, 'admin') }}
-                        </a>
-                    </div>
-                    <div class="col-md-6 col-lg-3 mb-3">
+                    <div class="col-md-6 col-lg-6 mb-3">
                         <a href="{{ path('admin_language_new') }}" class="btn btn-success w-100">
                             <i class="bi bi-plus-circle me-2"></i>{{ 'common.actions.new_language'|trans({}, 'admin') }}
                         </a>
                     </div>
-                    <div class="col-md-6 col-lg-3 mb-3">
-                        <a href="{{ path('admin_service_index') }}" class="btn btn-outline-primary w-100">
-                            <i class="bi bi-list-ul me-2"></i>{{ 'common.actions.manage_services'|trans({}, 'admin') }}
-                        </a>
-                    </div>
-                    <div class="col-md-6 col-lg-3 mb-3">
+                    <div class="col-md-6 col-lg-6 mb-3">
                         <a href="{{ path('homepage') }}" class="btn btn-outline-success w-100" target="_blank">
                             <i class="bi bi-eye me-2"></i>{{ 'common.actions.view_site'|trans({}, 'admin') }}
                         </a>
@@ -113,76 +87,9 @@
     </div>
 </div>
 
-{# Recent Services #}
+{# Languages Section #}
 <div class="row">
-    <div class="col-lg-8 mb-4">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-clock-history me-2"></i>{{ 'dashboard.recent_services'|trans({}, 'admin') }}
-                </h5>
-                <a href="{{ path('admin_service_index') }}" class="btn btn-sm btn-outline-primary">
-                    {{ 'dashboard.view_all'|trans({}, 'admin') }}
-                </a>
-            </div>
-            <div class="card-body">
-                {% if services|length > 0 %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>{{ 'dashboard.slug'|trans({}, 'admin') }}</th>
-                                    <th>{{ 'services.fields.translations'|trans({}, 'admin') }}</th>
-                                    <th>{{ 'dashboard.status'|trans({}, 'admin') }}</th>
-                                    <th>{{ 'dashboard.updated'|trans({}, 'admin') }}</th>
-                                    <th>{{ 'common.actions.title'|trans({}, 'admin') }}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for service in services|slice(0, 5) %}
-                                <tr>
-                                    <td>
-                                        <strong>{{ service.slug }}</strong>
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-info">{{ service.translations|length }}</span>
-                                    </td>
-                                    <td>
-                                        {% if service.active %}
-                                            <span class="badge bg-success">{{ 'common.status.active'|trans({}, 'admin') }}</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">{{ 'common.status.inactive'|trans({}, 'admin') }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <small class="text-muted">{{ service.updatedAt|date('d/m/Y H:i') }}</small>
-                                    </td>
-                                    <td>
-                                        <a href="{{ path('admin_service_edit', {id: service.id}) }}" 
-                                           class="btn btn-sm btn-outline-primary">
-                                            <i class="bi bi-pencil"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="text-center py-5">
-                        <i class="bi bi-inbox display-1 text-muted"></i>
-                        <h5 class="text-muted mt-3">{{ 'dashboard.no_service'|trans({}, 'admin') }}</h5>
-                        <p class="text-muted">{{ 'dashboard.create_first_service_text'|trans({}, 'admin') }}</p>
-                        <a href="{{ path('admin_service_new') }}" class="btn btn-primary">
-                            <i class="bi bi-plus-circle me-2"></i>{{ 'common.actions.create_service'|trans({}, 'admin') }}
-                        </a>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-lg-4 mb-4">
+    <div class="col-12 mb-4">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">

@@ -2,7 +2,6 @@
 navigation:
   dashboard: Panel de Control
   languages: Idiomas
-  services: Servicios
   translations: Traducciones
   settings: Configuración
   logout: Cerrar Sesión
@@ -13,22 +12,15 @@ dashboard:
   statistics: Estadísticas
   recent_activity: Actividad Reciente
   quick_actions: Acciones Rápidas
-  total_services: Total de Servicios
-  active_services: Servicios Activos
   total_languages: Idiomas Configurados
   translation_progress: Progreso de Traducciones
-  no_services: No hay servicios configurados
-  create_first_service: Crear primer servicio
   manage_languages: Gestionar idiomas
   languages_count: Idiomas
   translations_count: Traducciones
   completion: Complección
-  recent_services: Servicios Recientes
   view_all: Ver Todo
   configured_languages: Idiomas Configurados
   manage: Gestionar
-  no_service: Sin servicios
-  create_first_service_text: Comienza creando tu primer servicio.
   no_language_configured: No hay idiomas configurados
   add_language: Agregar Idioma
   updated: Actualizado
@@ -73,58 +65,7 @@ languages:
     native_name: Nombre del idioma en su idioma nativo
     default: Solo un idioma puede ser establecido como por defecto
     active: Los idiomas inactivos no están disponibles en el sitio
-
-services:
-  title: Gestión de Servicios
-  list_title: Lista de Servicios
-  new_title: Nuevo Servicio
-  edit_title: Editar Servicio
-  show_title: Detalles del Servicio
-  fields:
-    title: Título
-    slug: Slug
-    description: Descripción
-    detail: Detalle
-    is_active: Activo
-    sort_order: Orden de Visualización
-    created_at: Creado el
-    updated_at: Actualizado el
-    translations: Traducciones
-  actions:
-    new: Nuevo Servicio
-    edit: Editar
-    delete: Eliminar
-    show: Ver Detalles
-    duplicate: Duplicar
-    back_to_list: Volver a la Lista
-    create_service: Crear Servicio
-    actions: Acciones
-    update_service: Actualizar Servicio
-    cancel: Cancelar
-  messages:
-    created: Servicio creado exitosamente
-    updated: Servicio actualizado exitosamente
-    deleted: Servicio eliminado exitosamente
-    confirm_delete: ¿Estás seguro de que quieres eliminar este servicio?
-    no_services: No hay servicios configurados
-    create_first: Crear el primer servicio
-  help:
-    slug: Identificador único para la URL (generado automáticamente si está vacío)
-    sort_order: Orden de visualización de servicios (menor = mostrado primero)
-    is_active: Desmarcar para desactivar este servicio
-    fill_default: Llenar al menos el idioma por defecto
-    empty_fallback: Los campos vacíos usarán la traducción por defecto
-  tabs:
-    configuration: Configuración del Servicio
-    translations: Traducciones
-    tips: Consejos
-  translation_status:
-    translated: Traducido
-    not_translated: No Traducido
-    default_language: Idioma por Defecto
-    auto_generated: El slug se generará automáticamente desde el primer título ingresado
-    hide_public: Puedes desactivar el servicio para ocultarlo del público
-
+    
 translations:
   title: Gestión de Traducciones
   list_title: Archivos de Traducción
@@ -212,36 +153,4 @@ common:
     confirm: Confirmar
     yes: Sí
     no: No
-    new_service: Nuevo servicio
     new_language: Nuevo idioma
-    manage_services: Gestionar servicios
-    view_site: Ver el sitio
-    create_service: Crear servicio
-    actions: Acciones
-  status:
-    active: Activo
-    inactive: Inactivo
-    enabled: Habilitado
-    disabled: Deshabilitado
-    published: Publicado
-    draft: Borrador
-  messages:
-    success: Operación completada exitosamente
-    error: Ha ocurrido un error
-    confirm_action: ¿Estás seguro de que quieres realizar esta acción?
-    no_results: No se encontraron resultados
-    loading: Cargando...
-  form:
-    required: Este campo es obligatorio
-    invalid: Este campo no es válido
-    too_short: Este campo es muy corto
-    too_long: Este campo es muy largo
-    invalid_email: Dirección de correo no válida
-    invalid_url: URL no válida
-  time:
-    just_now: Justo ahora
-    minutes_ago: 'Hace %count% minutos'
-    hours_ago: 'Hace %count% horas'
-    days_ago: 'Hace %count% días'
-    weeks_ago: 'Hace %count% semanas'
-    months_ago: 'Hace %count% meses'

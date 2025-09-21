@@ -5,9 +5,9 @@ Application Symfony 7.3 développée par **Prudence ASSOGBA** pour la gestion de
 ## 🌟 Fonctionnalités
 
 ### Interface d'Administration
-- **Tableau de bord** avec statistiques des services et traductions
+- **Tableau de bord** avec statistiques des langues et traductions
 - **Gestion des langues** : ajout, désactivation, définition de langue par défaut
-- **Gestion des services multilingues** avec éditeur par onglets
+- **Gestion des médias** avec upload et organisation
 - **Interface responsive** avec mode sombre/clair
 - **Système de navigation** ergonomique et intuitif
 
@@ -92,17 +92,6 @@ php bin/console server:run
 - Langue par défaut
 - Ordre d'affichage
 
-#### Service
-- Slug unique
-- Statut actif/inactif
-- Ordre d'affichage
-- Timestamps de création/modification
-
-#### ServiceTranslation
-- Relation vers Service et Language
-- Titre, description et détail traduits
-- Contrainte d'unicité (service_id, language_id)
-
 ## 🎨 Interface Utilisateur
 
 ### Administration
@@ -114,8 +103,8 @@ php bin/console server:run
 
 ### Interface Publique
 - **Sélecteur de langue** avec noms natifs
-- **Recherche en temps réel** dans les contenus
-- **Cartes de services** avec design responsive
+- **Recherche en temps réel** dans les contenus  
+- **Interface responsive** avec design moderne
 - **Indicateurs de fallback** linguistique
 
 ## 🔧 Configuration
@@ -126,24 +115,17 @@ php bin/console server:run
 - **Espagnol** (es)
 - **Allemand** (de)
 
-### Services d'Exemple
-1. **Consultation Web** - Services de consultation pour le développement web
-2. **Formation Symfony** - Formation complète au framework Symfony
-3. **Support Technique** - Support et maintenance d'applications
-4. **Intégration API** - Services d'intégration d'APIs tierces
-5. **Audit de Sécurité** - Audit de sécurité des applications web
-
 ## 🚀 Utilisation
 
 ### Administration
 1. Accédez à `/admin` pour l'interface d'administration
 2. Gérez les langues depuis `/admin/languages`
-3. Créez et modifiez les services depuis `/admin/services`
-4. Utilisez l'éditeur par onglets pour les traductions
+3. Gérez les médias depuis `/admin/media`
+4. Utilisez l'éditeur pour configurer les traductions
 
 ### Fonctionnalités Avancées
-- **Duplication de services** avec copie des traductions
-- **Copie depuis langue par défaut** pour accélérer la traduction
+- **Gestion des médias** avec upload et organisation
+- **Système de traduction** flexible et intuitif
 - **Indicateurs visuels** de complétude des traductions
 - **Statistiques** de traduction en temps réel
 
