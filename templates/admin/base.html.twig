@@ -113,6 +113,27 @@
                             <i class="bi bi-translate me-2"></i>{{ 'navigation.translations'|trans({}, 'admin') }}
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link{% if app.request.get('_route') starts with 'admin_user_' %} active{% endif %}" 
+                           href="{{ path('admin_user_index') }}">
+                            <i class="bi bi-people-fill me-2"></i>Utilisateurs
+                        </a>
+                    </li>
+                </ul>
+                
+                <hr class="text-white-50">
+                
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ path('admin_user_profile') }}">
+                            <i class="bi bi-person-circle me-2"></i>Mon Profil
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ path('logout') }}">
+                            <i class="bi bi-box-arrow-right me-2"></i>Déconnexion
+                        </a>
+                    </li>
                 </ul>
             </div>
         </nav>

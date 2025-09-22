@@ -177,65 +177,7 @@ common:
     hours_ago: 'Il y a %count% heures'
     days_ago: 'Il y a %count% jours'
     weeks_ago: 'Il y a %count% semaines'
-    months_ago: 'Il y a %count% mois'
-dashboard:
-  title: 'Tableau de bord'
-  welcome: "Bienvenue dans l'administration d'Oragon"
-  statistics: Statistiques
-  recent_activity: 'Activité récente'
-  quick_actions: 'Actions rapides'
-  total_languages: 'Langues configurées'
-  translation_progress: 'Progression des traductions'
-  manage_languages: 'Gérer les langues'
-  languages_count: Langues
-  translations_count: Traductions
-  completion: Complétude
-  view_all: 'Voir tous'
-  configured_languages: 'Langues configurées'
-  manage: Gérer
-  no_language_configured: 'Aucune langue configurée'
-  add_language: 'Ajouter une langue'
-  updated: 'Mis à jour'
-  slug: Slug
-  status: Statut
-languages:
-  title: 'Gestion des langues'
-  list_title: 'Liste des langues'
-  new_title: 'Nouvelle langue'
-  edit_title: 'Modifier la langue'
-  show_title: 'Détails de la langue'
-  fields:
-    name: Nom
-    code: Code
-    native_name: 'Nom natif'
-    default: 'Par défaut'
-    active: Active
-    created_at: 'Créé le'
-    updated_at: 'Mis à jour le'
-  actions:
-    new: 'Nouvelle langue'
-    edit: Modifier
-    delete: Supprimer
-    show: 'Voir les détails'
-    set_default: 'Définir par défaut'
-    activate: Activer
-    deactivate: Désactiver
-    back_to_list: 'Retour à la liste'
-  messages:
-    created: 'Langue créée avec succès'
-    updated: 'Langue mise à jour avec succès'
-    deleted: 'Langue supprimée avec succès'
-    set_as_default: 'Langue définie par défaut'
-    activated: 'Langue activée'
-    deactivated: 'Langue désactivée'
-    confirm_delete: 'Êtes-vous sûr de vouloir supprimer cette langue ?'
-    no_languages: 'Aucune langue configurée'
-    create_first: 'Créer la première langue'
-  help:
-    code: 'Code ISO de la langue (ex: fr, en, es)'
-    native_name: 'Nom de la langue dans sa langue native'
-    default: 'Une seule langue peut être définie par défaut'
-    active: 'Les langues inactives ne sont pas disponibles sur le site'
+    months_ago: 'vor %count% Monaten'
 media:
   title: 'Gestionnaire de médias'
   list_title: 'Bibliothèque de médias'

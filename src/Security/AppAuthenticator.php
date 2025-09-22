@@ -2,6 +2,7 @@
 
 namespace App\Security;
 
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,6 +16,7 @@ use Symfony\Component\Security\Http\Authenticator\Passport\Credentials\PasswordC
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\SecurityRequestAttributes;
 use Symfony\Component\Security\Http\Util\TargetPathTrait;
+use App\Entity\User;
 
 class AppAuthenticator extends AbstractLoginFormAuthenticator
 {
@@ -22,8 +24,10 @@ class AppAuthenticator extends AbstractLoginFormAuthenticator
 
     public const LOGIN_ROUTE = 'login';
 
-    public function __construct(private UrlGeneratorInterface $urlGenerator)
-    {
+    public function __construct(
+        private UrlGeneratorInterface $urlGenerator,
+        private EntityManagerInterface $entityManager
+    ) {
     }
 
     public function authenticate(Request $request): Passport
@@ -44,6 +48,14 @@ class AppAuthenticator extends AbstractLoginFormAuthenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
+        // Update last login time
+        $user = $token->getUser();
+        if ($user instanceof User) {
+            $user->setLastLoginAt(new \DateTimeImmutable());
+            $this->entityManager->persist($user);
+            $this->entityManager->flush();
+        }
+
         if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
             return new RedirectResponse($targetPath);
         }
