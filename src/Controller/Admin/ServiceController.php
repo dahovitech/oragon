@@ -81,6 +81,90 @@ class ServiceController extends AbstractController
         ]);
     }
 
+    #[Route('/bulk-actions', name: 'bulk_actions', methods: ['POST'])]
+    public function bulkActions(Request $request): Response
+    {
+        $action = $request->request->get('action');
+        $serviceIds = $request->request->get('service_ids', []);
+
+        if (empty($serviceIds)) {
+            $this->addFlash('error', 'Aucun service sélectionné.');
+            return $this->redirectToRoute('admin_service_index');
+        }
+
+        $services = $this->serviceRepository->findBy(['id' => $serviceIds]);
+
+        switch ($action) {
+            case 'activate':
+                foreach ($services as $service) {
+                    $service->setIsActive(true);
+                }
+                $this->entityManager->flush();
+                $this->addFlash('success', count($services) . ' service(s) activé(s).');
+                break;
+
+            case 'deactivate':
+                foreach ($services as $service) {
+                    $service->setIsActive(false);
+                }
+                $this->entityManager->flush();
+                $this->addFlash('success', count($services) . ' service(s) désactivé(s).');
+                break;
+
+            case 'delete':
+                foreach ($services as $service) {
+                    $this->entityManager->remove($service);
+                }
+                $this->entityManager->flush();
+                $this->addFlash('success', count($services) . ' service(s) supprimé(s).');
+                break;
+
+            default:
+                $this->addFlash('error', 'Action inconnue.');
+        }
+
+        return $this->redirectToRoute('admin_service_index');
+    }
+
+    #[Route('/translation-tools', name: 'translation_tools', methods: ['GET', 'POST'])]
+    public function translationTools(Request $request): Response
+    {
+        $languages = $this->languageRepository->findActiveLanguages();
+        $statistics = $this->translationService->getGlobalTranslationStatistics();
+
+        if ($request->isMethod('POST')) {
+            $action = $request->request->get('action');
+            $targetLanguage = $request->request->get('target_language');
+            $sourceLanguage = $request->request->get('source_language');
+
+            try {
+                switch ($action) {
+                    case 'create_missing':
+                        $created = $this->translationService->createMissingTranslations($targetLanguage, $sourceLanguage);
+                        $this->addFlash('success', "{$created} traductions créées pour la langue {$targetLanguage}.");
+                        break;
+
+                    case 'remove_all':
+                        $removed = $this->translationService->removeTranslationsForLanguage($targetLanguage);
+                        $this->addFlash('success', "{$removed} traductions supprimées pour la langue {$targetLanguage}.");
+                        break;
+
+                    default:
+                        $this->addFlash('error', 'Action inconnue.');
+                }
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Erreur: ' . $e->getMessage());
+            }
+
+            return $this->redirectToRoute('admin_service_translation_tools');
+        }
+
+        return $this->render('admin/service/translation_tools.html.twig', [
+            'languages' => $languages,
+            'statistics' => $statistics
+        ]);
+    }
+
     #[Route('/{id}/edit', name: 'edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Service $service): Response
     {
@@ -165,89 +249,5 @@ class ServiceController extends AbstractController
         } catch (\Exception $e) {
             return new JsonResponse(['success' => false, 'message' => $e->getMessage()]);
         }
-    }
-
-    #[Route('/bulk-actions', name: 'bulk_actions', methods: ['POST'])]
-    public function bulkActions(Request $request): Response
-    {
-        $action = $request->request->get('action');
-        $serviceIds = $request->request->get('service_ids', []);
-
-        if (empty($serviceIds)) {
-            $this->addFlash('error', 'Aucun service sélectionné.');
-            return $this->redirectToRoute('admin_service_index');
-        }
-
-        $services = $this->serviceRepository->findBy(['id' => $serviceIds]);
-
-        switch ($action) {
-            case 'activate':
-                foreach ($services as $service) {
-                    $service->setIsActive(true);
-                }
-                $this->entityManager->flush();
-                $this->addFlash('success', count($services) . ' service(s) activé(s).');
-                break;
-
-            case 'deactivate':
-                foreach ($services as $service) {
-                    $service->setIsActive(false);
-                }
-                $this->entityManager->flush();
-                $this->addFlash('success', count($services) . ' service(s) désactivé(s).');
-                break;
-
-            case 'delete':
-                foreach ($services as $service) {
-                    $this->entityManager->remove($service);
-                }
-                $this->entityManager->flush();
-                $this->addFlash('success', count($services) . ' service(s) supprimé(s).');
-                break;
-
-            default:
-                $this->addFlash('error', 'Action inconnue.');
-        }
-
-        return $this->redirectToRoute('admin_service_index');
-    }
-
-    #[Route('/translation-tools', name: 'translation_tools', methods: ['GET', 'POST'])]
-    public function translationTools(Request $request): Response
-    {
-        $languages = $this->languageRepository->findActiveLanguages();
-        $statistics = $this->translationService->getGlobalTranslationStatistics();
-
-        if ($request->isMethod('POST')) {
-            $action = $request->request->get('action');
-            $targetLanguage = $request->request->get('target_language');
-            $sourceLanguage = $request->request->get('source_language');
-
-            try {
-                switch ($action) {
-                    case 'create_missing':
-                        $created = $this->translationService->createMissingTranslations($targetLanguage, $sourceLanguage);
-                        $this->addFlash('success', "{$created} traductions créées pour la langue {$targetLanguage}.");
-                        break;
-
-                    case 'remove_all':
-                        $removed = $this->translationService->removeTranslationsForLanguage($targetLanguage);
-                        $this->addFlash('success', "{$removed} traductions supprimées pour la langue {$targetLanguage}.");
-                        break;
-
-                    default:
-                        $this->addFlash('error', 'Action inconnue.');
-                }
-            } catch (\Exception $e) {
-                $this->addFlash('error', 'Erreur: ' . $e->getMessage());
-            }
-
-            return $this->redirectToRoute('admin_service_translation_tools');
-        }
-
-        return $this->render('admin/service/translation_tools.html.twig', [
-            'languages' => $languages,
-            'statistics' => $statistics
-        ]);
     }
 }
