@@ -85,7 +85,7 @@ class ServiceController extends AbstractController
     public function bulkActions(Request $request): Response
     {
         $action = $request->request->get('action');
-        $serviceIds = $request->request->get('service_ids', []);
+        $serviceIds = $request->request->all()['service_ids'] ?? [];
 
         if (empty($serviceIds)) {
             $this->addFlash('error', 'Aucun service sélectionné.');
