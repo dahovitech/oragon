@@ -1,0 +1,189 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ 'services.show_title'|trans({}, 'admin') }} - {{ service.title ?? service.slug }} - Administration - Oragon{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="bi bi-eye me-2 text-info"></i>{{ 'services.show_title'|trans({}, 'admin') }}
+        <small class="text-muted">- {{ service.title ?? service.slug }}</small>
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{{ path('admin_service_edit', {'id': service.id}) }}" class="btn btn-outline-primary">
+                <i class="bi bi-pencil me-2"></i>{{ 'common.actions.edit'|trans({}, 'admin') }}
+            </a>
+            <a href="{{ path('admin_service_edit_translations', {'id': service.id}) }}" class="btn btn-outline-success">
+                <i class="bi bi-translate me-2"></i>{{ 'translations.edit'|trans({}, 'admin') }}
+            </a>
+        </div>
+        <a href="{{ path('admin_service_index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>{{ 'services.actions.back_to_list'|trans({}, 'admin') }}
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-info-circle me-2"></i>{{ 'services.show_title'|trans({}, 'admin') }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <dl class="row">
+                    <dt class="col-sm-3">{{ 'services.fields.slug'|trans({}, 'admin') }}</dt>
+                    <dd class="col-sm-9">
+                        <code>{{ service.slug }}</code>
+                    </dd>
+
+                    <dt class="col-sm-3">{{ 'services.fields.status'|trans({}, 'admin') }}</dt>
+                    <dd class="col-sm-9">
+                        {% if service.isActive %}
+                            <span class="badge bg-success">{{ 'common.status.active'|trans({}, 'admin') }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ 'common.status.inactive'|trans({}, 'admin') }}</span>
+                        {% endif %}
+                    </dd>
+
+                    <dt class="col-sm-3">{{ 'services.fields.sort_order'|trans({}, 'admin') }}</dt>
+                    <dd class="col-sm-9">{{ service.sortOrder }}</dd>
+
+                    {% if service.image %}
+                        <dt class="col-sm-3">{{ 'services.fields.image'|trans({}, 'admin') }}</dt>
+                        <dd class="col-sm-9">
+                            <img src="{{ asset('upload/media/' ~ service.image.fileName) }}" 
+                                 alt="{{ service.image.alt }}" 
+                                 class="img-thumbnail" 
+                                 style="max-width: 300px; max-height: 200px; object-fit: cover;">
+                            <div class="small text-muted mt-1">{{ service.image.fileName }}</div>
+                        </dd>
+                    {% endif %}
+
+                    <dt class="col-sm-3">Créé le</dt>
+                    <dd class="col-sm-9">{{ service.createdAt|date('d/m/Y H:i') }}</dd>
+
+                    {% if service.updatedAt %}
+                        <dt class="col-sm-3">Mis à jour le</dt>
+                        <dd class="col-sm-9">{{ service.updatedAt|date('d/m/Y H:i') }}</dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Statistiques des traductions -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-translate me-2"></i>{{ 'translations.progress'|trans({}, 'admin') }}
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if service.translations|length > 0 %}
+                    {% for translation in service.translations %}
+                        {% set completion = translation.getCompletionPercentage() %}
+                        {% set badgeClass = completion == 100 ? 'success' : (completion >= 50 ? 'warning' : 'danger') %}
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span class="fw-bold">{{ translation.language.name }}</span>
+                                <span class="badge bg-{{ badgeClass }}">{{ completion }}%</span>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-{{ badgeClass }}" 
+                                     style="width: {{ completion }}%"
+                                     title="{{ translation.language.name }}: {{ completion }}%">
+                                </div>
+                            </div>
+                            <div class="small text-muted mt-1">
+                                {% if translation.title %}
+                                    <i class="bi bi-check-circle-fill text-success"></i>
+                                {% else %}
+                                    <i class="bi bi-x-circle-fill text-danger"></i>
+                                {% endif %}
+                                Titre
+                                
+                                {% if translation.description %}
+                                    <i class="bi bi-check-circle-fill text-success ms-2"></i>
+                                {% else %}
+                                    <i class="bi bi-x-circle-fill text-danger ms-2"></i>
+                                {% endif %}
+                                Description
+                                
+                                {% if translation.content %}
+                                    <i class="bi bi-check-circle-fill text-success ms-2"></i>
+                                {% else %}
+                                    <i class="bi bi-x-circle-fill text-danger ms-2"></i>
+                                {% endif %}
+                                Contenu
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="bi bi-translate text-muted" style="font-size: 2rem;"></i>
+                        <p class="text-muted mt-2">Aucune traduction disponible</p>
+                    </div>
+                {% endif %}
+                
+                <div class="d-grid">
+                    <a href="{{ path('admin_service_edit_translations', {'id': service.id}) }}" class="btn btn-success">
+                        <i class="bi bi-translate me-2"></i>{{ 'translations.edit'|trans({}, 'admin') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="bi bi-gear me-2"></i>{{ 'common.actions.title'|trans({}, 'admin') }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ path('admin_service_edit', {'id': service.id}) }}" class="btn btn-primary">
+                        <i class="bi bi-pencil me-2"></i>{{ 'common.actions.edit'|trans({}, 'admin') }}
+                    </a>
+                    <a href="{{ path('admin_service_edit_translations', {'id': service.id}) }}" class="btn btn-success">
+                        <i class="bi bi-translate me-2"></i>{{ 'translations.edit'|trans({}, 'admin') }}
+                    </a>
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <i class="bi bi-trash me-2"></i>{{ 'common.actions.delete'|trans({}, 'admin') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ 'services.actions.delete'|trans({}, 'admin') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                {{ 'services.confirm_delete_message'|trans({'%name%': service.title ?? service.slug}, 'admin') }}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    {{ 'common.actions.cancel'|trans({}, 'admin') }}
+                </button>
+                <form method="post" action="{{ path('admin_service_delete', {'id': service.id}) }}" style="display: inline-block;">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ service.id) }}">
+                    <button type="submit" class="btn btn-danger">
+                        {{ 'common.actions.delete'|trans({}, 'admin') }}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
