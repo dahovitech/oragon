@@ -25,7 +25,7 @@
                                 <div class="mb-3">
                                     <label for="slug" class="form-label">Slug (URL)</label>
                                     <input type="text" class="form-control" id="slug" name="slug" 
-                                           value="{{ service.slug }}" 
+                                           value="{{ service.slug ?? '' }}" 
                                            placeholder="Sera généré automatiquement">
                                     <div class="form-text">Laissez vide pour génération automatique</div>
                                 </div>
