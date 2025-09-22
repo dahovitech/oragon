@@ -149,6 +149,15 @@ translations:
     domain_info: Les domaines permettent d'organiser les traductions par section
     key_format: "Utilisez la notation à points pour organiser les clés (ex: menu.home)"
     fallback: Si une traduction manque, la langue par défaut sera utilisée
+  edit: Modifier les traductions
+  progress: Progression
+  global_completion: Complétion globale
+  status:
+    complete: Complète
+    partial: Partielle
+    started: Commencée
+    empty: Vide
+  completion: Complétion
 
 language:
   change_interface: Changer la langue de l'interface
@@ -280,14 +289,3 @@ service_translations:
   incomplete: Traductions incomplètes
   complete: Traductions complètes
   edit_translation: Modifier la traduction
-  
-translations:
-  edit: Modifier les traductions
-  progress: Progression
-  global_completion: Complétion globale
-  status:
-    complete: Complète
-    partial: Partielle
-    started: Commencée
-    empty: Vide
-  completion: Complétion
