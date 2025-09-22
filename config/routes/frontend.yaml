@@ -1,9 +1,3 @@
-# Admin Service Routes
-admin_service_routes:
-    resource: '../src/Controller/Admin/ServiceController.php'
-    type: attribute
-    prefix: /admin
-
 # Frontend Service Routes  
 frontend_service_routes:
     resource: '../src/Controller/FrontendServiceController.php'
