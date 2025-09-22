@@ -262,7 +262,7 @@ services:
     no_services: Aucun service configuré
     create_first: Créer le premier service
   help:
-    slug: Identifiant unique pour l'URL (ex: mon-service)
+    slug: "Identifiant unique pour l'URL (ex: mon-service)"
     sort_order: Plus petit = affiché en premier
     image: Image représentative du service
     active: Décochez pour désactiver ce service
