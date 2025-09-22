@@ -10,10 +10,10 @@
                 <h1 class="h3">Gestion des Services</h1>
                 <div>
                     <a href="{{ path('admin_service_translation_tools') }}" class="btn btn-info btn-sm me-2">
-                        <i class="fas fa-tools"></i> Outils de traduction
+                        <i class="bi bi-tools"></i> Outils de traduction
                     </a>
                     <a href="{{ path('admin_service_new') }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Nouveau service
+                        <i class="bi bi-plus"></i> Nouveau service
                     </a>
                 </div>
             </div>
@@ -30,7 +30,7 @@
                                     <h4 class="text-primary">{{ stats.completion_percentage }}%</h4>
                                 </div>
                                 <div class="text-muted">
-                                    <i class="fas fa-language fa-2x"></i>
+                                    <i class="bi bi-translate fa-2x"></i>
                                 </div>
                             </div>
                             <div class="mt-2">
@@ -56,7 +56,7 @@
                 <div class="card-body">
                     {% if services is empty %}
                         <div class="text-center py-4">
-                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <i class="bi bi-inbox fa-3x text-muted mb-3"></i>
                             <p class="text-muted">Aucun service disponible.</p>
                             <a href="{{ path('admin_service_new') }}" class="btn btn-primary">
                                 Créer le premier service
