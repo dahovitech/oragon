@@ -48,7 +48,7 @@
             {% if availableTranslations|length > 1 %}
                 <div class="alert alert-light border" role="alert">
                     <div class="d-flex align-items-center">
-                        <i class="fas fa-globe me-2 text-primary"></i>
+                        <i class="bi bi-globe me-2 text-primary"></i>
                         <div class="flex-grow-1">
                             <strong>{{ 'service.available_languages'|trans }}</strong>
                             <div class="mt-1">
@@ -73,7 +73,7 @@
                 <div class="card-body text-center">
                     <a href="{{ path('frontend_services_index', {'_locale': locale}) }}" 
                        class="btn btn-outline-primary">
-                        <i class="fas fa-arrow-left me-2"></i>
+                        <i class="bi bi-arrow-left me-2"></i>
                         {{ 'service.back_to_services'|trans }}
                     </a>
                 </div>
@@ -88,7 +88,7 @@
                     </p>
                     <a href="{{ path('frontend_contact', {'_locale': locale}) }}" 
                        class="btn btn-success">
-                        <i class="fas fa-envelope me-2"></i>
+                        <i class="bi bi-envelope me-2"></i>
                         {{ 'service.contact_us'|trans }}
                     </a>
                 </div>

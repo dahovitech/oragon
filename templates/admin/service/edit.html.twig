@@ -10,10 +10,10 @@
                 <h1 class="h3">Éditer Service: {{ service.title }}</h1>
                 <div>
                     <a href="{{ path('admin_service_show', {id: service.id}) }}" class="btn btn-info btn-sm me-2">
-                        <i class="fas fa-eye"></i> Voir
+                        <i class="bi bi-eye"></i> Voir
                     </a>
                     <a href="{{ path('admin_service_index') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Retour
+                        <i class="bi bi-arrow-left"></i> Retour
                     </a>
                 </div>
             </div>
@@ -101,7 +101,7 @@
                                         </div>
                                     </div>
                                     <button type="button" id="duplicateBtn" class="btn btn-sm btn-outline-primary mt-2 w-100">
-                                        <i class="fas fa-copy"></i> Dupliquer
+                                        <i class="bi bi-copy"></i> Dupliquer
                                     </button>
                                 </div>
                             </div>
@@ -131,14 +131,14 @@
                                                 {% set translation = service.getTranslation(language.code) %}
                                                 {% if translation %}
                                                     {% if translation.isComplete %}
-                                                        <i class="fas fa-check-circle text-success ms-1"></i>
+                                                        <i class="bi bi-check-circle text-success ms-1"></i>
                                                     {% elseif translation.isPartial %}
-                                                        <i class="fas fa-exclamation-circle text-warning ms-1"></i>
+                                                        <i class="bi bi-exclamation-circle text-warning ms-1"></i>
                                                     {% else %}
-                                                        <i class="fas fa-circle text-muted ms-1"></i>
+                                                        <i class="bi bi-circle text-muted ms-1"></i>
                                                     {% endif %}
                                                 {% else %}
-                                                    <i class="fas fa-plus-circle text-muted ms-1"></i>
+                                                    <i class="bi bi-plus-circle text-muted ms-1"></i>
                                                 {% endif %}
                                             </button>
                                         </li>
@@ -228,7 +228,7 @@
                         <div class="d-flex justify-content-end gap-2">
                             <a href="{{ path('admin_service_index') }}" class="btn btn-secondary">Annuler</a>
                             <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i> Enregistrer
+                                <i class="bi bi-floppy"></i> Enregistrer
                             </button>
                         </div>
                     </div>

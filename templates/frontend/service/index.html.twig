@@ -58,7 +58,7 @@
                                 <a href="{{ path('frontend_service_show', {'_locale': locale, 'slug': service.slug}) }}" 
                                    class="btn btn-primary">
                                     {{ 'services.read_more'|trans }}
-                                    <i class="fas fa-arrow-right ms-1"></i>
+                                    <i class="bi bi-arrow-right ms-1"></i>
                                 </a>
                             </div>
                         </div>
@@ -71,7 +71,7 @@
         <div class="row">
             <div class="col-12">
                 <div class="text-center py-5">
-                    <i class="fas fa-box-open fa-3x text-muted mb-4"></i>
+                    <i class="bi bi-box-seam fa-3x text-muted mb-4"></i>
                     <h3 class="text-muted">{{ 'services.no_services'|trans }}</h3>
                     <p class="text-muted">{{ 'services.no_services_description'|trans }}</p>
                 </div>
@@ -84,7 +84,7 @@
         <div class="row mt-5">
             <div class="col-12">
                 <div class="alert alert-info" role="alert">
-                    <i class="fas fa-info-circle me-2"></i>
+                    <i class="bi bi-info-circle me-2"></i>
                     {{ 'services.language_notice'|trans({'%language%': currentLanguage.nativeName}) }}
                     <a href="{{ path('frontend_services_index', {'_locale': 'fr'}) }}" class="alert-link">
                         {{ 'services.view_in_default'|trans }}
