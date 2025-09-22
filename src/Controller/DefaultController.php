@@ -22,7 +22,7 @@ class DefaultController extends AbstractController
     {
         $locale = $request->getLocale();
 
-        return $this->redirectToRoute('homepage', [
+        return $this->redirectToRoute('frontend_homepage', [
             '_locale' => $locale
         ]);
     }
@@ -37,7 +37,7 @@ class DefaultController extends AbstractController
         $request->getSession()->set('_locale', $_locale);
         $url = $request->headers->get('referer');
         $locale = $request->getLocale();
-        return $this->redirectToRoute('app_homepage', [
+        return $this->redirectToRoute('frontend_homepage', [
             '_locale' => $locale
         ]);
     }
