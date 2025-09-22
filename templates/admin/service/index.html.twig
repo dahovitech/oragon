@@ -1,254 +1,196 @@
 {% extends 'admin/base.html.twig' %}
 
-{% block title %}{{ 'services.title'|trans({}, 'admin') }}{% endblock %}
+{% block title %}{{ 'services.title'|trans({}, 'admin') }} - Administration - Oragon{% endblock %}
 
-{% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h3 class="card-title">{{ 'services.list_title'|trans({}, 'admin') }}</h3>
-                    <div>
-                        <a href="{{ path('admin_service_new') }}" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> {{ 'services.actions.new'|trans({}, 'admin') }}
-                        </a>
-                        <a href="{{ path('admin_service_statistics') }}" class="btn btn-info">
-                            <i class="fas fa-chart-bar"></i> {{ 'services.statistics'|trans({}, 'admin') }}
-                        </a>
-                    </div>
-                </div>
+{% block body %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="bi bi-grid-3x3-gap-fill me-2 text-primary"></i>{{ 'services.title'|trans({}, 'admin') }}
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a href="{{ path('admin_service_new') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>{{ 'services.actions.new'|trans({}, 'admin') }}
+        </a>
+    </div>
+</div>
 
-                {% if statistics %}
-                <div class="card-body border-bottom">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="info-box">
-                                <span class="info-box-icon bg-info">
-                                    <i class="fas fa-cogs"></i>
-                                </span>
-                                <div class="info-box-content">
-                                    <span class="info-box-text">{{ 'services.total'|trans({}, 'admin') }}</span>
-                                    <span class="info-box-number">{{ statistics.total_services }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="info-box">
-                                <span class="info-box-icon bg-success">
-                                    <i class="fas fa-language"></i>
-                                </span>
-                                <div class="info-box-content">
-                                    <span class="info-box-text">{{ 'languages.count'|trans({}, 'admin') }}</span>
-                                    <span class="info-box-number">{{ statistics.languages|length }}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="info-box">
-                                <span class="info-box-icon bg-warning">
-                                    <i class="fas fa-percentage"></i>
-                                </span>
-                                <div class="info-box-content">
-                                    <span class="info-box-text">{{ 'translations.global_completion'|trans({}, 'admin') }}</span>
-                                    <span class="info-box-number">{{ statistics.global_completion }}%</span>
-                                    <div class="progress">
-                                        <div class="progress-bar" style="width: {{ statistics.global_completion }}%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% endif %}
-
-                <div class="card-body">
-                    {% if services|length > 0 %}
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>{{ 'services.fields.title'|trans({}, 'admin') }}</th>
-                                        <th>{{ 'services.fields.slug'|trans({}, 'admin') }}</th>
-                                        <th>{{ 'services.fields.image'|trans({}, 'admin') }}</th>
-                                        <th>{{ 'services.fields.status'|trans({}, 'admin') }}</th>
-                                        <th>{{ 'services.fields.sort_order'|trans({}, 'admin') }}</th>
-                                        <th>{{ 'translations.progress'|trans({}, 'admin') }}</th>
-                                        <th class="text-center">{{ 'common.actions.title'|trans({}, 'admin') }}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for service in services %}
-                                        {% set translationStats = service.translationStats %}
-                                        <tr>
-                                            <td>
-                                                <strong>{{ service.title ?? service.slug }}</strong>
-                                                {% if service.description %}
-                                                    <br><small class="text-muted">{{ service.description|slice(0, 100) }}{% if service.description|length > 100 %}...{% endif %}</small>
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                <code>{{ service.slug }}</code>
-                                            </td>
-                                            <td>
-                                                {% if service.image %}
-                                                    <img src="{{ asset('upload/media/' ~ service.image.fileName) }}" 
-                                                         alt="{{ service.image.alt }}" 
-                                                         class="img-thumbnail" 
-                                                         style="width: 50px; height: 50px; object-fit: cover;">
-                                                {% else %}
-                                                    <span class="text-muted">{{ 'common.no_image'|trans({}, 'admin') }}</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                {% if service.isActive %}
-                                                    <span class="badge badge-success">{{ 'common.status.active'|trans({}, 'admin') }}</span>
-                                                {% else %}
-                                                    <span class="badge badge-secondary">{{ 'common.status.inactive'|trans({}, 'admin') }}</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>{{ service.sortOrder }}</td>
-                                            <td>
-                                                <div class="translation-progress">
-                                                    {% for locale, stats in translationStats %}
-                                                        {% set language = stats.language %}
-                                                        {% set completion = stats.completion %}
-                                                        {% set badgeClass = completion == 100 ? 'success' : (completion >= 50 ? 'warning' : 'danger') %}
-                                                        
-                                                        <div class="d-flex align-items-center mb-1">
-                                                            <span class="language-code me-2">{{ language.code|upper }}</span>
-                                                            <div class="progress flex-grow-1" style="height: 15px;">
-                                                                <div class="progress-bar bg-{{ badgeClass }}" 
-                                                                     style="width: {{ completion }}%"
-                                                                     title="{{ language.name }}: {{ completion }}%">
-                                                                </div>
-                                                            </div>
-                                                            <span class="ms-2 small">{{ completion }}%</span>
-                                                        </div>
-                                                    {% endfor %}
-                                                </div>
-                                            </td>
-                                            <td class="text-center">
-                                                <div class="btn-group" role="group">
-                                                    <a href="{{ path('admin_service_show', {'id': service.id}) }}" 
-                                                       class="btn btn-sm btn-outline-info" 
-                                                       title="{{ 'common.actions.view'|trans({}, 'admin') }}">
-                                                        <i class="fas fa-eye"></i>
-                                                    </a>
-                                                    <a href="{{ path('admin_service_edit', {'id': service.id}) }}" 
-                                                       class="btn btn-sm btn-outline-primary" 
-                                                       title="{{ 'common.actions.edit'|trans({}, 'admin') }}">
-                                                        <i class="fas fa-edit"></i>
-                                                    </a>
-                                                    <a href="{{ path('admin_service_edit_translations', {'id': service.id}) }}" 
-                                                       class="btn btn-sm btn-outline-success" 
-                                                       title="{{ 'translations.edit'|trans({}, 'admin') }}">
-                                                        <i class="fas fa-language"></i>
-                                                    </a>
-                                                    <button type="button" 
-                                                            class="btn btn-sm btn-outline-danger" 
-                                                            data-bs-toggle="modal" 
-                                                            data-bs-target="#deleteModal{{ service.id }}"
-                                                            title="{{ 'common.actions.delete'|trans({}, 'admin') }}">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </div>
-
-                                                <!-- Modal de suppression -->
-                                                <div class="modal fade" id="deleteModal{{ service.id }}" tabindex="-1">
-                                                    <div class="modal-dialog">
-                                                        <div class="modal-content">
-                                                            <div class="modal-header">
-                                                                <h5 class="modal-title">{{ 'services.confirm_delete'|trans({}, 'admin') }}</h5>
-                                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                            </div>
-                                                            <div class="modal-body">
-                                                                {{ 'services.confirm_delete_message'|trans({'%name%': service.title ?? service.slug}, 'admin') }}
-                                                            </div>
-                                                            <div class="modal-footer">
-                                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                                                    {{ 'common.actions.cancel'|trans({}, 'admin') }}
-                                                                </button>
-                                                                <form method="post" action="{{ path('admin_service_delete', {'id': service.id}) }}" style="display: inline-block;">
-                                                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ service.id) }}">
-                                                                    <button type="submit" class="btn btn-danger">
-                                                                        {{ 'common.actions.delete'|trans({}, 'admin') }}
-                                                                    </button>
-                                                                </form>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-5">
-                            <i class="fas fa-cogs fa-3x text-muted mb-3"></i>
-                            <h4>{{ 'services.no_services'|trans({}, 'admin') }}</h4>
-                            <p class="text-muted">{{ 'services.create_first'|trans({}, 'admin') }}</p>
-                            <a href="{{ path('admin_service_new') }}" class="btn btn-primary">
-                                <i class="fas fa-plus"></i> {{ 'services.actions.new'|trans({}, 'admin') }}
-                            </a>
-                        </div>
-                    {% endif %}
+{% if statistics %}
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-grid-3x3-gap-fill text-primary mb-2" style="font-size: 2rem;"></i>
+                <h5 class="card-title">{{ statistics.total_services }}</h5>
+                <p class="card-text text-muted">{{ 'services.total'|trans({}, 'admin') }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-translate text-success mb-2" style="font-size: 2rem;"></i>
+                <h5 class="card-title">{{ statistics.languages|length }}</h5>
+                <p class="card-text text-muted">{{ 'languages.count'|trans({}, 'admin') }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-percent text-warning mb-2" style="font-size: 2rem;"></i>
+                <h5 class="card-title">{{ statistics.global_completion }}%</h5>
+                <p class="card-text text-muted">{{ 'translations.global_completion'|trans({}, 'admin') }}</p>
+                <div class="progress">
+                    <div class="progress-bar bg-warning" style="width: {{ statistics.global_completion }}%"></div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endif %}
+
+{% if services|length > 0 %}
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>{{ 'services.fields.title'|trans({}, 'admin') }}</th>
+                        <th>{{ 'services.fields.slug'|trans({}, 'admin') }}</th>
+                        <th>{{ 'services.fields.image'|trans({}, 'admin') }}</th>
+                        <th>{{ 'services.fields.status'|trans({}, 'admin') }}</th>
+                        <th>{{ 'services.fields.sort_order'|trans({}, 'admin') }}</th>
+                        <th>{{ 'translations.progress'|trans({}, 'admin') }}</th>
+                        <th class="text-center">{{ 'common.actions.title'|trans({}, 'admin') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for service in services %}
+                        {% set translationStats = service.translationStats %}
+                        <tr>
+                            <td>
+                                <strong>{{ service.title ?? service.slug }}</strong>
+                                {% if service.description %}
+                                    <br><small class="text-muted">{{ service.description|slice(0, 100) }}{% if service.description|length > 100 %}...{% endif %}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <code>{{ service.slug }}</code>
+                            </td>
+                            <td>
+                                {% if service.image %}
+                                    <img src="{{ asset('upload/media/' ~ service.image.fileName) }}" 
+                                         alt="{{ service.image.alt }}" 
+                                         class="img-thumbnail" 
+                                         style="width: 50px; height: 50px; object-fit: cover;">
+                                {% else %}
+                                    <span class="text-muted">{{ 'common.no_image'|trans({}, 'admin') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if service.isActive %}
+                                    <span class="badge bg-success">{{ 'common.status.active'|trans({}, 'admin') }}</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ 'common.status.inactive'|trans({}, 'admin') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ service.sortOrder }}</td>
+                            <td>
+                                <div class="translation-progress">
+                                    {% for locale, stats in translationStats %}
+                                        {% set language = stats.language %}
+                                        {% set completion = stats.completion %}
+                                        {% set badgeClass = completion == 100 ? 'success' : (completion >= 50 ? 'warning' : 'danger') %}
+                                        
+                                        <div class="d-flex align-items-center mb-1">
+                                            <span class="badge bg-secondary me-2">{{ language.code|upper }}</span>
+                                            <div class="progress flex-grow-1" style="height: 15px;">
+                                                <div class="progress-bar bg-{{ badgeClass }}" 
+                                                     style="width: {{ completion }}%"
+                                                     title="{{ language.name }}: {{ completion }}%">
+                                                </div>
+                                            </div>
+                                            <span class="ms-2 small">{{ completion }}%</span>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <div class="btn-group" role="group">
+                                    <a href="{{ path('admin_service_show', {'id': service.id}) }}" 
+                                       class="btn btn-sm btn-outline-info" 
+                                       title="{{ 'common.actions.view'|trans({}, 'admin') }}">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ path('admin_service_edit', {'id': service.id}) }}" 
+                                       class="btn btn-sm btn-outline-primary" 
+                                       title="{{ 'common.actions.edit'|trans({}, 'admin') }}">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{{ path('admin_service_edit_translations', {'id': service.id}) }}" 
+                                       class="btn btn-sm btn-outline-success" 
+                                       title="{{ 'translations.edit'|trans({}, 'admin') }}">
+                                        <i class="bi bi-translate"></i>
+                                    </a>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteModal{{ service.id }}"
+                                            title="{{ 'common.actions.delete'|trans({}, 'admin') }}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Modal de suppression -->
+                                <div class="modal fade" id="deleteModal{{ service.id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">{{ 'services.confirm_delete'|trans({}, 'admin') }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                {{ 'services.confirm_delete_message'|trans({'%name%': service.title ?? service.slug}, 'admin') }}
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                                    {{ 'common.actions.cancel'|trans({}, 'admin') }}
+                                                </button>
+                                                <form method="post" action="{{ path('admin_service_delete', {'id': service.id}) }}" style="display: inline-block;">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ service.id) }}">
+                                                    <button type="submit" class="btn btn-danger">
+                                                        {{ 'common.actions.delete'|trans({}, 'admin') }}
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-grid-3x3-gap-fill text-muted mb-3" style="font-size: 4rem;"></i>
+        <h4>{{ 'services.no_services'|trans({}, 'admin') }}</h4>
+        <p class="text-muted">{{ 'services.create_first'|trans({}, 'admin') }}</p>
+        <a href="{{ path('admin_service_new') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>{{ 'services.actions.new'|trans({}, 'admin') }}
+        </a>
+    </div>
+</div>
+{% endif %}
 
 <style>
-.language-code {
-    font-family: monospace;
-    font-size: 0.8em;
-    font-weight: bold;
-    min-width: 30px;
-}
-
 .translation-progress {
     min-width: 200px;
-}
-
-.info-box {
-    display: flex;
-    align-items: center;
-    padding: 10px;
-    background: #fff;
-    border-radius: 5px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    margin-bottom: 10px;
-}
-
-.info-box-icon {
-    width: 70px;
-    height: 70px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5em;
-    color: white;
-    border-radius: 5px;
-    margin-right: 15px;
-}
-
-.info-box-content {
-    flex-grow: 1;
-}
-
-.info-box-text {
-    display: block;
-    font-size: 0.9em;
-    color: #666;
-}
-
-.info-box-number {
-    display: block;
-    font-size: 1.8em;
-    font-weight: bold;
 }
 </style>
 {% endblock %}
