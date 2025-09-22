@@ -40,7 +40,7 @@ services:
   # Search
   search_results: Search results
   search_meta_description: Search results for "%query%"
-  search_found: "%count% result(s) found for \"%query%\""
+  search_found: "%count% result(s) found for ""%query%"""
   search_no_results: No results found for "%query%"
   search_tip: Refine your search or browse all our services
   results_in_language: "Results in %language%"
