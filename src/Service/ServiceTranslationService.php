@@ -37,6 +37,12 @@ class ServiceTranslationService
 
         $service->setUpdatedAt();
         $this->entityManager->persist($service);
+        
+        // For new services, we need to flush first to get an ID before handling translations
+        $isNewService = $service->getId() === null;
+        if ($isNewService) {
+            $this->entityManager->flush();
+        }
 
         // Handle translations
         foreach ($translationsData as $languageCode => $data) {
@@ -45,7 +51,10 @@ class ServiceTranslationService
                 continue;
             }
 
-            $translation = $this->serviceTranslationRepository->findByServiceAndLanguage($service, $language);
+            $translation = null;
+            if (!$isNewService) {
+                $translation = $this->serviceTranslationRepository->findByServiceAndLanguage($service, $language);
+            }
             
             if (!$translation) {
                 $translation = new ServiceTranslation();
