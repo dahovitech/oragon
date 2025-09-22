@@ -1,0 +1,103 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ 'services.new_title'|trans({}, 'admin') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-plus"></i> {{ 'services.new_title'|trans({}, 'admin') }}
+                    </h3>
+                </div>
+
+                <div class="card-body">
+                    {{ form_start(form) }}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.slug) }}
+                                {{ form_widget(form.slug, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.slug) }}
+                                {{ form_help(form.slug) }}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.sortOrder) }}
+                                {{ form_widget(form.sortOrder, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.sortOrder) }}
+                                {{ form_help(form.sortOrder) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form_label(form.image) }}
+                                {{ form_widget(form.image, {'attr': {'class': 'form-control'}}) }}
+                                {{ form_errors(form.image) }}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    {{ form_widget(form.isActive, {'attr': {'class': 'form-check-input'}}) }}
+                                    {{ form_label(form.isActive, null, {'label_attr': {'class': 'form-check-label'}}) }}
+                                </div>
+                                {{ form_errors(form.isActive) }}
+                                {{ form_help(form.isActive) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        {{ 'services.new_help'|trans({}, 'admin') }}
+                    </div>
+
+                    {{ form_rest(form) }}
+                </div>
+
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ path('admin_service_index') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> {{ 'common.actions.cancel'|trans({}, 'admin') }}
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> {{ 'common.actions.save'|trans({}, 'admin') }}
+                        </button>
+                    </div>
+                </div>
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-générer le slug à partir du titre si disponible
+    const slugField = document.querySelector('input[name="service[slug]"]');
+    
+    if (slugField) {
+        slugField.addEventListener('input', function() {
+            // Auto-format du slug
+            this.value = this.value
+                .toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '');
+        });
+    }
+});
+</script>
+{% endblock %}

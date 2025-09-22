@@ -1,0 +1,310 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ 'services.edit_translations_title'|trans({}, 'admin') }} - {{ service.title ?? service.slug }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">
+                        {{ 'services.edit_translations_title'|trans({}, 'admin') }} - 
+                        <strong>{{ service.title ?? service.slug }}</strong>
+                    </h3>
+                    <div>
+                        <a href="{{ path('admin_service_index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> {{ 'common.actions.back'|trans({}, 'admin') }}
+                        </a>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-info dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="fas fa-tools"></i> {{ 'services.tools'|trans({}, 'admin') }}
+                            </button>
+                            <div class="dropdown-menu">
+                                <form method="post" action="{{ path('admin_service_synchronize', {'id': service.id}) }}" style="display: inline;">
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="fas fa-sync"></i> {{ 'services.synchronize_translations'|trans({}, 'admin') }}
+                                    </button>
+                                </form>
+                                <a class="dropdown-item" href="{{ path('admin_service_edit', {'id': service.id}) }}">
+                                    <i class="fas fa-edit"></i> {{ 'services.edit_service'|trans({}, 'admin') }}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+                    
+                    <!-- Onglets pour les langues -->
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="nav flex-column nav-pills" id="language-tabs" role="tablist">
+                                {% for language in languages %}
+                                    {% set translation = service.getTranslation(language.code) %}
+                                    {% set isActive = loop.first %}
+                                    {% set completion = translation ? translation.completionPercentage : 0 %}
+                                    {% set badgeClass = completion == 100 ? 'success' : (completion >= 50 ? 'warning' : 'danger') %}
+                                    
+                                    <a class="nav-link d-flex justify-content-between align-items-center {% if isActive %}active{% endif %}" 
+                                       id="tab-{{ language.code }}" 
+                                       data-bs-toggle="pill" 
+                                       href="#content-{{ language.code }}" 
+                                       role="tab">
+                                        <span>
+                                            <i class="fas fa-flag me-2"></i>
+                                            {{ language.name }}
+                                            <small class="d-block text-muted">{{ language.nativeName }}</small>
+                                        </span>
+                                        <div class="text-end">
+                                            <span class="badge bg-{{ badgeClass }}">{{ completion }}%</span>
+                                            {% if translation and translation.isComplete %}
+                                                <i class="fas fa-check-circle text-success ms-1"></i>
+                                            {% elseif translation and completion > 0 %}
+                                                <i class="fas fa-exclamation-triangle text-warning ms-1"></i>
+                                            {% else %}
+                                                <i class="fas fa-times-circle text-danger ms-1"></i>
+                                            {% endif %}
+                                        </div>
+                                    </a>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Actions rapides -->
+                            <div class="mt-4">
+                                <h6>{{ 'services.quick_actions'|trans({}, 'admin') }}</h6>
+                                {% for language in languages %}
+                                    {% set translation = service.getTranslation(language.code) %}
+                                    {% if translation and translation.completionPercentage > 0 %}
+                                        <div class="mb-2">
+                                            <div class="btn-group w-100" role="group">
+                                                <button type="button" class="btn btn-sm btn-outline-info dropdown-toggle" data-bs-toggle="dropdown">
+                                                    {{ language.code|upper }}
+                                                </button>
+                                                <div class="dropdown-menu">
+                                                    {% for targetLang in languages %}
+                                                        {% if targetLang.code != language.code %}
+                                                            {% set targetTranslation = service.getTranslation(targetLang.code) %}
+                                                            {% if not targetTranslation or targetTranslation.completionPercentage == 0 %}
+                                                                <form method="post" action="{{ path('admin_service_duplicate_translation', {
+                                                                    'id': service.id,
+                                                                    'sourceLocale': language.code,
+                                                                    'targetLocale': targetLang.code
+                                                                }) }}" style="display: inline;">
+                                                                    <button type="submit" class="dropdown-item">
+                                                                        <i class="fas fa-copy"></i> {{ 'services.copy_to'|trans({'%lang%': targetLang.name}, 'admin') }}
+                                                                    </button>
+                                                                </form>
+                                                            {% endif %}
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-9">
+                            <div class="tab-content" id="language-content">
+                                {% for language in languages %}
+                                    {% set isActive = loop.first %}
+                                    <div class="tab-pane fade {% if isActive %}show active{% endif %}" 
+                                         id="content-{{ language.code }}" 
+                                         role="tabpanel">
+                                        
+                                        <div class="card">
+                                            <div class="card-header d-flex justify-content-between align-items-center">
+                                                <h5 class="mb-0">
+                                                    <i class="fas fa-flag me-2"></i>
+                                                    {{ language.name }} ({{ language.nativeName }})
+                                                </h5>
+                                                {% set translation = service.getTranslation(language.code) %}
+                                                {% if translation %}
+                                                    <div class="translation-status">
+                                                        {% set status = translation.translationStatus %}
+                                                        {% if status == 'complete' %}
+                                                            <span class="badge bg-success">{{ 'translations.status.complete'|trans({}, 'admin') }}</span>
+                                                        {% elseif status == 'partial' %}
+                                                            <span class="badge bg-warning">{{ 'translations.status.partial'|trans({}, 'admin') }}</span>
+                                                        {% elseif status == 'started' %}
+                                                            <span class="badge bg-info">{{ 'translations.status.started'|trans({}, 'admin') }}</span>
+                                                        {% else %}
+                                                            <span class="badge bg-danger">{{ 'translations.status.empty'|trans({}, 'admin') }}</span>
+                                                        {% endif %}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <div class="card-body">
+                                                {% set fieldName = 'translation_' ~ language.code %}
+                                                {% if form[fieldName] is defined %}
+                                                    <div class="row">
+                                                        <div class="col-12">
+                                                            <div class="mb-3">
+                                                                {{ form_label(form[fieldName].title) }}
+                                                                {{ form_widget(form[fieldName].title, {'attr': {'class': 'form-control'}}) }}
+                                                                {{ form_errors(form[fieldName].title) }}
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="col-12">
+                                                            <div class="mb-3">
+                                                                {{ form_label(form[fieldName].description) }}
+                                                                {{ form_widget(form[fieldName].description, {'attr': {'class': 'form-control'}}) }}
+                                                                {{ form_errors(form[fieldName].description) }}
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="col-12">
+                                                            <div class="mb-3">
+                                                                {{ form_label(form[fieldName].content) }}
+                                                                {{ form_widget(form[fieldName].content, {'attr': {'class': 'form-control'}}) }}
+                                                                {{ form_errors(form[fieldName].content) }}
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                {{ form_label(form[fieldName].metaTitle) }}
+                                                                {{ form_widget(form[fieldName].metaTitle, {'attr': {'class': 'form-control'}}) }}
+                                                                {{ form_errors(form[fieldName].metaTitle) }}
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="col-md-6">
+                                                            <div class="mb-3">
+                                                                {{ form_label(form[fieldName].metaDescription) }}
+                                                                {{ form_widget(form[fieldName].metaDescription, {'attr': {'class': 'form-control'}}) }}
+                                                                {{ form_errors(form[fieldName].metaDescription) }}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ path('admin_service_index') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> {{ 'common.actions.cancel'|trans({}, 'admin') }}
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> {{ 'common.actions.save'|trans({}, 'admin') }}
+                            </button>
+                        </div>
+                    </div>
+
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.nav-pills .nav-link {
+    color: #495057;
+    border-radius: 0.375rem;
+    margin-bottom: 0.25rem;
+}
+
+.nav-pills .nav-link.active {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.nav-pills .nav-link:hover {
+    background-color: #f8f9fa;
+}
+
+.translation-status .badge {
+    font-size: 0.75em;
+}
+
+.card-header h5 {
+    color: #495057;
+}
+
+.form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.btn-group .dropdown-menu {
+    min-width: 200px;
+}
+
+.language-tabs .nav-link {
+    text-align: left;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .language-tabs {
+        flex-direction: row;
+        overflow-x: auto;
+    }
+    
+    .language-tabs .nav-link {
+        min-width: 120px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-save au changement de champ
+    const forms = document.querySelectorAll('input, textarea, select');
+    let saveTimeout;
+    
+    forms.forEach(function(field) {
+        field.addEventListener('input', function() {
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(function() {
+                // Ici on pourrait ajouter un auto-save via AJAX
+                console.log('Auto-save triggered');
+            }, 2000);
+        });
+    });
+    
+    // Indication de progression en temps réel
+    function updateProgress() {
+        document.querySelectorAll('[data-language]').forEach(function(tab) {
+            const language = tab.getAttribute('data-language');
+            const titleField = document.querySelector(`input[name*="translation_${language}"][name*="title"]`);
+            const descField = document.querySelector(`textarea[name*="translation_${language}"][name*="description"]`);
+            
+            let completion = 0;
+            let totalFields = 2;
+            
+            if (titleField && titleField.value.trim()) completion++;
+            if (descField && descField.value.trim()) completion++;
+            
+            const percentage = Math.round((completion / totalFields) * 100);
+            const badge = document.querySelector(`#tab-${language} .badge`);
+            
+            if (badge) {
+                badge.textContent = percentage + '%';
+                badge.className = `badge bg-${percentage === 100 ? 'success' : (percentage >= 50 ? 'warning' : 'danger')}`;
+            }
+        });
+    }
+    
+    // Mettre à jour la progression au changement
+    document.querySelectorAll('input, textarea').forEach(function(field) {
+        field.addEventListener('input', updateProgress);
+    });
+    
+    // Mise à jour initiale
+    updateProgress();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="{{ app.request.locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Oragon{% endblock %}</title>
+    
+    {% block meta %}
+        <meta name="description" content="{% block meta_description %}Oragon - Services digitaux professionnels{% endblock %}">
+        <meta name="keywords" content="{% block meta_keywords %}oragon, services digitaux, développement web{% endblock %}">
+    {% endblock %}
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    {% block stylesheets %}
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        
+        .language-selector {
+            border: none;
+            background: transparent;
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .language-selector:hover {
+            color: white;
+        }
+        
+        .service-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .service-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        
+        .service-image {
+            height: 200px;
+            object-fit: cover;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .service-content {
+            padding: 1.5rem;
+        }
+        
+        .service-title {
+            color: #2c3e50;
+            margin-bottom: 0.75rem;
+        }
+        
+        .service-description {
+            color: #6c757d;
+            font-size: 0.95rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 0.5rem 1.5rem;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            transform: translateY(-1px);
+        }
+        
+        footer {
+            background: #2c3e50;
+            color: white;
+            margin-top: 4rem;
+        }
+        
+        .language-flag {
+            width: 20px;
+            height: 15px;
+            margin-right: 0.5rem;
+        }
+        
+        .breadcrumb-item a {
+            text-decoration: none;
+        }
+        
+        .alert-translation {
+            border-left: 4px solid #ffc107;
+            background-color: #fff9c4;
+        }
+    </style>
+    {% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <div class="container">
+            <a class="navbar-brand" href="{{ path('homepage', {'_locale': app.request.locale}) }}">
+                <i class="fas fa-cube me-2"></i>Oragon
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ path('homepage', {'_locale': app.request.locale}) }}">
+                            <i class="fas fa-home me-1"></i>{{ 'navigation.home'|trans({}, 'messages') }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ path('service_index', {'_locale': app.request.locale}) }}">
+                            <i class="fas fa-cogs me-1"></i>{{ 'navigation.services'|trans({}, 'messages') }}
+                        </a>
+                    </li>
+                </ul>
+                
+                <!-- Sélecteur de langue -->
+                <div class="navbar-nav">
+                    {% include 'partials/language_selector.html.twig' %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenu principal -->
+    <main>
+        {% block breadcrumb %}{% endblock %}
+        
+        {% for type, messages in app.flashes %}
+            <div class="container mt-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ type == 'error' ? 'danger' : type }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+        
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Oragon</h5>
+                    <p class="mb-0">{{ 'footer.description'|trans({}, 'messages') }}</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">© {{ 'now'|date('Y') }} Oragon. {{ 'footer.rights'|trans({}, 'messages') }}</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% block javascripts %}
+    <script>
+        // Gestion du changement de langue
+        function changeLanguage(locale) {
+            fetch('{{ path('change_language', {'locale': 'LOCALE'}) }}'.replace('LOCALE', locale), {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect_url;
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors du changement de langue:', error);
+                // Fallback : rechargement de la page
+                window.location.reload();
+            });
+        }
+    </script>
+    {% endblock %}
+</body>
+</html>

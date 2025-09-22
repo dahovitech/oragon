@@ -222,3 +222,72 @@ common:
     days_ago: 'Il y a %count% jours'
     weeks_ago: 'Il y a %count% semaines'
     months_ago: 'Il y a %count% mois'
+
+# Services Management
+services:
+  title: Gestion des services
+  list_title: Liste des services
+  new_title: Nouveau service
+  edit_title: Modifier le service
+  show_title: Détails du service
+  edit_translations_title: Gérer les traductions
+  total: Services total
+  statistics: Statistiques
+  fields:
+    title: Titre
+    slug: Slug
+    image: Image
+    status: Statut
+    sort_order: Ordre
+    description: Description
+    content: Contenu
+    meta_title: Meta titre
+    meta_description: Meta description
+    language: Langue
+  actions:
+    new: Nouveau service
+    edit: Modifier
+    edit_service: Modifier le service
+    delete: Supprimer
+    show: Voir les détails
+    back_to_list: Retour à la liste
+    synchronize: Synchroniser
+  messages:
+    created: Service créé avec succès
+    updated: Service mis à jour avec succès
+    deleted: Service supprimé avec succès
+    synchronized: Services synchronisés avec succès
+    confirm_delete: Êtes-vous sûr de vouloir supprimer ce service ?
+    confirm_delete_message: Cette action supprimera définitivement le service "%name%" et toutes ses traductions
+    no_services: Aucun service configuré
+    create_first: Créer le premier service
+  help:
+    slug: Identifiant unique pour l'URL (ex: mon-service)
+    sort_order: Plus petit = affiché en premier
+    image: Image représentative du service
+    active: Décochez pour désactiver ce service
+  tools: Outils
+  synchronize_translations: Synchroniser les traductions
+  quick_actions: Actions rapides
+  copy_to: Copier vers %lang%
+  new_help: Après avoir créé le service, vous pourrez ajouter les traductions dans chaque langue
+
+# Service Translations
+service_translations:
+  title: Traductions des services
+  by_language: Par langue
+  missing: Traductions manquantes
+  incomplete: Traductions incomplètes
+  complete: Traductions complètes
+  edit_translation: Modifier la traduction
+  
+translations:
+  edit: Modifier les traductions
+  progress: Progression
+  global_completion: Complétion globale
+  status:
+    complete: Complète
+    partial: Partielle
+    started: Commencée
+    empty: Vide
+  completion: Complétion

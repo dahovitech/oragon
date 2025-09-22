@@ -1,0 +1,74 @@
+# Interface Frontend - Français
+navigation:
+  home: Accueil
+  services: Services
+  about: À propos
+  contact: Contact
+
+services:
+  title: Nos Services
+  subtitle: Découvrez notre gamme complète de services digitaux
+  meta_description: Découvrez les services digitaux professionnels d'Oragon
+  viewing_in: Contenu affiché en %language%
+  search_placeholder: Rechercher un service...
+  search_button: Rechercher
+  read_more: En savoir plus
+  available_in: Disponible en
+  translation_incomplete: Traduction incomplète
+  no_services_found: Aucun service trouvé
+  no_services_message: Aucun service n'est actuellement disponible dans cette langue
+  view_all: Voir tous les services
+  showing_count: Affichage de %count% services
+  cta_title: Besoin d'un service personnalisé ?
+  cta_description: Contactez-nous pour discuter de vos besoins spécifiques
+  cta_button: Nous contacter
+  service_details: Détails du service
+  last_updated: Dernière mise à jour
+  back_to_list: Retour à la liste
+  share: Partager
+  share_service: Partager ce service
+  share_description: Partagez ce service avec vos contacts
+  share_url: Lien du service
+  share_facebook: Partager sur Facebook
+  share_twitter: Partager sur Twitter
+  share_linkedin: Partager sur LinkedIn
+  other_services: Autres services
+  discover_more: Découvrez nos autres services
+  no_detailed_content: Contenu détaillé non disponible dans cette langue
+  content_fallback: Ce contenu est affiché dans une autre langue car la traduction en %language% n'est pas disponible
+  
+  # Recherche
+  search_results: Résultats de recherche
+  search_meta_description: Résultats de recherche pour "%query%"
+  search_found: %count% résultat(s) trouvé(s) pour "%query%"
+  search_no_results: Aucun résultat trouvé pour "%query%"
+  search_tip: Affinez votre recherche ou consultez tous nos services
+  results_in_language: Résultats en %language%
+  no_results_title: Aucun résultat trouvé
+  search_suggestions_title: Suggestions pour améliorer votre recherche
+  search_suggestion_1: Vérifiez l'orthographe des mots-clés
+  search_suggestion_2: Utilisez des termes plus généraux
+  search_suggestion_3: Essayez des synonymes
+  browse_all: Parcourir tous les services
+  try_searching: Essayez de rechercher
+  back_to_all: Retour à tous les services
+  
+  fields:
+    title: Titre
+    slug: Identifiant
+    language: Langue
+
+language:
+  change_interface: Changer la langue de l'interface
+  switch_error: Erreur lors du changement de langue
+  no_other_languages: Aucune autre langue disponible
+
+footer:
+  description: Solutions digitales innovantes et services professionnels
+  rights: Tous droits réservés
+
+common:
+  loading: Chargement...
+  error: Une erreur s'est produite
+  success: Opération réussie
+  no_image: Aucune image

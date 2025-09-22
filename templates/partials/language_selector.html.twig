@@ -1,0 +1,31 @@
+{% set languages = localization_service.getLanguageSelectorData() %}
+
+<div class="dropdown">
+    <button class="btn btn-link dropdown-toggle language-selector" type="button" id="languageDropdown" data-bs-toggle="dropdown">
+        {% for language in languages %}
+            {% if language.isCurrent %}
+                <i class="fas fa-globe me-1"></i>
+                {{ language.code|upper }}
+                <small>({{ language.nativeName }})</small>
+            {% endif %}
+        {% endfor %}
+    </button>
+    
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+        {% for language in languages %}
+            {% if not language.isCurrent %}
+                <li>
+                    <a class="dropdown-item" href="#" onclick="changeLanguage('{{ language.code }}'); return false;">
+                        <i class="fas fa-flag language-flag"></i>
+                        {{ language.name }}
+                        <small class="text-muted">({{ language.nativeName }})</small>
+                    </a>
+                </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if languages|length <= 1 %}
+            <li><span class="dropdown-item-text text-muted">{{ 'language.no_other_languages'|trans({}, 'messages') }}</span></li>
+        {% endif %}
+    </ul>
+</div>

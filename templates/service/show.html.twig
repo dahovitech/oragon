@@ -1,0 +1,304 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ service.metaTitle ?? service.title ?? service.slug }} - Oragon{% endblock %}
+
+{% block meta_description %}{{ service.metaDescription ?? service.description ?? 'Service Oragon' }}{% endblock %}
+
+{% block meta_keywords %}{{ translation.metaKeywords ? translation.metaKeywords|join(', ') : 'oragon, service, digital' }}{% endblock %}
+
+{% block breadcrumb %}
+<div class="bg-light py-3">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a href="{{ path('homepage', {'_locale': app.request.locale}) }}">
+                        <i class="fas fa-home"></i> {{ 'navigation.home'|trans({}, 'messages') }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{{ path('service_index', {'_locale': app.request.locale}) }}">
+                        {{ 'services.title'|trans({}, 'messages') }}
+                    </a>
+                </li>
+                <li class="breadcrumb-item active">{{ service.title ?? service.slug }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<article class="container my-5">
+    <!-- En-tête du service -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <!-- Alerte de fallback si nécessaire -->
+            {% if is_fallback is defined and is_fallback %}
+                <div class="alert alert-warning alert-translation">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {{ 'services.content_fallback'|trans({'%language%': current_language.name}, 'messages') }}
+                </div>
+            {% endif %}
+
+            <header class="text-center mb-5">
+                <h1 class="display-4 mb-3">{{ service.title ?? service.slug }}</h1>
+                
+                {% if service.description %}
+                    <p class="lead text-muted">{{ service.description }}</p>
+                {% endif %}
+
+                <!-- Indicateurs de langue -->
+                <div class="mt-3">
+                    <small class="text-muted">
+                        {{ 'services.available_in'|trans({}, 'messages') }}:
+                        {% for locale in service.availableLocales %}
+                            {% set localeTranslation = service.getTranslation(locale) %}
+                            {% if localeTranslation and localeTranslation.isComplete %}
+                                {% if locale == app.request.locale %}
+                                    <span class="badge bg-primary me-1">{{ locale|upper }}</span>
+                                {% else %}
+                                    <a href="{{ path('service_show', {'_locale': locale, 'slug': service.slug}) }}" 
+                                       class="badge bg-outline-primary text-decoration-none me-1">{{ locale|upper }}</a>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge bg-secondary me-1">{{ locale|upper }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </small>
+                </div>
+            </header>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Image du service -->
+        {% if service.image %}
+            <div class="col-lg-4 mb-4">
+                <div class="sticky-top" style="top: 2rem;">
+                    <img src="{{ asset('upload/media/' ~ service.image.fileName) }}" 
+                         class="img-fluid rounded shadow" 
+                         alt="{{ service.image.alt }}"
+                         style="width: 100%; max-height: 400px; object-fit: cover;">
+                </div>
+            </div>
+            <div class="col-lg-8">
+        {% else %}
+            <div class="col-12">
+        {% endif %}
+            
+            <!-- Contenu du service -->
+            <div class="service-content">
+                {% if service.content %}
+                    <div class="content-section mb-4">
+                        {{ service.content|nl2br }}
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {{ 'services.no_detailed_content'|trans({}, 'messages') }}
+                    </div>
+                {% endif %}
+
+                <!-- Informations supplémentaires -->
+                <div class="service-meta mt-5 p-4 bg-light rounded">
+                    <h5 class="mb-3">{{ 'services.service_details'|trans({}, 'messages') }}</h5>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>{{ 'services.fields.slug'|trans({}, 'admin') }}:</strong>
+                            <code>{{ service.slug }}</code>
+                        </div>
+                        <div class="col-md-6">
+                            <strong>{{ 'services.fields.language'|trans({}, 'admin') }}:</strong>
+                            {{ current_language.name }} ({{ current_language.nativeName }})
+                        </div>
+                    </div>
+
+                    {% if translation.updatedAt %}
+                        <div class="row mt-2">
+                            <div class="col-12">
+                                <small class="text-muted">
+                                    {{ 'services.last_updated'|trans({}, 'messages') }}: 
+                                    {{ translation.updatedAt|date('d/m/Y H:i') }}
+                                </small>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Actions -->
+                <div class="mt-4 text-center">
+                    <a href="{{ path('service_index', {'_locale': app.request.locale}) }}" 
+                       class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        {{ 'services.back_to_list'|trans({}, 'messages') }}
+                    </a>
+                    
+                    <button type="button" class="btn btn-primary" onclick="shareService()">
+                        <i class="fas fa-share-alt me-1"></i>
+                        {{ 'services.share'|trans({}, 'messages') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Services similaires ou recommandés -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <hr>
+            <h4 class="text-center mb-4">{{ 'services.other_services'|trans({}, 'messages') }}</h4>
+            
+            <div class="row">
+                <!-- Ici on pourrait afficher d'autres services -->
+                <div class="col-12 text-center text-muted">
+                    <p>{{ 'services.discover_more'|trans({}, 'messages') }}</p>
+                    <a href="{{ path('service_index', {'_locale': app.request.locale}) }}" class="btn btn-outline-primary">
+                        {{ 'services.view_all'|trans({}, 'messages') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</article>
+
+<!-- Modal de partage -->
+<div class="modal fade" id="shareModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ 'services.share_service'|trans({}, 'messages') }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>{{ 'services.share_description'|trans({}, 'messages') }}</p>
+                
+                <div class="mb-3">
+                    <label class="form-label">{{ 'services.share_url'|trans({}, 'messages') }}</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="shareUrl" readonly 
+                               value="{{ url('service_show', {'_locale': app.request.locale, 'slug': service.slug}) }}">
+                        <button type="button" class="btn btn-outline-secondary" onclick="copyToClipboard()">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ url('service_show', {'_locale': app.request.locale, 'slug': service.slug})|url_encode }}" 
+                       target="_blank" class="btn btn-primary">
+                        <i class="fab fa-facebook me-2"></i>{{ 'services.share_facebook'|trans({}, 'messages') }}
+                    </a>
+                    
+                    <a href="https://twitter.com/intent/tweet?url={{ url('service_show', {'_locale': app.request.locale, 'slug': service.slug})|url_encode }}&text={{ (service.title ~ ' - Oragon')|url_encode }}" 
+                       target="_blank" class="btn btn-info">
+                        <i class="fab fa-twitter me-2"></i>{{ 'services.share_twitter'|trans({}, 'messages') }}
+                    </a>
+                    
+                    <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ url('service_show', {'_locale': app.request.locale, 'slug': service.slug})|url_encode }}" 
+                       target="_blank" class="btn btn-primary">
+                        <i class="fab fa-linkedin me-2"></i>{{ 'services.share_linkedin'|trans({}, 'messages') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.service-content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+}
+
+.service-meta {
+    border-left: 4px solid #007bff;
+}
+
+.content-section p {
+    margin-bottom: 1.2rem;
+}
+
+.badge-outline-primary {
+    color: #007bff;
+    border: 1px solid #007bff;
+    background-color: transparent;
+}
+
+.badge-outline-primary:hover {
+    color: white;
+    background-color: #007bff;
+}
+
+@media (max-width: 768px) {
+    .display-4 {
+        font-size: 2rem;
+    }
+    
+    .service-content {
+        font-size: 1rem;
+    }
+}
+</style>
+
+<script>
+function shareService() {
+    if (navigator.share) {
+        navigator.share({
+            title: '{{ service.title|escape('js') }} - Oragon',
+            text: '{{ service.description|escape('js') }}',
+            url: window.location.href
+        }).catch(console.error);
+    } else {
+        // Fallback vers le modal
+        const modal = new bootstrap.Modal(document.getElementById('shareModal'));
+        modal.show();
+    }
+}
+
+function copyToClipboard() {
+    const urlInput = document.getElementById('shareUrl');
+    urlInput.select();
+    document.execCommand('copy');
+    
+    // Feedback visuel
+    const button = event.target.closest('button');
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check"></i>';
+    
+    setTimeout(() => {
+        button.innerHTML = originalText;
+    }, 2000);
+}
+
+// Amélioration de l'accessibilité
+document.addEventListener('DOMContentLoaded', function() {
+    // Ajouter des liens "retour en haut" pour les longs contenus
+    if (document.body.scrollHeight > window.innerHeight * 2) {
+        const backToTop = document.createElement('button');
+        backToTop.innerHTML = '<i class="fas fa-arrow-up"></i>';
+        backToTop.className = 'btn btn-primary position-fixed';
+        backToTop.style.bottom = '20px';
+        backToTop.style.right = '20px';
+        backToTop.style.zIndex = '1000';
+        backToTop.style.display = 'none';
+        backToTop.title = 'Retour en haut';
+        
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        
+        document.body.appendChild(backToTop);
+        
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTop.style.display = 'block';
+            } else {
+                backToTop.style.display = 'none';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
