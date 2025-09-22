@@ -1,6 +1,6 @@
 # Frontend Service Routes
 frontend_service_routes:
-    resource: '../src/Controller/FrontendServiceController.php'
+    resource: '../../src/Controller/FrontendServiceController.php'
     type: attribute
 
 # Homepage with locale
