@@ -2,6 +2,8 @@
 navigation:
   dashboard: Dashboard
   languages: Languages
+  media: Media Manager
+  services: Services
   translations: Translations
   settings: Settings
   logout: Logout

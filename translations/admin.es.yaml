@@ -2,6 +2,8 @@
 navigation:
   dashboard: Panel de Control
   languages: Idiomas
+  media: Gestor de Medios
+  services: Servicios
   translations: Traducciones
   settings: Configuración
   logout: Cerrar Sesión

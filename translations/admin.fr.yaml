@@ -3,6 +3,7 @@ navigation:
   dashboard: Tableau de bord
   languages: Langues
   media: Gestionnaire de médias
+  services: Services
   translations: Traductions
   settings: Paramètres
   logout: Déconnexion

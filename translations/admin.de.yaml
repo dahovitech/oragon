@@ -1,6 +1,14 @@
 navigation:
   dashboard: Dashboard
   languages: Sprachen
+  media: Medien-Manager
+  services: Dienste
+  translations: Übersetzungen
+  settings: Einstellungen
+  logout: Abmelden
+
+# Language Management moved to separate section
+language:
   welcome: 'Willkommen in der Oragon-Verwaltung'
   statistics: Statistiken
   recent_activity: 'Letzte Aktivitäten'
@@ -42,10 +50,8 @@ navigation:
     native_name: 'Sprachname in der nativen Sprache'
     default: 'Nur eine Sprache kann als Standard festgelegt werden'
     active: 'Inaktive Sprachen sind auf der Website nicht verfügbar'
-  media: 'Gestionnaire de médias'
-  translations: Traductions
-  settings: Paramètres
-  logout: Déconnexion
+  change_interface: 'Oberflächensprache ändern'
+  switch_error: 'Fehler beim Sprachwechsel'
 translations:
   title: Übersetzungsverwaltung
   list_title: Übersetzungsdateien
@@ -74,9 +80,6 @@ translations:
   sync_error: 'Erreur lors de la synchronisation'
   sync_error_unknown: 'Erreur lors de la synchronisation: Unknown error'
   sync_info: 'Les traductions sont synchronisées avec les langues configurées'
-language:
-  change_interface: 'Oberflächensprache ändern'
-  switch_error: 'Fehler beim Sprachwechsel'
 forms:
   language:
     code:
