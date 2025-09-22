@@ -21,6 +21,9 @@ class FrontController extends AbstractController
         private LanguageRepository $languageRepository
     ) {}
 
+    /**
+     * Homepage avec locale
+     */
     #[Route('/', name: 'frontend_homepage')]
     public function homepage(Request $request): Response
     {

@@ -17,7 +17,7 @@ use Symfony\Component\Routing\Annotation\Route;
  */
 class DefaultController extends AbstractController
 {
-    #[Route('/', name: 'default')]
+    #[Route('/', name: 'homepage')]
     public function homepage(Request $request): Response
     {
         $locale = $request->getLocale();
