@@ -98,4 +98,77 @@ class LocaleListener
                 }
                 $request->server->set('PATH_INFO', $newPathInfo);
                 $request->attributes->set('_locale', $urlLocale);
-                return;\n            }\n        }\n\n        // No valid locale in URL, detect and redirect\n        $detectedLocale = $this->detectUserLocale($request, $session);\n        \n        // Only redirect if we're on the homepage or a route without locale\n        if ($this->shouldRedirectToLocalizedUrl($pathInfo)) {\n            $localizedPath = '/' . $detectedLocale . $pathInfo;\n            $response = new RedirectResponse($localizedPath, 302);\n            $event->setResponse($response);\n            return;\n        }\n        \n        // Set the detected locale for the request\n        $request->setLocale($detectedLocale);\n        $session->set('_locale', $detectedLocale);\n    }\n\n    private function extractLocaleFromPath(string $pathInfo): ?string\n    {\n        if (preg_match('#^/([a-z]{2})(/.*)?$#', $pathInfo, $matches)) {\n            return $matches[1];\n        }\n        return null;\n    }\n\n    private function detectUserLocale($request, $session): string\n    {\n        // First, check session\n        $sessionLocale = $session->get('_locale');\n        if ($sessionLocale && $this->languageRepository->findActiveByCode($sessionLocale)) {\n            return $sessionLocale;\n        }\n\n        // Then, check browser preferences\n        $acceptLanguages = $request->getLanguages();\n        $activeLanguageCodes = $this->languageRepository->findActiveLanguageCodes();\n        \n        foreach ($acceptLanguages as $browserLocale) {\n            // Try exact match first\n            if (in_array($browserLocale, $activeLanguageCodes)) {\n                return $browserLocale;\n            }\n            \n            // Try language part only (e.g., 'en' from 'en-US')\n            $languagePart = substr($browserLocale, 0, 2);\n            if (in_array($languagePart, $activeLanguageCodes)) {\n                return $languagePart;\n            }\n        }\n\n        // Fallback to default language\n        $defaultLanguage = $this->languageRepository->findDefaultLanguage();\n        return $defaultLanguage ? $defaultLanguage->getCode() : 'fr';\n    }\n\n    private function shouldRedirectToLocalizedUrl(string $pathInfo): bool\n    {\n        // Redirect for homepage and main navigation paths\n        $pathsToRedirect = [\n            '/',\n            '/services',\n            '/about',\n            '/contact',\n            '/news',\n            '/portfolio'\n        ];\n        \n        return in_array($pathInfo, $pathsToRedirect) || \n               preg_match('#^/[^/]+$#', $pathInfo); // Single level paths\n    }\n}
+                return;
+            }
+        }
+
+        // No valid locale in URL, detect and redirect
+        $detectedLocale = $this->detectUserLocale($request, $session);
+        
+        // Only redirect if we're on the homepage or a route without locale
+        if ($this->shouldRedirectToLocalizedUrl($pathInfo)) {
+            $localizedPath = '/' . $detectedLocale . $pathInfo;
+            $response = new RedirectResponse($localizedPath, 302);
+            $event->setResponse($response);
+            return;
+        }
+        
+        // Set the detected locale for the request
+        $request->setLocale($detectedLocale);
+        $session->set('_locale', $detectedLocale);
+    }
+
+    private function extractLocaleFromPath(string $pathInfo): ?string
+    {
+        if (preg_match('#^/([a-z]{2})(/.*)?$#', $pathInfo, $matches)) {
+            return $matches[1];
+        }
+        return null;
+    }
+
+    private function detectUserLocale($request, $session): string
+    {
+        // First, check session
+        $sessionLocale = $session->get('_locale');
+        if ($sessionLocale && $this->languageRepository->findActiveByCode($sessionLocale)) {
+            return $sessionLocale;
+        }
+
+        // Then, check browser preferences
+        $acceptLanguages = $request->getLanguages();
+        $activeLanguageCodes = $this->languageRepository->findActiveLanguageCodes();
+        
+        foreach ($acceptLanguages as $browserLocale) {
+            // Try exact match first
+            if (in_array($browserLocale, $activeLanguageCodes)) {
+                return $browserLocale;
+            }
+            
+            // Try language part only (e.g., 'en' from 'en-US')
+            $languagePart = substr($browserLocale, 0, 2);
+            if (in_array($languagePart, $activeLanguageCodes)) {
+                return $languagePart;
+            }
+        }
+
+        // Fallback to default language
+        $defaultLanguage = $this->languageRepository->findDefaultLanguage();
+        return $defaultLanguage ? $defaultLanguage->getCode() : 'fr';
+    }
+
+    private function shouldRedirectToLocalizedUrl(string $pathInfo): bool
+    {
+        // Redirect for homepage and main navigation paths
+        $pathsToRedirect = [
+            '/',
+            '/services',
+            '/about',
+            '/contact',
+            '/news',
+            '/portfolio'
+        ];
+        
+        return in_array($pathInfo, $pathsToRedirect) || 
+               preg_match('#^/[^/]+$#', $pathInfo); // Single level paths
+    }
+}
