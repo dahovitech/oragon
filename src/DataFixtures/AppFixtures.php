@@ -5,17 +5,11 @@ namespace App\DataFixtures;
 use App\Entity\Language;
 use App\Entity\Service;
 use App\Entity\ServiceTranslation;
-use App\Entity\User;
 use Doctrine\Bundle\FixturesBundle\Fixture;
 use Doctrine\Persistence\ObjectManager;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class AppFixtures extends Fixture
 {
-    public function __construct(
-        private UserPasswordHasherInterface $passwordHasher
-    ) {}
-
     public function load(ObjectManager $manager): void
     {
         // Create languages
@@ -55,13 +49,7 @@ class AppFixtures extends Fixture
             ->setSortOrder(4);
         $manager->persist($german);
 
-        // Create Admin User
-        $admin = new User();
-        $admin->setEmail('admin@oragon.com');
-        $admin->setRoles(['ROLE_ADMIN']);
-        $hashedPassword = $this->passwordHasher->hashPassword($admin, 'admin123');
-        $admin->setPassword($hashedPassword);
-        $manager->persist($admin);
+        // Note: User creation is handled by UserFixtures.php
 
         // Flush languages first so we can reference them
         $manager->flush();
