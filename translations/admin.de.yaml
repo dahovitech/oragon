@@ -1,10 +1,20 @@
+# Administrationsoberfläche - Deutsch
 navigation:
   dashboard: Dashboard
+  services: Dienste
+  media: Medien-Manager
   languages: Sprachen
+  translations: Übersetzungen
+  settings: Einstellungen
+  logout: Abmelden
+
+dashboard:
   welcome: 'Willkommen in der Oragon-Verwaltung'
   statistics: Statistiken
   recent_activity: 'Letzte Aktivitäten'
   quick_actions: Schnellaktionen
+
+languages:
   title: Sprachenverwaltung
   list_title: Sprachenliste
   new_title: 'Neue Sprache'

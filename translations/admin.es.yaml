@@ -1,6 +1,8 @@
 # Interfaz de Administración - Español
 navigation:
   dashboard: Panel de Control
+  services: Servicios
+  media: Gestor de Medios
   languages: Idiomas
   translations: Traducciones
   settings: Configuración

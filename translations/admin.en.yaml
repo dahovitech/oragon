@@ -1,6 +1,8 @@
 # Administration Interface - English
 navigation:
   dashboard: Dashboard
+  services: Services
+  media: Media Manager
   languages: Languages
   translations: Translations
   settings: Settings

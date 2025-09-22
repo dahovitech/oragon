@@ -1,8 +1,9 @@
 # Interface Administration - Français
 navigation:
   dashboard: Tableau de bord
-  languages: Langues
+  services: Services
   media: Gestionnaire de médias
+  languages: Langues
   translations: Traductions
   settings: Paramètres
   logout: Déconnexion

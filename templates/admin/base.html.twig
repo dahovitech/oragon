@@ -90,6 +90,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link{% if app.request.get('_route') starts with 'admin_service_' %} active{% endif %}" 
+                           href="{{ path('admin_service_index') }}">
+                            <i class="bi bi-gear-fill me-2"></i>{{ 'navigation.services'|trans({}, 'admin') }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link{% if app.request.get('_route') starts with 'admin_media_' %} active{% endif %}" 
                            href="{{ path('admin_media_index') }}">
                             <i class="bi bi-images me-2"></i>{{ 'navigation.media'|trans({}, 'admin') }}
