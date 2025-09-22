@@ -1,0 +1,28 @@
+# Services translations (English)
+services:
+  page_title: "Our Services"
+  page_subtitle: "Discover our tailor-made digital solutions"
+  meta_description: "Discover our digital services: web development, mobile applications, digital marketing and e-commerce solutions."
+  read_more: "Learn more"
+  no_services: "No services available"
+  no_services_description: "We are currently working on new services. Come back soon!"
+  language_notice: "You are viewing this page in %language%. Some content may not be translated."
+  view_in_default: "View in French"
+
+service:
+  back_to_services: "Back to services"
+  interested: "Interested in this service?"
+  contact_description: "Contact us to discuss your project and get a personalized quote."
+  contact_us: "Contact us"
+  other_services: "Other services"
+  available_languages: "This service is available in the following languages:"
+  loading_other_services: "Loading other services..."
+  no_other_services: "No other services available"
+  error_loading_services: "Error loading services"
+
+navigation:
+  home: "Home"
+  services: "Services"
+  about: "About"
+  contact: "Contact"
+  language_selector: "Change language"
