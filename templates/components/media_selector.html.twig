@@ -26,7 +26,13 @@
         <div class="media-preview {% if not selectedMedia %}d-none{% endif %}" id="mediaPreview_{{ inputName }}">
             <div class="media-preview-container">
                 {% if selectedMedia %}
-                    <img src="/{{ selectedMedia.webPath }}" alt="{{ selectedMedia.alt }}" class="media-preview-image">
+                    <img src="{{ selectedMedia.webPath|first == '/' ? selectedMedia.webPath : '/' ~ selectedMedia.webPath }}" 
+                         alt="{{ selectedMedia.alt }}" 
+                         class="media-preview-image"
+                         onload="this.parentElement.parentElement.classList.remove('d-none'); this.parentElement.parentElement.nextElementSibling.classList.add('d-none');"
+                         onerror="console.error('Erreur de chargement image:', this.src);">
+                {% else %}
+                    <img src="" alt="" class="media-preview-image" style="display: none;">
                 {% endif %}
                 <div class="media-preview-overlay">
                     <button type="button" class="btn btn-sm btn-outline-light me-2" onclick="openMediaLibrary('{{ inputName }}')">
@@ -40,6 +46,10 @@
             {% if selectedMedia %}
                 <div class="media-preview-info">
                     <small class="text-muted">{{ selectedMedia.alt ?: selectedMedia.fileName }}</small>
+                </div>
+            {% else %}
+                <div class="media-preview-info">
+                    <small class="text-muted">Image sélectionnée</small>
                 </div>
             {% endif %}
         </div>
@@ -120,10 +130,12 @@
 </div>
 
 <style>
+/* Base styles pour le sélecteur de média */
 .media-selector {
-    border: 1px solid #dee2e6;
+    border: 1px solid var(--bs-border-color);
     border-radius: 0.375rem;
     min-height: 120px;
+    background-color: var(--bs-body-bg);
 }
 
 .media-preview-container {
@@ -138,6 +150,7 @@
     object-fit: cover;
     border-radius: 0.375rem;
     display: block;
+    border: 1px solid var(--bs-border-color);
 }
 
 .media-preview-overlay {
@@ -174,6 +187,7 @@
     text-align: center;
 }
 
+/* Styles pour les items de la bibliothèque de médias */
 .media-library-item {
     position: relative;
     border: 2px solid transparent;
@@ -181,17 +195,22 @@
     overflow: hidden;
     cursor: pointer;
     transition: all 0.3s ease;
+    background-color: var(--bs-body-bg);
 }
 
 .media-library-item:hover {
-    border-color: #0d6efd;
+    border-color: var(--bs-primary);
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
+[data-bs-theme="dark"] .media-library-item:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
 .media-library-item.selected {
-    border-color: #0d6efd;
-    background-color: #e7f1ff;
+    border-color: var(--bs-primary);
+    background-color: var(--bs-primary-bg-subtle);
 }
 
 .media-library-item img {
@@ -206,7 +225,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(13, 110, 253, 0.8);
+    background: rgba(var(--bs-primary-rgb), 0.8);
     color: white;
     display: flex;
     align-items: center;
@@ -233,23 +252,28 @@
 
 /* Styles pour la zone d'upload */
 .upload-dropzone {
-    border: 2px dashed #dee2e6;
+    border: 2px dashed var(--bs-border-color);
     border-radius: 0.375rem;
     padding: 2rem;
     text-align: center;
     transition: all 0.3s ease;
     cursor: pointer;
+    background-color: var(--bs-body-bg);
 }
 
 .upload-dropzone:hover,
 .upload-dropzone.dragover {
-    border-color: #0d6efd;
-    background-color: #f8f9fa;
+    border-color: var(--bs-primary);
+    background-color: var(--bs-primary-bg-subtle);
 }
 
 .upload-dropzone.dragover {
-    border-color: #0d6efd;
-    background-color: #e7f1ff;
+    border-color: var(--bs-primary);
+}
+
+[data-bs-theme="dark"] .upload-dropzone:hover,
+[data-bs-theme="dark"] .upload-dropzone.dragover {
+    background-color: var(--bs-dark-bg-subtle);
 }
 
 .upload-progress-item {
@@ -261,11 +285,63 @@
 }
 
 .upload-success {
-    color: #198754;
+    color: var(--bs-success) !important;
 }
 
 .upload-error {
-    color: #dc3545;
+    color: var(--bs-danger) !important;
+}
+
+/* Styles spécifiques pour le mode dark */
+[data-bs-theme="dark"] .media-selector {
+    background-color: var(--bs-dark);
+    border-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .media-preview-image {
+    border-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .upload-dropzone {
+    background-color: var(--bs-dark);
+    border-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .media-library-item {
+    background-color: var(--bs-dark);
+}
+
+/* Amélioration de la modal pour le mode dark */
+[data-bs-theme="dark"] .modal-content {
+    background-color: var(--bs-dark);
+    border-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .modal-header {
+    border-bottom-color: var(--bs-border-color);
+}
+
+[data-bs-theme="dark"] .modal-footer {
+    border-top-color: var(--bs-border-color);
+}
+
+/* Amélioration des contrôles de formulaire dans la modal */
+[data-bs-theme="dark"] .form-control {
+    background-color: var(--bs-dark);
+    border-color: var(--bs-border-color);
+    color: var(--bs-body-color);
+}
+
+[data-bs-theme="dark"] .form-control:focus {
+    background-color: var(--bs-dark);
+    border-color: var(--bs-primary);
+    color: var(--bs-body-color);
+}
+
+[data-bs-theme="dark"] .form-select {
+    background-color: var(--bs-dark);
+    border-color: var(--bs-border-color);
+    color: var(--bs-body-color);
 }
 </style>
 
@@ -311,9 +387,40 @@ function openMediaLibrary(inputName) {
 }
 
 function removeSelectedMedia(inputName) {
-    document.getElementById('mediaInput_' + inputName).value = '';
-    document.getElementById('mediaPreview_' + inputName).classList.add('d-none');
-    document.getElementById('mediaEmpty_' + inputName).classList.remove('d-none');
+    // Vérifier que l'inputName est fourni
+    if (!inputName) {
+        console.error('inputName is required for removeSelectedMedia');
+        return;
+    }
+    
+    // Vider le champ caché
+    const hiddenInput = document.getElementById('mediaInput_' + inputName);
+    if (hiddenInput) {
+        hiddenInput.value = '';
+    }
+    
+    // Mettre à jour l'affichage
+    const previewContainer = document.getElementById('mediaPreview_' + inputName);
+    const emptyContainer = document.getElementById('mediaEmpty_' + inputName);
+    
+    if (previewContainer && emptyContainer) {
+        previewContainer.classList.add('d-none');
+        emptyContainer.classList.remove('d-none');
+        
+        // Optionnel: vider l'image pour éviter les problèmes de cache
+        const previewImage = previewContainer.querySelector('.media-preview-image');
+        if (previewImage) {
+            previewImage.src = '';
+            previewImage.alt = '';
+        }
+        
+        const previewInfo = previewContainer.querySelector('.media-preview-info small');
+        if (previewInfo) {
+            previewInfo.textContent = '';
+        }
+    } else {
+        console.error('Preview containers not found for input:', inputName);
+    }
 }
 
 function selectMedia(mediaId, mediaUrl, mediaAlt) {
@@ -339,16 +446,34 @@ function selectMedia(mediaId, mediaUrl, mediaAlt) {
         const previewInfo = previewContainer.querySelector('.media-preview-info small');
         
         if (previewImage) {
-            previewImage.src = mediaUrl;
+            // S'assurer que l'URL est correctement formatée
+            const imageUrl = mediaUrl.startsWith('/') ? mediaUrl : '/' + mediaUrl;
+            previewImage.src = imageUrl;
             previewImage.alt = mediaAlt || '';
+            
+            // Forcer le rechargement de l'image en cas de problème de cache
+            previewImage.onload = function() {
+                previewContainer.classList.remove('d-none');
+                emptyContainer.classList.add('d-none');
+            };
+            
+            previewImage.onerror = function() {
+                console.error('Erreur de chargement de l\'image:', imageUrl);
+                // En cas d'erreur, afficher quand même le conteneur avec un placeholder
+                previewContainer.classList.remove('d-none');
+                emptyContainer.classList.add('d-none');
+            };
         }
         
         if (previewInfo) {
-            previewInfo.textContent = mediaAlt || '';
+            previewInfo.textContent = mediaAlt || 'Image sélectionnée';
         }
         
-        previewContainer.classList.remove('d-none');
-        emptyContainer.classList.add('d-none');
+        // S'assurer que l'affichage est mis à jour immédiatement
+        if (previewImage && previewImage.complete && previewImage.naturalWidth > 0) {
+            previewContainer.classList.remove('d-none');
+            emptyContainer.classList.add('d-none');
+        }
         
         // Fermer la modal
         closeMediaLibrary();
