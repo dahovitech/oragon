@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 use App\Entity\Service;
 use App\Entity\ServiceTranslation;
 use App\Repository\LanguageRepository;
+use App\Repository\MediaRepository;
 use App\Repository\ServiceRepository;
 use App\Service\ServiceTranslationService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -22,6 +23,7 @@ class ServiceController extends AbstractController
     public function __construct(
         private ServiceRepository $serviceRepository,
         private LanguageRepository $languageRepository,
+        private MediaRepository $mediaRepository,
         private ServiceTranslationService $translationService,
         private EntityManagerInterface $entityManager
     ) {}
@@ -56,6 +58,14 @@ class ServiceController extends AbstractController
             
             $service->setIsActive($data['isActive'] ?? true);
             $service->setSortOrder((int)($data['sortOrder'] ?? 0));
+
+            // Gestion de l'image
+            if (!empty($data['imageId'])) {
+                $media = $this->mediaRepository->find($data['imageId']);
+                if ($media) {
+                    $service->setImage($media);
+                }
+            }
 
             $translationsData = [];
             foreach ($languages as $language) {
@@ -180,6 +190,18 @@ class ServiceController extends AbstractController
             
             $service->setIsActive($data['isActive'] ?? true);
             $service->setSortOrder((int)($data['sortOrder'] ?? 0));
+
+            // Gestion de l'image
+            if (isset($data['imageId'])) {
+                if (empty($data['imageId'])) {
+                    $service->setImage(null);
+                } else {
+                    $media = $this->mediaRepository->find($data['imageId']);
+                    if ($media) {
+                        $service->setImage($media);
+                    }
+                }
+            }
 
             $translationsData = [];
             foreach ($languages as $language) {
