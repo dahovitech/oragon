@@ -61,7 +61,7 @@
                 <h5 class="modal-title">
                     <i class="bi bi-images me-2"></i>Bibliothèque de médias
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <!-- Barre de recherche et filtres -->
@@ -95,7 +95,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                <button type="button" class="btn btn-secondary">Fermer</button>
             </div>
         </div>
     </div>
@@ -222,7 +222,7 @@ let currentInputName = '';
 
 function openMediaLibrary(inputName) {
     currentInputName = inputName;
-    const modal = new bootstrap.Modal(document.getElementById('mediaLibraryModal'));
+    const modalElement = document.getElementById('mediaLibraryModal');
     
     // Réinitialiser les filtres
     document.getElementById('mediaLibrarySearch').value = '';
@@ -234,7 +234,25 @@ function openMediaLibrary(inputName) {
     // Charger les médias
     loadMediaLibrary();
     
-    modal.show();
+    // Vérifier si Bootstrap est disponible
+    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    } else if (typeof $ !== 'undefined' && $.fn.modal) {
+        // Fallback vers jQuery si Bootstrap n'est pas disponible
+        $(modalElement).modal('show');
+    } else {
+        // Dernière solution : afficher manuellement
+        modalElement.style.display = 'block';
+        modalElement.classList.add('show');
+        document.body.classList.add('modal-open');
+        
+        // Ajouter backdrop
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop fade show';
+        backdrop.id = 'mediaModalBackdrop';
+        document.body.appendChild(backdrop);
+    }
 }
 
 function removeSelectedMedia(inputName) {
@@ -259,8 +277,33 @@ function selectMedia(mediaId, mediaUrl, mediaAlt) {
     emptyContainer.classList.add('d-none');
     
     // Fermer la modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('mediaLibraryModal'));
-    modal.hide();
+    closeMediaLibrary();
+}
+
+function closeMediaLibrary() {
+    const modalElement = document.getElementById('mediaLibraryModal');
+    
+    // Vérifier si Bootstrap est disponible
+    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        if (modal) {
+            modal.hide();
+        }
+    } else if (typeof $ !== 'undefined' && $.fn.modal) {
+        // Fallback vers jQuery si Bootstrap n'est pas disponible
+        $(modalElement).modal('hide');
+    } else {
+        // Dernière solution : cacher manuellement
+        modalElement.style.display = 'none';
+        modalElement.classList.remove('show');
+        document.body.classList.remove('modal-open');
+        
+        // Supprimer backdrop
+        const backdrop = document.getElementById('mediaModalBackdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+    }
 }
 
 async function loadMediaLibrary() {
@@ -382,6 +425,37 @@ document.addEventListener('DOMContentLoaded', function() {
             mediaLibraryTypeFilter = this.value;
             mediaLibraryCurrentPage = 1;
             loadMediaLibrary();
+        });
+    }
+    
+    // Gestionnaires pour fermer la modal
+    const modalElement = document.getElementById('mediaLibraryModal');
+    if (modalElement) {
+        // Bouton de fermeture
+        const closeButton = modalElement.querySelector('.btn-close');
+        if (closeButton) {
+            closeButton.addEventListener('click', closeMediaLibrary);
+        }
+        
+        // Bouton Fermer dans le footer
+        const footerCloseButton = modalElement.querySelector('.modal-footer .btn-secondary');
+        if (footerCloseButton) {
+            footerCloseButton.addEventListener('click', closeMediaLibrary);
+        }
+        
+        // Clic sur le backdrop
+        modalElement.addEventListener('click', function(e) {
+            if (e.target === modalElement) {
+                closeMediaLibrary();
+            }
+        });
+        
+        // Touche Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && !modalElement.classList.contains('d-none') && 
+                (modalElement.style.display === 'block' || modalElement.classList.contains('show'))) {
+                closeMediaLibrary();
+            }
         });
     }
 });
