@@ -1,0 +1,388 @@
+{#
+    Composant de sélection de média
+    
+    Paramètres:
+    - selectedMedia: l'objet Media actuellement sélectionné (optionnel)
+    - inputName: nom du champ input (par défaut: 'imageId')
+    - label: libellé du champ (par défaut: 'Image')
+    - required: champ requis ou non (par défaut: false)
+#}
+
+{% set inputName = inputName|default('imageId') %}
+{% set label = label|default('Image') %}
+{% set required = required|default(false) %}
+
+<div class="mb-3">
+    <label class="form-label">
+        {{ label }}
+        {% if required %}<span class="text-danger">*</span>{% endif %}
+    </label>
+    
+    <div class="media-selector" id="mediaSelector_{{ inputName }}">
+        <!-- Champ caché pour stocker l'ID du média -->
+        <input type="hidden" name="{{ inputName }}" value="{{ selectedMedia ? selectedMedia.id : '' }}" id="mediaInput_{{ inputName }}">
+        
+        <!-- Aperçu de l'image sélectionnée -->
+        <div class="media-preview {% if not selectedMedia %}d-none{% endif %}" id="mediaPreview_{{ inputName }}">
+            <div class="media-preview-container">
+                {% if selectedMedia %}
+                    <img src="/{{ selectedMedia.webPath }}" alt="{{ selectedMedia.alt }}" class="media-preview-image">
+                {% endif %}
+                <div class="media-preview-overlay">
+                    <button type="button" class="btn btn-sm btn-outline-light me-2" onclick="openMediaLibrary('{{ inputName }}')">
+                        <i class="bi bi-pencil"></i> Modifier
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeSelectedMedia('{{ inputName }}')">
+                        <i class="bi bi-trash"></i> Supprimer
+                    </button>
+                </div>
+            </div>
+            {% if selectedMedia %}
+                <div class="media-preview-info">
+                    <small class="text-muted">{{ selectedMedia.alt ?: selectedMedia.fileName }}</small>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Bouton de sélection (affiché quand aucune image n'est sélectionnée) -->
+        <div class="media-selector-empty {% if selectedMedia %}d-none{% endif %}" id="mediaEmpty_{{ inputName }}">
+            <button type="button" class="btn btn-outline-primary w-100" onclick="openMediaLibrary('{{ inputName }}')">
+                <i class="bi bi-image me-2"></i>Sélectionner une image
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de sélection de média -->
+<div class="modal fade" id="mediaLibraryModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-images me-2"></i>Bibliothèque de médias
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Barre de recherche et filtres -->
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <input type="text" class="form-control" id="mediaLibrarySearch" placeholder="Rechercher un média...">
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="mediaLibraryTypeFilter">
+                            <option value="">Tous les types</option>
+                            <option value="image">Images</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Grille des médias -->
+                <div id="mediaLibraryGrid" class="row g-3">
+                    <!-- Les médias seront chargés ici -->
+                </div>
+                
+                <!-- Pagination -->
+                <div id="mediaLibraryPagination" class="d-flex justify-content-center mt-4">
+                    <!-- Pagination sera générée ici -->
+                </div>
+                
+                <!-- État vide -->
+                <div id="mediaLibraryEmpty" class="text-center py-5" style="display: none;">
+                    <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+                    <h5 class="text-muted mt-3">Aucun média trouvé</h5>
+                    <p class="text-muted">Essayez de modifier vos critères de recherche.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.media-selector {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    min-height: 120px;
+}
+
+.media-preview-container {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+}
+
+.media-preview-image {
+    max-width: 200px;
+    max-height: 150px;
+    object-fit: cover;
+    border-radius: 0.375rem;
+    display: block;
+}
+
+.media-preview-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 0.375rem;
+}
+
+.media-preview-container:hover .media-preview-overlay {
+    opacity: 1;
+}
+
+.media-preview {
+    padding: 1rem;
+    text-align: center;
+}
+
+.media-preview-info {
+    margin-top: 0.5rem;
+}
+
+.media-selector-empty {
+    padding: 2rem 1rem;
+    text-align: center;
+}
+
+.media-library-item {
+    position: relative;
+    border: 2px solid transparent;
+    border-radius: 0.375rem;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.media-library-item:hover {
+    border-color: #0d6efd;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.media-library-item.selected {
+    border-color: #0d6efd;
+    background-color: #e7f1ff;
+}
+
+.media-library-item img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+}
+
+.media-library-item .media-library-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(13, 110, 253, 0.8);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.media-library-item:hover .media-library-overlay,
+.media-library-item.selected .media-library-overlay {
+    opacity: 1;
+}
+
+.media-library-item .media-library-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+}
+</style>
+
+<script>
+let mediaLibraryCurrentPage = 1;
+let mediaLibrarySearchQuery = '';
+let mediaLibraryTypeFilter = 'image'; // Par défaut, ne montrer que les images
+let currentInputName = '';
+
+function openMediaLibrary(inputName) {
+    currentInputName = inputName;
+    const modal = new bootstrap.Modal(document.getElementById('mediaLibraryModal'));
+    
+    // Réinitialiser les filtres
+    document.getElementById('mediaLibrarySearch').value = '';
+    document.getElementById('mediaLibraryTypeFilter').value = 'image';
+    mediaLibraryCurrentPage = 1;
+    mediaLibrarySearchQuery = '';
+    mediaLibraryTypeFilter = 'image';
+    
+    // Charger les médias
+    loadMediaLibrary();
+    
+    modal.show();
+}
+
+function removeSelectedMedia(inputName) {
+    document.getElementById('mediaInput_' + inputName).value = '';
+    document.getElementById('mediaPreview_' + inputName).classList.add('d-none');
+    document.getElementById('mediaEmpty_' + inputName).classList.remove('d-none');
+}
+
+function selectMedia(mediaId, mediaUrl, mediaAlt) {
+    // Mettre à jour le champ caché
+    document.getElementById('mediaInput_' + currentInputName).value = mediaId;
+    
+    // Mettre à jour l'aperçu
+    const previewContainer = document.getElementById('mediaPreview_' + currentInputName);
+    const emptyContainer = document.getElementById('mediaEmpty_' + currentInputName);
+    
+    previewContainer.querySelector('.media-preview-image').src = mediaUrl;
+    previewContainer.querySelector('.media-preview-image').alt = mediaAlt || '';
+    previewContainer.querySelector('.media-preview-info small').textContent = mediaAlt || '';
+    
+    previewContainer.classList.remove('d-none');
+    emptyContainer.classList.add('d-none');
+    
+    // Fermer la modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('mediaLibraryModal'));
+    modal.hide();
+}
+
+async function loadMediaLibrary() {
+    try {
+        const response = await fetch('{{ path("admin_media_list") }}?' + new URLSearchParams({
+            page: mediaLibraryCurrentPage,
+            search: mediaLibrarySearchQuery,
+            type: mediaLibraryTypeFilter
+        }));
+        
+        const data = await response.json();
+        renderMediaLibrary(data.medias);
+        renderMediaLibraryPagination(data.pagination);
+    } catch (error) {
+        console.error('Erreur lors du chargement des médias:', error);
+    }
+}
+
+function renderMediaLibrary(medias) {
+    const grid = document.getElementById('mediaLibraryGrid');
+    const empty = document.getElementById('mediaLibraryEmpty');
+    
+    grid.innerHTML = '';
+    
+    if (medias.length === 0) {
+        empty.style.display = 'block';
+        return;
+    }
+    
+    empty.style.display = 'none';
+    
+    medias.forEach(media => {
+        if (media.isImage) { // Ne montrer que les images
+            const item = createMediaLibraryItem(media);
+            grid.appendChild(item);
+        }
+    });
+}
+
+function createMediaLibraryItem(media) {
+    const col = document.createElement('div');
+    col.className = 'col-lg-2 col-md-3 col-sm-4 col-6';
+    
+    col.innerHTML = `
+        <div class="media-library-item" onclick="selectMedia(${media.id}, '${media.url}', '${media.alt || ''}')">
+            <img src="${media.url}" alt="${media.alt || ''}">
+            <div class="media-library-overlay">
+                <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+            </div>
+            <div class="media-library-info">
+                <div class="text-truncate">${media.alt || media.fileName}</div>
+            </div>
+        </div>
+    `;
+    
+    return col;
+}
+
+function renderMediaLibraryPagination(pagination) {
+    const container = document.getElementById('mediaLibraryPagination');
+    container.innerHTML = '';
+    
+    if (pagination.total <= 1) return;
+    
+    const nav = document.createElement('nav');
+    nav.innerHTML = '<ul class="pagination"></ul>';
+    const ul = nav.querySelector('ul');
+    
+    // Page précédente
+    if (pagination.current > 1) {
+        ul.innerHTML += `
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="goToMediaLibraryPage(${pagination.current - 1}); return false;">Précédent</a>
+            </li>
+        `;
+    }
+    
+    // Pages numérotées
+    for (let i = Math.max(1, pagination.current - 2); i <= Math.min(pagination.total, pagination.current + 2); i++) {
+        ul.innerHTML += `
+            <li class="page-item ${i === pagination.current ? 'active' : ''}">
+                <a class="page-link" href="#" onclick="goToMediaLibraryPage(${i}); return false;">${i}</a>
+            </li>
+        `;
+    }
+    
+    // Page suivante
+    if (pagination.current < pagination.total) {
+        ul.innerHTML += `
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="goToMediaLibraryPage(${pagination.current + 1}); return false;">Suivant</a>
+            </li>
+        `;
+    }
+    
+    container.appendChild(nav);
+}
+
+function goToMediaLibraryPage(page) {
+    mediaLibraryCurrentPage = page;
+    loadMediaLibrary();
+}
+
+// Event listeners pour la recherche et les filtres
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('mediaLibrarySearch');
+    const typeFilter = document.getElementById('mediaLibraryTypeFilter');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            mediaLibrarySearchQuery = this.value;
+            mediaLibraryCurrentPage = 1;
+            loadMediaLibrary();
+        });
+    }
+    
+    if (typeFilter) {
+        typeFilter.addEventListener('change', function() {
+            mediaLibraryTypeFilter = this.value;
+            mediaLibraryCurrentPage = 1;
+            loadMediaLibrary();
+        });
+    }
+});
+</script>

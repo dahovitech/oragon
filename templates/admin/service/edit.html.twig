@@ -51,6 +51,13 @@
                                     </div>
                                 </div>
 
+                                <!-- Sélecteur d'image -->
+                                {% include 'components/media_selector.html.twig' with {
+                                    'selectedMedia': service.image,
+                                    'inputName': 'imageId',
+                                    'label': 'Image du service'
+                                } %}
+
                                 <hr>
 
                                 <div class="mb-3">
