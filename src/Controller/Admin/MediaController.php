@@ -30,12 +30,73 @@ class MediaController extends AbstractController
     #[Route('/upload', name: 'upload', methods: ['POST'])]
     public function upload(Request $request, EntityManagerInterface $entityManager): JsonResponse
     {
+        // Vérifier si c'est un upload multiple
+        $files = $request->files->get('files');
+        if (is_array($files)) {
+            return $this->multiUpload($request, $entityManager);
+        }
+        
         $uploadedFile = $request->files->get('file');
         
         if (!$uploadedFile instanceof UploadedFile) {
             return new JsonResponse(['success' => false, 'message' => 'Aucun fichier uploadé'], 400);
         }
 
+        return $this->processFileUpload($uploadedFile, $entityManager);
+    }
+
+    #[Route('/multi-upload', name: 'multi_upload', methods: ['POST'])]
+    public function multiUpload(Request $request, EntityManagerInterface $entityManager): JsonResponse
+    {
+        $uploadedFiles = $request->files->get('files');
+        
+        if (!is_array($uploadedFiles) || empty($uploadedFiles)) {
+            return new JsonResponse(['success' => false, 'message' => 'Aucun fichier uploadé'], 400);
+        }
+
+        $results = [];
+        $successCount = 0;
+        $errors = [];
+
+        foreach ($uploadedFiles as $index => $uploadedFile) {
+            if (!$uploadedFile instanceof UploadedFile) {
+                $errors[] = "Fichier #" . ($index + 1) . ": Fichier invalide";
+                continue;
+            }
+
+            try {
+                $result = $this->processFileUpload($uploadedFile, $entityManager, false);
+                $data = json_decode($result->getContent(), true);
+                
+                if ($data['success']) {
+                    $results[] = $data['media'];
+                    $successCount++;
+                } else {
+                    $errors[] = "Fichier '{$uploadedFile->getClientOriginalName()}': " . $data['message'];
+                }
+            } catch (\Exception $e) {
+                $errors[] = "Fichier '{$uploadedFile->getClientOriginalName()}': " . $e->getMessage();
+            }
+        }
+
+        // Persister tous les changements en une fois
+        $entityManager->flush();
+
+        return new JsonResponse([
+            'success' => $successCount > 0,
+            'message' => $successCount > 0 ? 
+                "$successCount fichier(s) uploadé(s) avec succès" . 
+                (count($errors) > 0 ? " (" . count($errors) . " erreur(s))" : "") : 
+                'Aucun fichier n\'a pu être uploadé',
+            'results' => $results,
+            'errors' => $errors,
+            'successCount' => $successCount,
+            'totalCount' => count($uploadedFiles)
+        ]);
+    }
+
+    private function processFileUpload(UploadedFile $uploadedFile, EntityManagerInterface $entityManager, bool $flush = true): JsonResponse
+    {
         // Validate file type
         $allowedMimeTypes = [
             'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
@@ -58,7 +119,10 @@ class MediaController extends AbstractController
             $media->setAlt($uploadedFile->getClientOriginalName());
 
             $entityManager->persist($media);
-            $entityManager->flush();
+            
+            if ($flush) {
+                $entityManager->flush();
+            }
 
             return new JsonResponse([
                 'success' => true,
