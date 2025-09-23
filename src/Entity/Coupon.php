@@ -30,15 +30,15 @@ class Coupon
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
     #[Assert\NotBlank]
     #[Assert\PositiveOrZero]
-    private float $value = 0.00;
+    private string $value = '0.00';
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
     #[Assert\PositiveOrZero]
-    private ?float $minAmount = null;
+    private ?string $minAmount = null;
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2, nullable: true)]
     #[Assert\PositiveOrZero]
-    private ?float $maxAmount = null;
+    private ?string $maxAmount = null;
 
     #[ORM\Column(nullable: true)]
     #[Assert\PositiveOrZero]
@@ -101,36 +101,36 @@ class Coupon
         return $this;
     }
 
-    public function getValue(): float
+    public function getValue(): string
     {
         return $this->value;
     }
 
-    public function setValue(float $value): static
+    public function setValue(string $value): static
     {
         $this->value = $value;
         $this->updatedAt = new \DateTime();
         return $this;
     }
 
-    public function getMinAmount(): ?float
+    public function getMinAmount(): ?string
     {
         return $this->minAmount;
     }
 
-    public function setMinAmount(?float $minAmount): static
+    public function setMinAmount(?string $minAmount): static
     {
         $this->minAmount = $minAmount;
         $this->updatedAt = new \DateTime();
         return $this;
     }
 
-    public function getMaxAmount(): ?float
+    public function getMaxAmount(): ?string
     {
         return $this->maxAmount;
     }
 
-    public function setMaxAmount(?float $maxAmount): static
+    public function setMaxAmount(?string $maxAmount): static
     {
         $this->maxAmount = $maxAmount;
         $this->updatedAt = new \DateTime();
@@ -303,20 +303,20 @@ class Coupon
             return 0;
         }
 
-        if ($this->minAmount && $total < $this->minAmount) {
+        if ($this->minAmount && $total < (float)$this->minAmount) {
             return 0;
         }
 
         $discount = 0;
 
         if ($this->type === 'percentage') {
-            $discount = ($total * $this->value) / 100;
+            $discount = ($total * (float)$this->value) / 100;
         } else {
-            $discount = $this->value;
+            $discount = (float)$this->value;
         }
 
-        if ($this->maxAmount && $discount > $this->maxAmount) {
-            $discount = $this->maxAmount;
+        if ($this->maxAmount && $discount > (float)$this->maxAmount) {
+            $discount = (float)$this->maxAmount;
         }
 
         return min($discount, $total);

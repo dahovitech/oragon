@@ -29,18 +29,18 @@ class Order
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
     #[Assert\NotBlank]
     #[Assert\PositiveOrZero]
-    private float $totalAmount = 0.00;
+    private string $totalAmount = '0.00';
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    private float $shippingAmount = 0.00;
+    private string $shippingAmount = '0.00';
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    private float $taxAmount = 0.00;
+    private string $taxAmount = '0.00';
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
-    private float $discountAmount = 0.00;
+    private string $discountAmount = '0.00';
 
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'orders')]
     #[ORM\JoinColumn(nullable: false)]
     private User $user;
 
@@ -107,45 +107,45 @@ class Order
         return $this;
     }
 
-    public function getTotalAmount(): float
+    public function getTotalAmount(): string
     {
         return $this->totalAmount;
     }
 
-    public function setTotalAmount(float $totalAmount): static
+    public function setTotalAmount(string $totalAmount): static
     {
         $this->totalAmount = $totalAmount;
         return $this;
     }
 
-    public function getShippingAmount(): float
+    public function getShippingAmount(): string
     {
         return $this->shippingAmount;
     }
 
-    public function setShippingAmount(float $shippingAmount): static
+    public function setShippingAmount(string $shippingAmount): static
     {
         $this->shippingAmount = $shippingAmount;
         return $this;
     }
 
-    public function getTaxAmount(): float
+    public function getTaxAmount(): string
     {
         return $this->taxAmount;
     }
 
-    public function setTaxAmount(float $taxAmount): static
+    public function setTaxAmount(string $taxAmount): static
     {
         $this->taxAmount = $taxAmount;
         return $this;
     }
 
-    public function getDiscountAmount(): float
+    public function getDiscountAmount(): string
     {
         return $this->discountAmount;
     }
 
-    public function setDiscountAmount(float $discountAmount): static
+    public function setDiscountAmount(string $discountAmount): static
     {
         $this->discountAmount = $discountAmount;
         return $this;

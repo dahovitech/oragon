@@ -32,11 +32,11 @@ class OrderItem
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
     #[Assert\NotBlank]
     #[Assert\PositiveOrZero]
-    private float $unitPrice = 0.00;
+    private string $unitPrice = '0.00';
 
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
     #[Assert\PositiveOrZero]
-    private float $totalPrice = 0.00;
+    private string $totalPrice = '0.00';
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank]
@@ -102,24 +102,24 @@ class OrderItem
         return $this;
     }
 
-    public function getUnitPrice(): float
+    public function getUnitPrice(): string
     {
         return $this->unitPrice;
     }
 
-    public function setUnitPrice(float $unitPrice): static
+    public function setUnitPrice(string $unitPrice): static
     {
         $this->unitPrice = $unitPrice;
         $this->calculateTotalPrice();
         return $this;
     }
 
-    public function getTotalPrice(): float
+    public function getTotalPrice(): string
     {
         return $this->totalPrice;
     }
 
-    public function setTotalPrice(float $totalPrice): static
+    public function setTotalPrice(string $totalPrice): static
     {
         $this->totalPrice = $totalPrice;
         return $this;
@@ -174,7 +174,7 @@ class OrderItem
      */
     private function calculateTotalPrice(): void
     {
-        $this->totalPrice = $this->quantity * $this->unitPrice;
+        $this->totalPrice = (string)($this->quantity * (float)$this->unitPrice);
     }
 
     /**

@@ -21,7 +21,7 @@ class ShippingMethod
     #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
     #[Assert\NotBlank]
     #[Assert\PositiveOrZero]
-    private float $price = 0.00;
+    private string $price = '0.00';
 
     #[ORM\Column(nullable: true)]
     #[Assert\PositiveOrZero]
@@ -54,12 +54,12 @@ class ShippingMethod
         return $this->id;
     }
 
-    public function getPrice(): float
+    public function getPrice(): string
     {
         return $this->price;
     }
 
-    public function setPrice(float $price): static
+    public function setPrice(string $price): static
     {
         $this->price = $price;
         $this->updatedAt = new \DateTime();
