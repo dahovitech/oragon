@@ -55,18 +55,34 @@ class OrderRepository extends ServiceEntityRepository
     /**
      * Find orders by user
      */
-    public function findByUser($user, int $limit = null): array
+    public function findByUser($user, int $page = null, int $limit = null): array
     {
         $qb = $this->createQueryBuilder('o')
             ->where('o.user = :user')
             ->setParameter('user', $user)
             ->orderBy('o.createdAt', 'DESC');
 
-        if ($limit) {
+        if ($page && $limit) {
+            $qb->setFirstResult(($page - 1) * $limit)
+               ->setMaxResults($limit);
+        } elseif ($limit) {
             $qb->setMaxResults($limit);
         }
 
         return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Count orders by user
+     */
+    public function countByUser($user): int
+    {
+        return $this->createQueryBuilder('o')
+            ->select('COUNT(o.id)')
+            ->where('o.user = :user')
+            ->setParameter('user', $user)
+            ->getQuery()
+            ->getSingleScalarResult();
     }
 
     /**

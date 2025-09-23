@@ -1,9 +1,9 @@
 ecommerce_frontend:
     resource: '../src/Bundle/EcommerceBundle/Controller/Frontend'
-    type: annotation
+    type: attribute
     prefix: /shop
 
 ecommerce_admin:
     resource: '../src/Bundle/EcommerceBundle/Controller/Admin'
-    type: annotation
+    type: attribute
     prefix: /admin/ecommerce

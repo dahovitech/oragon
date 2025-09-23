@@ -141,4 +141,49 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * Find users by criteria with pagination (API compatibility)
+     */
+    public function findByCriteria(int $page = 1, int $limit = 10, $search = null, $role = null): array
+    {
+        $qb = $this->createQueryBuilder('u')
+            ->orderBy('u.createdAt', 'DESC');
+
+        if ($search) {
+            $qb->andWhere('u.firstName LIKE :search OR u.lastName LIKE :search OR u.email LIKE :search')
+               ->setParameter('search', '%' . $search . '%');
+        }
+
+        if ($role) {
+            $qb->andWhere('u.roles LIKE :role')
+               ->setParameter('role', '%"' . $role . '"%');
+        }
+
+        return $qb->setFirstResult(($page - 1) * $limit)
+                  ->setMaxResults($limit)
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    /**
+     * Count users by criteria (API compatibility)
+     */
+    public function countByCriteria($search = null, $role = null): int
+    {
+        $qb = $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)');
+
+        if ($search) {
+            $qb->andWhere('u.firstName LIKE :search OR u.lastName LIKE :search OR u.email LIKE :search')
+               ->setParameter('search', '%' . $search . '%');
+        }
+
+        if ($role) {
+            $qb->andWhere('u.roles LIKE :role')
+               ->setParameter('role', '%"' . $role . '"%');
+        }
+
+        return $qb->getQuery()->getSingleScalarResult();
+    }
 }

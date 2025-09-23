@@ -174,4 +174,51 @@ class PostRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * Find posts by criteria with pagination
+     */
+    public function findByCriteria(array $criteria, int $page = 1, int $limit = 10, $categoryId = null): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->leftJoin('p.author', 'a')
+            ->leftJoin('p.category', 'c')
+            ->orderBy('p.createdAt', 'DESC');
+
+        foreach ($criteria as $field => $value) {
+            $qb->andWhere("p.$field = :$field")
+               ->setParameter($field, $value);
+        }
+
+        if ($categoryId) {
+            $qb->andWhere('p.category = :categoryId')
+               ->setParameter('categoryId', $categoryId);
+        }
+
+        return $qb->setFirstResult(($page - 1) * $limit)
+                  ->setMaxResults($limit)
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    /**
+     * Count posts by criteria
+     */
+    public function countByCriteria(array $criteria, $categoryId = null): int
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)');
+
+        foreach ($criteria as $field => $value) {
+            $qb->andWhere("p.$field = :$field")
+               ->setParameter($field, $value);
+        }
+
+        if ($categoryId) {
+            $qb->andWhere('p.category = :categoryId')
+               ->setParameter('categoryId', $categoryId);
+        }
+
+        return $qb->getQuery()->getSingleScalarResult();
+    }
 }

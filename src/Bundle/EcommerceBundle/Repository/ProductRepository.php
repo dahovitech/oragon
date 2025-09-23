@@ -288,4 +288,60 @@ class ProductRepository extends ServiceEntityRepository
             $qb->andWhere('(p.trackStock = false OR p.stock > 0)');
         }
     }
+
+    /**
+     * Find products by criteria with pagination (API compatibility)
+     */
+    public function findByCriteria(array $criteria, int $page = 1, int $limit = 10, $categoryId = null, $search = null): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->leftJoin('p.category', 'c')
+            ->orderBy('p.createdAt', 'DESC');
+
+        foreach ($criteria as $field => $value) {
+            $qb->andWhere("p.$field = :$field")
+               ->setParameter($field, $value);
+        }
+
+        if ($categoryId) {
+            $qb->andWhere('p.category = :categoryId')
+               ->setParameter('categoryId', $categoryId);
+        }
+
+        if ($search) {
+            $qb->andWhere('p.name LIKE :search OR p.description LIKE :search OR p.shortDescription LIKE :search')
+               ->setParameter('search', '%' . $search . '%');
+        }
+
+        return $qb->setFirstResult(($page - 1) * $limit)
+                  ->setMaxResults($limit)
+                  ->getQuery()
+                  ->getResult();
+    }
+
+    /**
+     * Count products by criteria (API compatibility)
+     */
+    public function countByCriteria(array $criteria, $categoryId = null, $search = null): int
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)');
+
+        foreach ($criteria as $field => $value) {
+            $qb->andWhere("p.$field = :$field")
+               ->setParameter($field, $value);
+        }
+
+        if ($categoryId) {
+            $qb->andWhere('p.category = :categoryId')
+               ->setParameter('categoryId', $categoryId);
+        }
+
+        if ($search) {
+            $qb->andWhere('p.name LIKE :search OR p.description LIKE :search OR p.shortDescription LIKE :search')
+               ->setParameter('search', '%' . $search . '%');
+        }
+
+        return $qb->getQuery()->getSingleScalarResult();
+    }
 }

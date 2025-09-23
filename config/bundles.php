@@ -24,4 +24,5 @@ return [
     App\Bundle\ThemeBundle\ThemeBundle::class => ['all' => true],
     App\Bundle\ApiBundle\ApiBundle::class => ['all' => true],
     Lexik\Bundle\JWTAuthenticationBundle\LexikJWTAuthenticationBundle::class => ['all' => true],
+    Nelmio\ApiDocBundle\NelmioApiDocBundle::class => ['all' => true],
 ];
