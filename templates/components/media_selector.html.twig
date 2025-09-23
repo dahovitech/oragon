@@ -880,6 +880,12 @@ async function uploadFiles(files) {
     const progressContainer = document.getElementById('uploadProgress');
     const successMessage = document.getElementById('uploadSuccessMessage');
     
+    // Vérifications de sécurité avant d'accéder aux propriétés
+    if (!progressContainer || !successMessage) {
+        console.error('Éléments requis non trouvés:', { progressContainer, successMessage });
+        return;
+    }
+    
     progressContainer.style.display = 'block';
     progressContainer.innerHTML = '';
     successMessage.style.display = 'none';
@@ -915,8 +921,10 @@ async function uploadFiles(files) {
             
             // Afficher le message de succès
             setTimeout(() => {
-                successMessage.style.display = 'block';
-                progressContainer.style.display = 'none';
+                if (successMessage && progressContainer) {
+                    successMessage.style.display = 'block';
+                    progressContainer.style.display = 'none';
+                }
             }, 1500);
             
             // Recharger la bibliothèque de médias si on est sur l'onglet sélection
