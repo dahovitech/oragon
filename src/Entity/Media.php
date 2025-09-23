@@ -133,17 +133,17 @@ class Media
  
     public function getUploadDir()
     {
-        return join(DIRECTORY_SEPARATOR, ['upload','media']);
+        return 'upload/media';
     }
  
     protected function getUploadRootDir()
     {
-        return join(DIRECTORY_SEPARATOR, [__DIR__,'..','..','public', $this->getUploadDir()]);
+        return __DIR__ . '/../../public/' . $this->getUploadDir();
     }
      
     public function getWebPath()
     {
-        return $this->getUploadDir().DIRECTORY_SEPARATOR.$this->getFileName();
+        return $this->getUploadDir() . '/' . $this->getFileName();
     }
 
     /**
