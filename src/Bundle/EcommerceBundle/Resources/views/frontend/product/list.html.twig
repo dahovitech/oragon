@@ -1,0 +1,189 @@
+{% extends 'frontend/base.html.twig' %}
+
+{% block title %}Products{% if filters.search %} - Search: {{ filters.search }}{% endif %}{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+    <div class="row">
+        <!-- Filters Sidebar -->
+        <div class="col-lg-3 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Filters</h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="{{ path('ecommerce_product_list') }}">
+                        <!-- Search -->
+                        <div class="mb-3">
+                            <label for="search" class="form-label">Search</label>
+                            <input type="text" class="form-control" id="search" name="search" value="{{ filters.search ?? '' }}" placeholder="Search products...">
+                        </div>
+
+                        <!-- Category -->
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="">All Categories</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}" {{ filters.category == category.id ? 'selected' : '' }}>
+                                        {{ category.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Price Range -->
+                        <div class="mb-3">
+                            <label class="form-label">Price Range</label>
+                            <div class="row">
+                                <div class="col-6">
+                                    <input type="number" class="form-control" name="min_price" value="{{ filters.min_price ?? '' }}" placeholder="Min" step="0.01">
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" class="form-control" name="max_price" value="{{ filters.max_price ?? '' }}" placeholder="Max" step="0.01">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Featured -->
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="featured" name="featured" value="1" {{ filters.featured ? 'checked' : '' }}>
+                            <label class="form-check-label" for="featured">
+                                Featured Products Only
+                            </label>
+                        </div>
+
+                        <!-- In Stock -->
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="in_stock" name="in_stock" value="1" {{ filters.in_stock ? 'checked' : '' }}>
+                            <label class="form-check-label" for="in_stock">
+                                In Stock Only
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                        <a href="{{ path('ecommerce_product_list') }}" class="btn btn-outline-secondary w-100 mt-2">Clear Filters</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="col-lg-9">
+            <!-- Sort Options -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Products ({{ pagination.total_items }})</h2>
+                <div class="d-flex align-items-center">
+                    <label for="sort" class="form-label me-2">Sort by:</label>
+                    <select class="form-select" id="sort" name="sort" style="width: auto;" onchange="updateSort()">
+                        <option value="name" {{ filters.sort == 'name' ? 'selected' : '' }}>Name</option>
+                        <option value="price" {{ filters.sort == 'price' ? 'selected' : '' }}>Price</option>
+                        <option value="created" {{ filters.sort == 'created' ? 'selected' : '' }}>Newest</option>
+                        <option value="popularity" {{ filters.sort == 'popularity' ? 'selected' : '' }}>Popularity</option>
+                    </select>
+                </div>
+            </div>
+
+            {% if products|length > 0 %}
+                <div class="row">
+                    {% for product in products %}
+                        <div class="col-md-6 col-xl-4 mb-4">
+                            <div class="card h-100 product-card">
+                                <div class="position-relative">
+                                    {% if product.featuredImage %}
+                                        <img src="{{ product.featuredImage.path }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 200px;">
+                                            <i class="fas fa-image fa-3x text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    {% if product.isFeatured %}
+                                        <span class="badge bg-warning position-absolute top-0 start-0 m-2">Featured</span>
+                                    {% endif %}
+                                    
+                                    {% if product.comparePrice and product.price < product.comparePrice %}
+                                        <span class="badge bg-danger position-absolute top-0 end-0 m-2">
+                                            -{{ ((product.comparePrice - product.price) / product.comparePrice * 100)|round }}%
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">{{ product.name }}</h5>
+                                    <p class="card-text text-muted small flex-grow-1">{{ product.shortDescription|slice(0, 100) }}...</p>
+                                    
+                                    <div class="mt-auto">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <div class="price">
+                                                <span class="h5 text-primary mb-0">€{{ product.price }}</span>
+                                                {% if product.comparePrice and product.price < product.comparePrice %}
+                                                    <span class="text-muted text-decoration-line-through small">€{{ product.comparePrice }}</span>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            {% if product.trackStock %}
+                                                {% if product.stock > 0 %}
+                                                    <span class="badge bg-success">In Stock</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Out of Stock</span>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="d-grid">
+                                            <a href="{{ path('ecommerce_product_show', {slug: product.slug}) }}" class="btn btn-outline-primary">View Details</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                {% if pagination.total_pages > 1 %}
+                    <nav aria-label="Products pagination" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if pagination.current_page > 1 %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ path('ecommerce_product_list', app.request.query.all|merge({page: pagination.current_page - 1})) }}">Previous</a>
+                                </li>
+                            {% endif %}
+
+                            {% for page in range(max(1, pagination.current_page - 2), min(pagination.total_pages, pagination.current_page + 2)) %}
+                                <li class="page-item {{ pagination.current_page == page ? 'active' : '' }}">
+                                    <a class="page-link" href="{{ path('ecommerce_product_list', app.request.query.all|merge({page: page})) }}">{{ page }}</a>
+                                </li>
+                            {% endfor %}
+
+                            {% if pagination.current_page < pagination.total_pages %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ path('ecommerce_product_list', app.request.query.all|merge({page: pagination.current_page + 1})) }}">Next</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h3>No products found</h3>
+                    <p class="text-muted">Try adjusting your search criteria or browse all products.</p>
+                    <a href="{{ path('ecommerce_product_list') }}" class="btn btn-primary">View All Products</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function updateSort() {
+    const sortValue = document.getElementById('sort').value;
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('sort', sortValue);
+    urlParams.set('page', 1); // Reset to first page
+    window.location.search = urlParams.toString();
+}
+</script>
+{% endblock %}
