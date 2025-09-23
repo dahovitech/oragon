@@ -28,9 +28,7 @@
                 {% if selectedMedia %}
                     <img src="{{ selectedMedia.webPath|first == '/' ? selectedMedia.webPath : '/' ~ selectedMedia.webPath }}" 
                          alt="{{ selectedMedia.alt }}" 
-                         class="media-preview-image"
-                         onload="this.parentElement.parentElement.classList.remove('d-none'); this.parentElement.parentElement.nextElementSibling.classList.add('d-none');"
-                         onerror="console.error('Erreur de chargement image:', this.src);">
+                         class="media-preview-image">
                 {% else %}
                     <img src="" alt="" class="media-preview-image" style="display: none;">
                 {% endif %}
@@ -352,8 +350,14 @@ let mediaLibraryTypeFilter = 'image'; // Par défaut, ne montrer que les images
 let currentInputName = '';
 
 function openMediaLibrary(inputName) {
+    console.log('=== DEBUT openMediaLibrary ===');
+    console.log('inputName reçu:', inputName);
+    
     currentInputName = inputName;
+    console.log('currentInputName défini à:', currentInputName);
+    
     const modalElement = document.getElementById('mediaLibraryModal');
+    console.log('modalElement trouvé:', modalElement);
     
     // Réinitialiser les filtres
     document.getElementById('mediaLibrarySearch').value = '';
@@ -362,17 +366,23 @@ function openMediaLibrary(inputName) {
     mediaLibrarySearchQuery = '';
     mediaLibraryTypeFilter = 'image';
     
+    console.log('Filtres réinitialisés');
+    
     // Charger les médias
+    console.log('Chargement des médias...');
     loadMediaLibrary();
     
     // Vérifier si Bootstrap est disponible
     if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        console.log('Ouverture modal avec Bootstrap 5');
         const modal = new bootstrap.Modal(modalElement);
         modal.show();
     } else if (typeof $ !== 'undefined' && $.fn.modal) {
+        console.log('Ouverture modal avec jQuery fallback');
         // Fallback vers jQuery si Bootstrap n'est pas disponible
         $(modalElement).modal('show');
     } else {
+        console.log('Ouverture modal manuelle');
         // Dernière solution : afficher manuellement
         modalElement.style.display = 'block';
         modalElement.classList.add('show');
@@ -384,6 +394,8 @@ function openMediaLibrary(inputName) {
         backdrop.id = 'mediaModalBackdrop';
         document.body.appendChild(backdrop);
     }
+    console.log('=== FIN openMediaLibrary ===');
+}
 }
 
 function removeSelectedMedia(inputName) {
@@ -425,6 +437,12 @@ function removeSelectedMedia(inputName) {
 }
 
 function selectMedia(mediaId, mediaUrl, mediaAlt) {
+    console.log('=== DEBUT selectMedia ===');
+    console.log('mediaId:', mediaId);
+    console.log('mediaUrl:', mediaUrl);
+    console.log('mediaAlt:', mediaAlt);
+    console.log('currentInputName:', currentInputName);
+    
     // Vérification de sécurité
     if (!currentInputName) {
         console.error('currentInputName is not defined');
@@ -433,32 +451,45 @@ function selectMedia(mediaId, mediaUrl, mediaAlt) {
     
     // Mettre à jour le champ caché
     const hiddenInput = document.getElementById('mediaInput_' + currentInputName);
+    console.log('hiddenInput trouvé:', hiddenInput);
     if (hiddenInput) {
         hiddenInput.value = mediaId;
+        console.log('hiddenInput.value défini à:', mediaId);
     }
     
     // Mettre à jour l'aperçu
     const previewContainer = document.getElementById('mediaPreview_' + currentInputName);
     const emptyContainer = document.getElementById('mediaEmpty_' + currentInputName);
     
+    console.log('previewContainer:', previewContainer);
+    console.log('emptyContainer:', emptyContainer);
+    
     if (previewContainer && emptyContainer) {
         // Vérifier que les éléments enfants existent
         const previewImage = previewContainer.querySelector('.media-preview-image');
         const previewInfo = previewContainer.querySelector('.media-preview-info small');
         
+        console.log('previewImage trouvée:', previewImage);
+        console.log('previewInfo trouvée:', previewInfo);
+        
         if (previewImage) {
             // S'assurer que l'URL est correctement formatée
             const imageUrl = mediaUrl.startsWith('/') ? mediaUrl : '/' + mediaUrl;
+            console.log('URL finale de l\'image:', imageUrl);
+            
             previewImage.src = imageUrl;
             previewImage.alt = mediaAlt || '';
             
             // Rendre l'image visible (au cas où elle était cachée)
             previewImage.style.display = 'block';
+            console.log('Image rendue visible, style.display=', previewImage.style.display);
             
             // Forcer le rechargement de l'image en cas de problème de cache
             previewImage.onload = function() {
+                console.log('Image chargée avec succès');
                 previewContainer.classList.remove('d-none');
                 emptyContainer.classList.add('d-none');
+                console.log('Conteneurs mis à jour - preview visible, empty caché');
             };
             
             previewImage.onerror = function() {
@@ -466,20 +497,28 @@ function selectMedia(mediaId, mediaUrl, mediaAlt) {
                 // En cas d'erreur, afficher quand même le conteneur avec un placeholder
                 previewContainer.classList.remove('d-none');
                 emptyContainer.classList.add('d-none');
+                console.log('Conteneurs mis à jour malgré l\'erreur');
             };
+            
+            // Mise à jour immédiate si l'image est déjà en cache
+            if (previewImage.complete && previewImage.naturalWidth > 0) {
+                console.log('Image déjà en cache, mise à jour immédiate');
+                previewContainer.classList.remove('d-none');
+                emptyContainer.classList.add('d-none');
+            }
+        } else {
+            console.error('previewImage non trouvée');
         }
         
         if (previewInfo) {
             previewInfo.textContent = mediaAlt || 'Image sélectionnée';
-        }
-        
-        // S'assurer que l'affichage est mis à jour immédiatement
-        if (previewImage && previewImage.complete && previewImage.naturalWidth > 0) {
-            previewContainer.classList.remove('d-none');
-            emptyContainer.classList.add('d-none');
+            console.log('previewInfo mis à jour:', previewInfo.textContent);
+        } else {
+            console.error('previewInfo non trouvée');
         }
         
         // Fermer la modal
+        console.log('Fermeture de la modal...');
         closeMediaLibrary();
     } else {
         console.error('Preview containers not found for input:', currentInputName);
