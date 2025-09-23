@@ -1,0 +1,36 @@
+# See the configuration reference at https://symfony.com/bundles/SchebTwoFactorBundle/6.x/configuration.html
+scheb_two_factor:
+    security_tokens:
+        - Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken
+        - Symfony\Component\Security\Http\Authenticator\Token\PostAuthenticationToken
+    
+    # TOTP authentication
+    totp:
+        enabled: true
+        server_name: 'Oragon Platform'
+        issuer: 'Oragon'
+        template: 'security/2fa_form.html.twig'
+        
+    # Google Authenticator
+    google:
+        enabled: true
+        server_name: 'Oragon Platform'
+        issuer: 'Oragon'
+        template: 'security/2fa_form.html.twig'
+        
+    # Backup codes
+    backup_codes:
+        enabled: true
+        template: 'security/2fa_backup_codes.html.twig'
+        
+    # Trusted device
+    trusted_device:
+        enabled: true
+        lifetime: 2592000 # 30 days
+        extend_lifetime: true
+        cookie_name: trusted_device
+        cookie_secure: auto
+        cookie_same_site: lax
+        
+    # QR code generation
+    qr_code_generator: endroid_qr_code

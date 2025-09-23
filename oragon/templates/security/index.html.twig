@@ -1,0 +1,233 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Sécurité{% endblock %}
+
+{% block page_title %}
+<h1 class="h2 mb-3">
+    <i class="fas fa-shield-alt text-primary me-2"></i>
+    Sécurité du compte
+</h1>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Authentification à deux facteurs -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-mobile-alt me-2"></i>
+                    Authentification à deux facteurs (2FA)
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if two_factor_status.enabled %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>Activée</strong> - Votre compte est protégé par la 2FA
+                    </div>
+                    
+                    <div class="row text-center">
+                        {% if two_factor_status.google_authenticator %}
+                            <div class="col-6">
+                                <i class="fab fa-google fa-2x text-success mb-2"></i>
+                                <p class="small">Google Authenticator</p>
+                            </div>
+                        {% endif %}
+                        {% if two_factor_status.totp %}
+                            <div class="col-6">
+                                <i class="fas fa-key fa-2x text-success mb-2"></i>
+                                <p class="small">TOTP</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <p class="text-muted small">
+                        <i class="fas fa-code me-1"></i>
+                        {{ two_factor_status.backup_codes_count }} codes de secours disponibles
+                    </p>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{{ path('user_security_2fa_backup_codes_regenerate') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-sync me-1"></i>
+                            Régénérer les codes de secours
+                        </a>
+                        <button type="button" class="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#disable2FAModal">
+                            <i class="fas fa-times me-1"></i>
+                            Désactiver la 2FA
+                        </button>
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Non activée</strong> - Votre compte n'est pas protégé par la 2FA
+                    </div>
+                    
+                    <p class="text-muted">
+                        L'authentification à deux facteurs ajoute une couche de sécurité supplémentaire à votre compte.
+                    </p>
+                    
+                    <div class="d-grid">
+                        <a href="{{ path('user_security_2fa_enable') }}" class="btn btn-success">
+                            <i class="fas fa-plus me-1"></i>
+                            Activer la 2FA
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Gestion du mot de passe -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-lock me-2"></i>
+                    Mot de passe
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">
+                    Modifiez régulièrement votre mot de passe pour maintenir la sécurité de votre compte.
+                </p>
+                
+                <div class="d-grid">
+                    <a href="{{ path('user_security_password_change') }}" class="btn btn-warning">
+                        <i class="fas fa-edit me-1"></i>
+                        Changer le mot de passe
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Activité récente -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Activité de sécurité récente
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_events is empty %}
+                    <p class="text-muted text-center py-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Aucune activité récente
+                    </p>
+                {% else %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Événement</th>
+                                    <th>Détails</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for event in recent_events %}
+                                    <tr>
+                                        <td>{{ event.timestamp|date('d/m/Y H:i') }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ event.type == 'success' ? 'success' : 'warning' }}">
+                                                {{ event.name }}
+                                            </span>
+                                        </td>
+                                        <td class="text-muted">{{ event.details|default('N/A') }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Informations de sécurité -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Conseils de sécurité
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-check text-success me-2"></i>Bonnes pratiques</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-chevron-right text-muted me-2"></i>
+                                Utilisez un mot de passe unique et complexe
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-chevron-right text-muted me-2"></i>
+                                Activez l'authentification à deux facteurs
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-chevron-right text-muted me-2"></i>
+                                Gardez vos codes de secours en sécurité
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-exclamation-triangle text-warning me-2"></i>Alertes</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-chevron-right text-muted me-2"></i>
+                                Ne partagez jamais vos codes d'authentification
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-chevron-right text-muted me-2"></i>
+                                Déconnectez-vous sur les appareils partagés
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-chevron-right text-muted me-2"></i>
+                                Surveillez l'activité suspecte
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal désactivation 2FA -->
+<div class="modal fade" id="disable2FAModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Désactiver la 2FA</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{{ path('user_security_2fa_disable') }}">
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Attention :</strong> Désactiver la 2FA réduira la sécurité de votre compte.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Mot de passe actuel</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger">Désactiver</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

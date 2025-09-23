@@ -1,0 +1,40 @@
+# Security routes
+security_dashboard:
+    path: /user/security
+    controller: App\Controller\Security\SecurityController::index
+
+# 2FA routes
+security_2fa_enable:
+    path: /user/security/2fa/enable
+    controller: App\Controller\Security\SecurityController::enable2FA
+
+security_2fa_confirm:
+    path: /user/security/2fa/confirm
+    controller: App\Controller\Security\SecurityController::confirm2FA
+
+security_2fa_disable:
+    path: /user/security/2fa/disable
+    controller: App\Controller\Security\SecurityController::disable2FA
+
+security_2fa_backup_codes:
+    path: /user/security/2fa/backup-codes/regenerate
+    controller: App\Controller\Security\SecurityController::regenerateBackupCodes
+
+security_2fa_status_api:
+    path: /user/security/api/2fa/status
+    controller: App\Controller\Security\SecurityController::get2FAStatusApi
+    methods: [GET]
+
+# Password management
+security_password_change:
+    path: /user/security/password/change
+    controller: App\Controller\Security\SecurityController::changePassword
+
+# 2FA authentication routes (used by Scheb bundle)
+2fa_login:
+    path: /2fa
+    defaults:
+        _controller: scheb_two_factor.form_controller::form
+
+2fa_login_check:
+    path: /2fa_check

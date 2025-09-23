@@ -32,3 +32,40 @@ services:
         arguments:
             $defaultFromEmail: '%app.notification.default_from_email%'
             $defaultFromName: '%app.notification.default_from_name%'
+
+    # Security Services
+    App\Service\Security\TwoFactorService:
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
+            $googleAuthenticator: '@scheb_two_factor.security.google_authenticator'
+            $totpAuthenticator: '@scheb_two_factor.security.totp_authenticator'
+
+    App\Service\Security\SecurityAuditService:
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
+            $logger: '@logger'
+            $requestStack: '@request_stack'
+
+    App\Service\Security\RateLimitingService:
+        arguments:
+            $loginLimiterFactory: '@limiter.login_limiter'
+            $apiLimiterFactory: '@limiter.api_limiter'
+            $generalLimiterFactory: '@limiter.general_limiter'
+            $auditService: '@App\Service\Security\SecurityAuditService'
+
+    # Performance Services
+    App\Service\Performance\PerformanceOptimizationService:
+        arguments:
+            $cache: '@cache.app'
+            $logger: '@logger'
+
+    # Event Listeners
+    App\EventListener\Security\RateLimitingListener:
+        arguments:
+            $rateLimitingService: '@App\Service\Security\RateLimitingService'
+            $auditService: '@App\Service\Security\SecurityAuditService'
+            $security: '@security.helper'
+
+    App\EventListener\Security\SecurityAuditListener:
+        arguments:
+            $auditService: '@App\Service\Security\SecurityAuditService'

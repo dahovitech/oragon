@@ -1,0 +1,180 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Activer la 2FA{% endblock %}
+
+{% block page_title %}
+<h1 class="h2 mb-3">
+    <i class="fas fa-mobile-alt text-primary me-2"></i>
+    Activer l'authentification à deux facteurs
+</h1>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        {% if secret is defined and qr_code is defined %}
+            <!-- Étape 2: Configuration de l'application -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-qrcode me-2"></i>
+                        Étape 2: Configurez votre application d'authentification
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 text-center">
+                            <h6>Scannez ce code QR</h6>
+                            <div class="mb-3">
+                                <img src="{{ qr_code }}" alt="QR Code 2FA" class="img-fluid" style="max-width: 200px;">
+                            </div>
+                            <p class="text-muted small">
+                                Utilisez Google Authenticator, Authy ou une autre application compatible TOTP
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Ou saisissez manuellement</h6>
+                            <div class="alert alert-info">
+                                <strong>Clé secrète :</strong><br>
+                                <code>{{ secret }}</code>
+                            </div>
+                            <p class="text-muted small">
+                                Copiez cette clé dans votre application d'authentification si vous ne pouvez pas scanner le code QR.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="text-center">
+                        <h6>Étape 3: Vérifiez la configuration</h6>
+                        <p class="text-muted">Saisissez le code à 6 chiffres généré par votre application :</p>
+                        
+                        <form method="post" action="{{ path('user_security_2fa_confirm') }}" class="d-inline-block">
+                            <div class="input-group mb-3" style="max-width: 300px;">
+                                <input type="text" class="form-control text-center" name="code" placeholder="000000" 
+                                       pattern="[0-9]{6}" maxlength="6" required autofocus>
+                                <button class="btn btn-success" type="submit">
+                                    <i class="fas fa-check me-1"></i>
+                                    Vérifier
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <p class="text-muted small">
+                            Le code change toutes les 30 secondes
+                        </p>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <!-- Étape 1: Choix de la méthode -->
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        Étape 1: Choisissez votre méthode d'authentification
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 border-success">
+                                <div class="card-body text-center">
+                                    <i class="fab fa-google fa-3x text-success mb-3"></i>
+                                    <h5>Google Authenticator</h5>
+                                    <p class="text-muted">
+                                        Compatible avec Google Authenticator, Authy, et la plupart des applications TOTP.
+                                    </p>
+                                    <form method="post" class="d-inline">
+                                        <input type="hidden" name="method" value="google">
+                                        <button type="submit" class="btn btn-success">
+                                            <i class="fas fa-mobile-alt me-1"></i>
+                                            Choisir cette méthode
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100 border-info">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-key fa-3x text-info mb-3"></i>
+                                    <h5>TOTP Standard</h5>
+                                    <p class="text-muted">
+                                        Time-based One-Time Password compatible avec tous les générateurs TOTP.
+                                    </p>
+                                    <form method="post" class="d-inline">
+                                        <input type="hidden" name="method" value="totp">
+                                        <button type="submit" class="btn btn-info">
+                                            <i class="fas fa-clock me-1"></i>
+                                            Choisir cette méthode
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-4">
+                        <h6><i class="fas fa-info-circle me-2"></i>Qu'est-ce que l'authentification à deux facteurs ?</h6>
+                        <p class="mb-0">
+                            La 2FA ajoute une couche de sécurité supplémentaire à votre compte. En plus de votre mot de passe, 
+                            vous devrez saisir un code temporaire généré par votre téléphone ou une application d'authentification.
+                        </p>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <a href="{{ path('user_security_index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>
+                            Retour aux paramètres de sécurité
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if secret is defined %}
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-8">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Important : Sauvegardez votre clé secrète
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-0">
+                    Conservez cette clé secrète en lieu sûr. Elle vous permettra de reconfigurer votre 
+                    application d'authentification si vous perdez votre téléphone.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus sur le champ de code
+    const codeInput = document.querySelector('input[name="code"]');
+    if (codeInput) {
+        codeInput.focus();
+        
+        // Auto-submit quand 6 chiffres sont saisis
+        codeInput.addEventListener('input', function() {
+            if (this.value.length === 6 && /^[0-9]{6}$/.test(this.value)) {
+                this.form.submit();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

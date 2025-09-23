@@ -1,0 +1,190 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Authentification à deux facteurs{% endblock %}
+
+{% block body %}
+<div class="container d-flex align-items-center justify-content-center min-vh-100">
+    <div class="row w-100 justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        Authentification à deux facteurs
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <i class="fas fa-mobile-alt fa-3x text-primary mb-3"></i>
+                        <p class="text-muted">
+                            Saisissez le code à 6 chiffres généré par votre application d'authentification
+                        </p>
+                    </div>
+
+                    <form method="post" action="{{ path('2fa_login_check') }}">
+                        <div class="mb-3">
+                            <label for="authCode" class="form-label">Code d'authentification</label>
+                            <input type="text" 
+                                   class="form-control form-control-lg text-center" 
+                                   id="authCode" 
+                                   name="_auth_code" 
+                                   placeholder="000000"
+                                   pattern="[0-9]{6,8}"
+                                   maxlength="8"
+                                   autocomplete="one-time-code"
+                                   required 
+                                   autofocus>
+                            <div class="form-text">
+                                Le code change toutes les 30 secondes
+                            </div>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="trusted" name="_trusted">
+                            <label class="form-check-label" for="trusted">
+                                Faire confiance à cet appareil pendant 30 jours
+                            </label>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-sign-in-alt me-2"></i>
+                                Vérifier le code
+                            </button>
+                        </div>
+                    </form>
+
+                    <hr>
+
+                    <div class="text-center">
+                        <button type="button" class="btn btn-link btn-sm" data-bs-toggle="collapse" data-bs-target="#backupCodeForm">
+                            <i class="fas fa-key me-1"></i>
+                            Utiliser un code de secours
+                        </button>
+                    </div>
+
+                    <div class="collapse" id="backupCodeForm">
+                        <div class="card border-warning mt-3">
+                            <div class="card-header bg-warning text-dark">
+                                <small><i class="fas fa-exclamation-triangle me-1"></i>Code de secours</small>
+                            </div>
+                            <div class="card-body">
+                                <form method="post" action="{{ path('2fa_login_check') }}">
+                                    <div class="mb-3">
+                                        <input type="text" 
+                                               class="form-control text-center" 
+                                               name="_auth_code" 
+                                               placeholder="Code de secours"
+                                               style="text-transform: uppercase;"
+                                               required>
+                                        <div class="form-text">
+                                            Saisissez l'un de vos codes de secours à 8 caractères
+                                        </div>
+                                    </div>
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-warning">
+                                            <i class="fas fa-unlock me-1"></i>
+                                            Utiliser le code de secours
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <small class="text-muted">
+                        <a href="{{ path('app_logout') }}" class="text-decoration-none">
+                            <i class="fas fa-sign-out-alt me-1"></i>
+                            Se déconnecter
+                        </a>
+                    </small>
+                </div>
+            </div>
+
+            <!-- Aide -->
+            <div class="text-center mt-4">
+                <div class="card border-info">
+                    <div class="card-body">
+                        <h6 class="text-info">
+                            <i class="fas fa-question-circle me-2"></i>
+                            Besoin d'aide ?
+                        </h6>
+                        <p class="small text-muted mb-2">
+                            Si vous n'avez pas accès à votre application d'authentification :
+                        </p>
+                        <ul class="list-unstyled small text-muted">
+                            <li>• Utilisez un code de secours</li>
+                            <li>• Vérifiez l'heure de votre appareil</li>
+                            <li>• Contactez le support si nécessaire</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const codeInput = document.getElementById('authCode');
+    
+    // Auto-focus sur le champ de code
+    if (codeInput) {
+        codeInput.focus();
+        
+        // Formatage automatique du code
+        codeInput.addEventListener('input', function() {
+            // Supprime les caractères non numériques sauf pour les codes de secours
+            if (this.value.length <= 6) {
+                this.value = this.value.replace(/\D/g, '');
+            }
+            
+            // Auto-submit pour les codes à 6 chiffres
+            if (this.value.length === 6 && /^[0-9]{6}$/.test(this.value)) {
+                setTimeout(() => {
+                    this.form.submit();
+                }, 100);
+            }
+        });
+        
+        // Gestion du paste
+        codeInput.addEventListener('paste', function(e) {
+            setTimeout(() => {
+                const pastedValue = this.value.replace(/\s/g, '');
+                if (pastedValue.length === 6 && /^[0-9]{6}$/.test(pastedValue)) {
+                    this.value = pastedValue;
+                    this.form.submit();
+                }
+            }, 10);
+        });
+    }
+
+    // Gestion des codes de secours
+    const backupInput = document.querySelector('#backupCodeForm input[name="_auth_code"]');
+    if (backupInput) {
+        backupInput.addEventListener('input', function() {
+            // Convertir en majuscules et limiter à 8 caractères
+            this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 8);
+        });
+    }
+});
+
+// Actualisation automatique de la page si l'utilisateur reste inactif
+let inactivityTimer;
+function resetInactivityTimer() {
+    clearTimeout(inactivityTimer);
+    inactivityTimer = setTimeout(function() {
+        if (confirm('Votre session a expiré. Voulez-vous actualiser la page ?')) {
+            location.reload();
+        }
+    }, 300000); // 5 minutes
+}
+
+document.addEventListener('click', resetInactivityTimer);
+document.addEventListener('keypress', resetInactivityTimer);
+resetInactivityTimer();
+</script>
+{% endblock %}

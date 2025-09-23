@@ -8,12 +8,16 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Scheb\TwoFactorBundle\Model\Google\TwoFactorInterface as GoogleTwoFactorInterface;
+use Scheb\TwoFactorBundle\Model\Totp\TwoFactorInterface as TotpTwoFactorInterface;
+use Scheb\TwoFactorBundle\Model\BackupCodeInterface;
+use Scheb\TwoFactorBundle\Model\TrustedDeviceInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 #[UniqueEntity(fields: ['email'], message: 'Il existe déjà un compte avec cet email')]
 #[ORM\HasLifecycleCallbacks]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User implements UserInterface, PasswordAuthenticatedUserInterface, GoogleTwoFactorInterface, TotpTwoFactorInterface, BackupCodeInterface, TrustedDeviceInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -58,6 +62,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $lastLoginAt = null;
+
+    // 2FA Properties
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $googleAuthenticatorSecret = null;
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $totpSecret = null;
+
+    #[ORM\Column(type: 'boolean')]
+    private bool $isTwoFactorEnabled = false;
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $backupCodes = null;
+
+    #[ORM\Column(type: 'integer')]
+    private int $trustedTokenVersion = 0;
 
     public function __construct()
     {
@@ -232,5 +252,107 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function eraseCredentials(): void
     {
         // @deprecated, to be removed when upgrading to Symfony 8
+    }
+
+    // 2FA Methods - Google Authenticator
+    public function isGoogleAuthenticatorEnabled(): bool
+    {
+        return $this->isTwoFactorEnabled && $this->googleAuthenticatorSecret !== null;
+    }
+
+    public function getGoogleAuthenticatorUsername(): string
+    {
+        return $this->email;
+    }
+
+    public function getGoogleAuthenticatorSecret(): ?string
+    {
+        return $this->googleAuthenticatorSecret;
+    }
+
+    public function setGoogleAuthenticatorSecret(?string $googleAuthenticatorSecret): void
+    {
+        $this->googleAuthenticatorSecret = $googleAuthenticatorSecret;
+    }
+
+    // 2FA Methods - TOTP
+    public function isTotpAuthenticationEnabled(): bool
+    {
+        return $this->isTwoFactorEnabled && $this->totpSecret !== null;
+    }
+
+    public function getTotpAuthenticationUsername(): string
+    {
+        return $this->email;
+    }
+
+    public function getTotpAuthenticationConfiguration(): ?array
+    {
+        return null; // Use default configuration
+    }
+
+    public function getTotpSecret(): ?string
+    {
+        return $this->totpSecret;
+    }
+
+    public function setTotpSecret(?string $totpSecret): void
+    {
+        $this->totpSecret = $totpSecret;
+    }
+
+    // 2FA General Methods
+    public function isTwoFactorEnabled(): bool
+    {
+        return $this->isTwoFactorEnabled;
+    }
+
+    public function setTwoFactorEnabled(bool $enabled): void
+    {
+        $this->isTwoFactorEnabled = $enabled;
+    }
+
+    // Backup Codes Methods
+    public function isBackupCode(string $code): bool
+    {
+        return in_array($code, $this->backupCodes ?: []);
+    }
+
+    public function invalidateBackupCode(string $code): void
+    {
+        $codes = $this->backupCodes ?: [];
+        $key = array_search($code, $codes);
+        if ($key !== false) {
+            unset($codes[$key]);
+            $this->backupCodes = array_values($codes);
+        }
+    }
+
+    public function getBackupCodes(): array
+    {
+        return $this->backupCodes ?: [];
+    }
+
+    public function setBackupCodes(array $codes): void
+    {
+        $this->backupCodes = $codes;
+    }
+
+    public function addBackupCode(string $code): void
+    {
+        $codes = $this->backupCodes ?: [];
+        $codes[] = $code;
+        $this->backupCodes = $codes;
+    }
+
+    // Trusted Device Methods
+    public function getTrustedTokenVersion(): int
+    {
+        return $this->trustedTokenVersion;
+    }
+
+    public function setTrustedTokenVersion(int $version): void
+    {
+        $this->trustedTokenVersion = $version;
     }
 }
