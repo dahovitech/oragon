@@ -1,0 +1,575 @@
+{% extends 'frontend/base.html.twig' %}
+
+{% block title %}Nouvelle demande de prêt - EdgeLoan{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .application-steps {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .step.active {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+        }
+        .step.completed {
+            background: #e8f5e8;
+            border-left: 4px solid #4caf50;
+        }
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #dee2e6;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        .step.active .step-number {
+            background: #2196f3;
+            color: white;
+        }
+        .step.completed .step-number {
+            background: #4caf50;
+            color: white;
+        }
+        .eligibility-checker {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .form-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .upload-zone {
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .upload-zone:hover {
+            border-color: #007bff;
+            background-color: #f8f9fa;
+        }
+        .upload-zone.dragover {
+            border-color: #007bff;
+            background-color: #e3f2fd;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="page-content">
+    <!-- Header Section -->
+    <section class="page-header page-header-modern page-header-md">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12 align-self-center p-static order-2 text-center">
+                    <h1 class="text-dark font-weight-bold text-8">Nouvelle demande de prêt</h1>
+                    <span class="sub-title text-dark">Complétez votre dossier en quelques étapes simples</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container py-5">
+        <div class="row">
+            <!-- Sidebar Steps -->
+            <div class="col-lg-4 mb-4">
+                <!-- Steps Progress -->
+                <div class="application-steps">
+                    <h5 class="mb-3">
+                        <i class="fas fa-list-ol me-2"></i>Étapes de votre demande
+                    </h5>
+                    
+                    <div class="step active">
+                        <div class="step-number">1</div>
+                        <div>
+                            <strong>Informations du prêt</strong>
+                            <div class="text-muted small">Type, montant, durée</div>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div>
+                            <strong>Détails personnels</strong>
+                            <div class="text-muted small">Objet, garanties</div>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div>
+                            <strong>Documents</strong>
+                            <div class="text-muted small">Pièces justificatives</div>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div>
+                            <strong>Validation</strong>
+                            <div class="text-muted small">Vérification et envoi</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Eligibility Checker -->
+                <div class="eligibility-checker">
+                    <h5 class="mb-3">
+                        <i class="fas fa-calculator me-2"></i>Vérifiez votre éligibilité
+                    </h5>
+                    
+                    <form id="eligibility-form">
+                        <div class="mb-3">
+                            <label class="form-label">Revenus mensuels nets</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="monthly-income" 
+                                       value="{{ user.monthlyIncome ?? '' }}" required>
+                                <span class="input-group-text">€</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Charges mensuelles</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="monthly-expenses" required>
+                                <span class="input-group-text">€</span>
+                            </div>
+                            <small class="form-text text-white-50">Crédits en cours, loyer, etc.</small>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-light w-100">
+                            <i class="fas fa-check-circle me-2"></i>Vérifier
+                        </button>
+                    </form>
+                    
+                    <div id="eligibility-result" style="display: none;" class="mt-3">
+                        <!-- Results will be displayed here -->
+                    </div>
+                </div>
+
+                <!-- Tips -->
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            <i class="fas fa-lightbulb text-warning me-2"></i>Conseils
+                        </h6>
+                        <ul class="list-unstyled mb-0 small">
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Préparez vos documents à l'avance
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Soyez précis dans vos informations
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Vérifiez votre capacité de remboursement
+                            </li>
+                            <li class="mb-0">
+                                <i class="fas fa-check text-success me-2"></i>
+                                Contactez-nous pour toute question
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Form -->
+            <div class="col-lg-8">
+                {% if loanType %}
+                    <!-- Pre-selected Loan Type Info -->
+                    <div class="alert alert-info">
+                        <h6>
+                            <i class="fas fa-info-circle me-2"></i>
+                            Type de prêt sélectionné: {{ loanType.name }}
+                        </h6>
+                        <p class="mb-2">{{ loanType.description }}</p>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <small class="text-muted d-block">Montant</small>
+                                <strong>{{ loanType.minAmount|number_format(0, ',', ' ') }}€ - {{ loanType.maxAmount|number_format(0, ',', ' ') }}€</strong>
+                            </div>
+                            <div class="col-md-4">
+                                <small class="text-muted d-block">Durée</small>
+                                <strong>{{ loanType.minDuration }} - {{ loanType.maxDuration }} mois</strong>
+                            </div>
+                            <div class="col-md-4">
+                                <small class="text-muted d-block">Taux à partir de</small>
+                                <strong class="text-primary">{{ loanType.baseInterestRate }}%</strong>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                {{ form_start(form, {'attr': {'id': 'loan-application-form', 'enctype': 'multipart/form-data'}}) }}
+
+                <!-- Section 1: Loan Information -->
+                <div class="form-section">
+                    <h4 class="mb-4">
+                        <i class="fas fa-coins text-primary me-2"></i>
+                        Informations du prêt
+                    </h4>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form_label(form.loanType) }}
+                            {{ form_widget(form.loanType, {'attr': {'class': 'form-select', 'onchange': 'updateLoanTypeLimits()'}}) }}
+                            {{ form_errors(form.loanType) }}
+                            {{ form_help(form.loanType) }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form_label(form.requestedAmount) }}
+                            {{ form_widget(form.requestedAmount, {'attr': {'id': 'requested-amount', 'oninput': 'updateCalculation()'}}) }}
+                            {{ form_errors(form.requestedAmount) }}
+                            {{ form_help(form.requestedAmount) }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form_label(form.duration) }}
+                            {{ form_widget(form.duration, {'attr': {'id': 'duration', 'oninput': 'updateCalculation()'}}) }}
+                            {{ form_errors(form.duration) }}
+                            {{ form_help(form.duration) }}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            {{ form_label(form.purpose) }}
+                            {{ form_widget(form.purpose) }}
+                            {{ form_errors(form.purpose) }}
+                            {{ form_help(form.purpose) }}
+                        </div>
+                    </div>
+                    
+                    <!-- Calculation Preview -->
+                    <div id="calculation-preview" class="alert alert-light d-none">
+                        <h6><i class="fas fa-calculator me-2"></i>Estimation de votre prêt</h6>
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <small class="text-muted d-block">Mensualité estimée</small>
+                                <strong class="text-primary h5" id="estimated-payment">-</strong>
+                            </div>
+                            <div class="col-md-4">
+                                <small class="text-muted d-block">Coût total</small>
+                                <strong id="estimated-total">-</strong>
+                            </div>
+                            <div class="col-md-4">
+                                <small class="text-muted d-block">Intérêts</small>
+                                <strong id="estimated-interest">-</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Additional Information -->
+                <div class="form-section">
+                    <h4 class="mb-4">
+                        <i class="fas fa-user-edit text-primary me-2"></i>
+                        Informations complémentaires
+                    </h4>
+                    
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            {{ form_label(form.guarantees) }}
+                            {{ form_widget(form.guarantees) }}
+                            {{ form_errors(form.guarantees) }}
+                            {{ form_help(form.guarantees) }}
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            {{ form_label(form.personalInfo) }}
+                            {{ form_widget(form.personalInfo) }}
+                            {{ form_errors(form.personalInfo) }}
+                            {{ form_help(form.personalInfo) }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 3: Documents -->
+                <div class="form-section">
+                    <h4 class="mb-4">
+                        <i class="fas fa-file-upload text-primary me-2"></i>
+                        Documents justificatifs
+                    </h4>
+                    
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Documents requis</label>
+                            <div class="alert alert-info">
+                                <h6>Documents généralement demandés :</h6>
+                                <ul class="mb-0">
+                                    <li>Justificatifs de revenus (3 derniers bulletins de salaire)</li>
+                                    <li>Relevés bancaires (3 derniers mois)</li>
+                                    <li>Avis d'imposition</li>
+                                    <li>Pièce d'identité</li>
+                                    {% if user.accountType.value == 'BUSINESS' %}
+                                        <li>Extrait Kbis (moins de 3 mois)</li>
+                                        <li>Bilans comptables</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            {{ form_label(form.documents) }}
+                            
+                            <div class="upload-zone" id="upload-zone">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">Glissez-déposez vos fichiers ici</h5>
+                                <p class="text-muted mb-3">ou cliquez pour sélectionner</p>
+                                {{ form_widget(form.documents, {'attr': {'style': 'display: none;', 'id': 'file-input'}}) }}
+                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('file-input').click()">
+                                    <i class="fas fa-folder-open me-2"></i>Choisir des fichiers
+                                </button>
+                            </div>
+                            
+                            <div class="file-preview mt-3" id="file-preview" style="display: none;">
+                                <h6>Fichiers sélectionnés:</h6>
+                                <div id="file-list"></div>
+                            </div>
+                            
+                            {{ form_errors(form.documents) }}
+                            {{ form_help(form.documents) }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="form-section">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ path('app_loan_catalog') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Retour au catalogue
+                        </a>
+                        
+                        <div class="d-flex gap-2">
+                            {{ form_widget(form.save) }}
+                            {{ form_widget(form.submit) }}
+                        </div>
+                    </div>
+                </div>
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // File upload handling
+            const uploadZone = document.getElementById('upload-zone');
+            const fileInput = document.getElementById('file-input');
+            const filePreview = document.getElementById('file-preview');
+            const fileList = document.getElementById('file-list');
+
+            // Drag and drop
+            uploadZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+
+            uploadZone.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+            });
+
+            uploadZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                fileInput.files = files;
+                displayFiles(files);
+            });
+
+            // Click upload
+            uploadZone.addEventListener('click', function() {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', function() {
+                displayFiles(this.files);
+            });
+
+            function displayFiles(files) {
+                if (files.length > 0) {
+                    filePreview.style.display = 'block';
+                    fileList.innerHTML = '';
+                    
+                    Array.from(files).forEach((file, index) => {
+                        const fileItem = document.createElement('div');
+                        fileItem.className = 'file-item d-flex justify-content-between align-items-center p-2 border rounded mb-2';
+                        fileItem.innerHTML = `
+                            <div>
+                                <i class="fas fa-file-${getFileIcon(file.type)} me-2"></i>
+                                <strong>${file.name}</strong>
+                                <span class="text-muted ms-2">(${formatFileSize(file.size)})</span>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile(${index})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        `;
+                        fileList.appendChild(fileItem);
+                    });
+                } else {
+                    filePreview.style.display = 'none';
+                }
+            }
+
+            function getFileIcon(mimeType) {
+                if (mimeType.includes('pdf')) return 'pdf';
+                if (mimeType.includes('image')) return 'image';
+                return 'alt';
+            }
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            // Eligibility checker
+            document.getElementById('eligibility-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                checkEligibility();
+            });
+
+            function checkEligibility() {
+                const monthlyIncome = parseFloat(document.getElementById('monthly-income').value);
+                const monthlyExpenses = parseFloat(document.getElementById('monthly-expenses').value);
+                const requestedAmount = parseFloat(document.getElementById('requested-amount').value) || 50000;
+                const duration = parseInt(document.getElementById('duration').value) || 60;
+                const loanTypeSelect = document.getElementById('loan_application_form_loanType');
+                const loanTypeId = loanTypeSelect.value;
+
+                if (!monthlyIncome || !monthlyExpenses || !loanTypeId) {
+                    alert('Veuillez remplir tous les champs');
+                    return;
+                }
+
+                fetch('{{ path('app_loan_application_eligibility_check') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        monthlyIncome: monthlyIncome,
+                        monthlyExpenses: monthlyExpenses,
+                        requestedAmount: requestedAmount,
+                        duration: duration,
+                        loanTypeId: loanTypeId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    displayEligibilityResult(data);
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                });
+            }
+
+            function displayEligibilityResult(data) {
+                const resultDiv = document.getElementById('eligibility-result');
+                const isEligible = data.eligible;
+                
+                resultDiv.innerHTML = `
+                    <div class="alert alert-${isEligible ? 'success' : 'warning'} border-0">
+                        <h6>
+                            <i class="fas fa-${isEligible ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                            ${isEligible ? 'Éligible' : 'Attention'}
+                        </h6>
+                        <p class="mb-2">Taux d'endettement: ${data.debtRatio.toFixed(1)}%</p>
+                        <small>
+                            ${data.recommendations.join('<br>')}
+                        </small>
+                    </div>
+                `;
+                
+                resultDiv.style.display = 'block';
+            }
+
+            // Calculation update
+            window.updateCalculation = function() {
+                const amount = parseFloat(document.getElementById('requested-amount').value);
+                const duration = parseInt(document.getElementById('duration').value);
+                const loanTypeSelect = document.getElementById('loan_application_form_loanType');
+                const loanTypeId = loanTypeSelect.value;
+
+                if (amount && duration && loanTypeId) {
+                    fetch('{{ path('app_loan_calculate') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            amount: amount,
+                            duration: duration,
+                            loanTypeId: loanTypeId
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.error) {
+                            document.getElementById('estimated-payment').textContent = 
+                                data.monthlyPayment.toLocaleString('fr-FR', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                }) + '€';
+                            
+                            document.getElementById('estimated-total').textContent = 
+                                data.totalAmount.toLocaleString('fr-FR', {
+                                    minimumFractionDigits: 0,
+                                    maximumFractionDigits: 0
+                                }) + '€';
+                            
+                            document.getElementById('estimated-interest').textContent = 
+                                data.totalInterest.toLocaleString('fr-FR', {
+                                    minimumFractionDigits: 0,
+                                    maximumFractionDigits: 0
+                                }) + '€';
+                            
+                            document.getElementById('calculation-preview').classList.remove('d-none');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Erreur:', error);
+                    });
+                }
+            };
+
+            // Update calculation on load if values exist
+            updateCalculation();
+        });
+    </script>
+{% endblock %}

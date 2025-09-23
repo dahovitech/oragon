@@ -1,0 +1,420 @@
+{% extends 'frontend/base.html.twig' %}
+
+{% block title %}Demande de prêt #{{ application.id }} - EdgeLoan{% endblock %}
+
+{% block body %}
+<div class="page-content">
+    <!-- Header Section -->
+    <section class="page-header page-header-modern page-header-md">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 align-self-center p-static order-2">
+                    <nav aria-label="breadcrumb" class="mb-2">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item">
+                                <a href="{{ path('app_loan_application_index') }}">Mes demandes</a>
+                            </li>
+                            <li class="breadcrumb-item active">Demande #{{ application.id }}</li>
+                        </ol>
+                    </nav>
+                    <h1 class="text-dark font-weight-bold text-8">Demande de prêt #{{ application.id }}</h1>
+                    <span class="sub-title text-dark">{{ application.loanType ? application.loanType.name : 'Type non défini' }}</span>
+                </div>
+                <div class="col-md-4 text-end order-1">
+                    {% set status = application.status.value %}
+                    {% if status == 'DRAFT' %}
+                        <span class="badge bg-secondary fs-6 px-3 py-2">
+                            <i class="fas fa-edit me-1"></i>Brouillon
+                        </span>
+                    {% elseif status == 'SUBMITTED' %}
+                        <span class="badge bg-primary fs-6 px-3 py-2">
+                            <i class="fas fa-paper-plane me-1"></i>Soumise
+                        </span>
+                    {% elseif status == 'UNDER_REVIEW' %}
+                        <span class="badge bg-warning fs-6 px-3 py-2">
+                            <i class="fas fa-search me-1"></i>En étude
+                        </span>
+                    {% elseif status == 'APPROVED' %}
+                        <span class="badge bg-success fs-6 px-3 py-2">
+                            <i class="fas fa-check-circle me-1"></i>Approuvée
+                        </span>
+                    {% elseif status == 'REJECTED' %}
+                        <span class="badge bg-danger fs-6 px-3 py-2">
+                            <i class="fas fa-times-circle me-1"></i>Rejetée
+                        </span>
+                    {% elseif status == 'DISBURSED' %}
+                        <span class="badge bg-info fs-6 px-3 py-2">
+                            <i class="fas fa-handshake me-1"></i>Versée
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container py-5">
+        <div class="row">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                <!-- Loan Details -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-coins text-primary me-2"></i>
+                            Détails du prêt
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">Type de prêt</label>
+                                <div class="fw-bold">{{ application.loanType ? application.loanType.name : 'Non défini' }}</div>
+                                {% if application.loanType %}
+                                    <small class="text-muted">{{ application.loanType.description }}</small>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label text-muted">Objet du prêt</label>
+                                <div class="fw-bold">
+                                    {% if application.purpose %}
+                                        {% set purposes = {
+                                            'real_estate_purchase': 'Achat immobilier',
+                                            'renovation_works': 'Travaux et rénovation',
+                                            'vehicle_purchase': 'Achat véhicule',
+                                            'debt_consolidation': 'Consolidation de dettes',
+                                            'personal_project': 'Projet personnel',
+                                            'business_investment': 'Investissement professionnel',
+                                            'business_cash_flow': 'Trésorerie d\'entreprise',
+                                            'professional_equipment': 'Équipements professionnels',
+                                            'other': 'Autres'
+                                        } %}
+                                        {{ purposes[application.purpose] ?? application.purpose }}
+                                    {% else %}
+                                        Non défini
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label text-muted">Montant demandé</label>
+                                <div class="fw-bold text-primary h5">
+                                    {{ application.requestedAmount ? application.requestedAmount|number_format(0, ',', ' ') ~ '€' : 'Non défini' }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label text-muted">Durée</label>
+                                <div class="fw-bold">
+                                    {{ application.duration ? application.duration ~ ' mois' : 'Non définie' }}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label text-muted">Taux d'intérêt</label>
+                                <div class="fw-bold">
+                                    {{ application.interestRate ? application.interestRate ~ '%' : 'Non défini' }}
+                                </div>
+                            </div>
+                            
+                            {% if application.monthlyPayment %}
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted">Mensualité calculée</label>
+                                    <div class="fw-bold text-success h5">
+                                        {{ application.monthlyPayment|number_format(2, ',', ' ') }}€
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-muted">Coût total</label>
+                                    <div class="fw-bold">
+                                        {{ application.totalAmount ? application.totalAmount|number_format(0, ',', ' ') ~ '€' : 'Non calculé' }}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if application.guarantees %}
+                            <hr>
+                            <h6>Garanties proposées</h6>
+                            <p class="text-muted">{{ application.guarantees|nl2br }}</p>
+                        {% endif %}
+                        
+                        {% if application.personalInfo %}
+                            <hr>
+                            <h6>Informations complémentaires</h6>
+                            <p class="text-muted">{{ application.personalInfo|nl2br }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Documents -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-file-alt text-primary me-2"></i>
+                            Documents joints ({{ application.documents|length }})
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if application.documents is empty %}
+                            <div class="text-center py-3">
+                                <i class="fas fa-file-alt fa-2x text-muted mb-2"></i>
+                                <p class="text-muted">Aucun document joint à cette demande</p>
+                                {% if application.status.value == 'DRAFT' %}
+                                    <a href="{{ path('app_loan_application_edit', {'id': application.id}) }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-plus me-1"></i>Ajouter des documents
+                                    </a>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="row">
+                                {% for document in application.documents %}
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-3">
+                                                        {% if document.fileName|slice(-3) == 'pdf' %}
+                                                            <i class="fas fa-file-pdf fa-2x text-danger"></i>
+                                                        {% else %}
+                                                            <i class="fas fa-file-image fa-2x text-primary"></i>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <h6 class="mb-1">{{ document.originalName }}</h6>
+                                                        <p class="text-muted mb-1 small">
+                                                            {{ document.uploadedAt|date('d/m/Y H:i') }}
+                                                        </p>
+                                                        <span class="badge bg-light text-dark">
+                                                            {{ (document.fileSize / 1024 / 1024)|number_format(2) }} MB
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="card-footer">
+                                                <a href="/{{ document.filePath }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-download me-1"></i>Télécharger
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Rejection Reason -->
+                {% if application.status.value == 'REJECTED' and application.rejectionReason %}
+                    <div class="card mb-4">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-times-circle me-2"></i>
+                                Motif du rejet
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0">{{ application.rejectionReason|nl2br }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Status Timeline -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-history text-primary me-2"></i>
+                            Suivi de la demande
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-success"></div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Demande créée</h6>
+                                    <p class="text-muted mb-0 small">
+                                        {{ application.createdAt|date('d/m/Y à H:i') }}
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            {% if application.submittedAt %}
+                                <div class="timeline-item">
+                                    <div class="timeline-marker bg-primary"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="mb-1">Demande soumise</h6>
+                                        <p class="text-muted mb-0 small">
+                                            {{ application.submittedAt|date('d/m/Y à H:i') }}
+                                        </p>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            {% if application.status.value == 'UNDER_REVIEW' %}
+                                <div class="timeline-item">
+                                    <div class="timeline-marker bg-warning"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="mb-1">En cours d'étude</h6>
+                                        <p class="text-muted mb-0 small">
+                                            Votre dossier est en cours d'analyse par nos équipes
+                                        </p>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            {% if application.reviewedAt %}
+                                <div class="timeline-item">
+                                    <div class="timeline-marker {% if application.status.value == 'APPROVED' %}bg-success{% else %}bg-danger{% endif %}"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="mb-1">
+                                            {% if application.status.value == 'APPROVED' %}
+                                                Demande approuvée
+                                            {% else %}
+                                                Demande rejetée
+                                            {% endif %}
+                                        </h6>
+                                        <p class="text-muted mb-0 small">
+                                            {{ application.reviewedAt|date('d/m/Y à H:i') }}
+                                        </p>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            {% if application.status.value == 'DISBURSED' %}
+                                <div class="timeline-item">
+                                    <div class="timeline-marker bg-info"></div>
+                                    <div class="timeline-content">
+                                        <h6 class="mb-1">Fonds versés</h6>
+                                        <p class="text-muted mb-0 small">
+                                            Les fonds ont été versés sur votre compte
+                                        </p>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if application.status.value == 'DRAFT' %}
+                            <div class="d-grid gap-2">
+                                <a href="{{ path('app_loan_application_edit', {'id': application.id}) }}" 
+                                   class="btn btn-warning">
+                                    <i class="fas fa-edit me-2"></i>Modifier la demande
+                                </a>
+                                
+                                <form method="post" action="{{ path('app_loan_application_submit', {'id': application.id}) }}" 
+                                      onsubmit="return confirm('Êtes-vous sûr de vouloir soumettre cette demande ?')">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-paper-plane me-2"></i>Soumettre la demande
+                                    </button>
+                                </form>
+                            </div>
+                        {% elseif application.status.value == 'APPROVED' %}
+                            <div class="d-grid gap-2">
+                                <a href="#" class="btn btn-success">
+                                    <i class="fas fa-file-signature me-2"></i>Signer le contrat
+                                </a>
+                                <small class="text-muted text-center">
+                                    Félicitations ! Votre demande a été approuvée.
+                                </small>
+                            </div>
+                        {% elseif application.status.value == 'REJECTED' %}
+                            <div class="d-grid gap-2">
+                                <a href="{{ path('app_loan_application_new') }}" class="btn btn-primary">
+                                    <i class="fas fa-plus me-2"></i>Nouvelle demande
+                                </a>
+                                <small class="text-muted text-center">
+                                    Vous pouvez faire une nouvelle demande en tenant compte des remarques.
+                                </small>
+                            </div>
+                        {% else %}
+                            <div class="text-center">
+                                <i class="fas fa-clock fa-2x text-muted mb-3"></i>
+                                <p class="text-muted">Votre demande est en cours de traitement.</p>
+                                <small>Vous recevrez une notification dès qu'il y aura du nouveau.</small>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Contact -->
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h6 class="card-title">
+                            <i class="fas fa-headset text-info me-2"></i>
+                            Besoin d'aide ?
+                        </h6>
+                        <p class="card-text small">
+                            Contactez notre équipe pour toute question concernant votre demande.
+                        </p>
+                        <div class="d-grid gap-2">
+                            <a href="tel:0123456789" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-phone me-1"></i>01 23 45 67 89
+                            </a>
+                            <a href="mailto:support@edgeloan.com" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-envelope me-1"></i>Email
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <div class="text-center mt-4">
+            <a href="{{ path('app_loan_application_index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Retour à mes demandes
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.timeline {
+    position: relative;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 50px;
+    padding-bottom: 25px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 7px;
+    top: 5px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px #dee2e6;
+}
+
+.timeline-content h6 {
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,322 @@
+{% extends 'frontend/base.html.twig' %}
+
+{% block title %}Catalogue de Prêts - EdgeLoan{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="/assets/vendor/nouislider/distribute/nouislider.min.css">
+    <style>
+        .loan-card {
+            transition: all 0.3s ease;
+            border: 1px solid #e0e0e0;
+        }
+        .loan-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-color: #007bff;
+        }
+        .filter-sidebar {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .amount-range {
+            margin: 20px 0;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="page-content">
+    <!-- Header Section -->
+    <section class="page-header page-header-modern page-header-md">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 align-self-center p-static order-2">
+                    <h1 class="text-dark font-weight-bold text-8">Catalogue de Prêts</h1>
+                    <span class="sub-title text-dark">Trouvez le prêt qui correspond à vos besoins</span>
+                </div>
+                <div class="col-md-4 text-end order-1">
+                    <div class="badge bg-primary fs-6 px-3 py-2">
+                        {{ stats.total }} offres disponibles
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container py-5">
+        <div class="row">
+            <!-- Sidebar Filters -->
+            <div class="col-lg-3 mb-4">
+                <div class="filter-sidebar">
+                    <h5 class="mb-4">
+                        <i class="fas fa-filter me-2"></i>Filtres
+                    </h5>
+                    
+                    <form method="GET" id="filter-form">
+                        <!-- Type de compte -->
+                        <div class="mb-4">
+                            <h6>Type de compte</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="account_type" 
+                                       value="all" id="account_all" 
+                                       {{ filters.accountType == 'all' ? 'checked' : '' }}>
+                                <label class="form-check-label" for="account_all">
+                                    Tous les comptes
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="account_type" 
+                                       value="INDIVIDUAL" id="account_individual"
+                                       {{ filters.accountType == 'INDIVIDUAL' ? 'checked' : '' }}>
+                                <label class="form-check-label" for="account_individual">
+                                    <i class="fas fa-user me-1"></i>Particulier
+                                    <span class="badge bg-secondary ms-1">{{ stats.individual }}</span>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="account_type" 
+                                       value="BUSINESS" id="account_business"
+                                       {{ filters.accountType == 'BUSINESS' ? 'checked' : '' }}>
+                                <label class="form-check-label" for="account_business">
+                                    <i class="fas fa-building me-1"></i>Entreprise
+                                    <span class="badge bg-secondary ms-1">{{ stats.business }}</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Montant -->
+                        <div class="mb-4">
+                            <h6>Montant du prêt</h6>
+                            <div class="amount-range">
+                                <div id="amount-slider"></div>
+                                <div class="d-flex justify-content-between mt-2">
+                                    <input type="hidden" name="min_amount" id="min-amount" value="{{ filters.minAmount ?? stats.minAmountOverall }}">
+                                    <input type="hidden" name="max_amount" id="max-amount" value="{{ filters.maxAmount ?? stats.maxAmountOverall }}">
+                                    <small class="text-muted">
+                                        <span id="min-amount-display">{{ filters.minAmount ?? stats.minAmountOverall|number_format(0, ',', ' ') }}</span>€
+                                    </small>
+                                    <small class="text-muted">
+                                        <span id="max-amount-display">{{ filters.maxAmount ?? stats.maxAmountOverall|number_format(0, ',', ' ') }}</span>€
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-2"></i>Filtrer
+                            </button>
+                            <a href="{{ path('app_loan_catalog') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-refresh me-2"></i>Réinitialiser
+                            </a>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="mt-4 p-3 bg-light border-start border-primary border-5">
+                    <h6><i class="fas fa-calculator text-primary me-2"></i>Outils utiles</h6>
+                    <div class="d-grid gap-2">
+                        <a href="{{ path('app_loan_calculator') }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-calculator me-1"></i>Calculateur
+                        </a>
+                        <a href="{{ path('app_loan_compare') }}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-balance-scale me-1"></i>Comparer
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-lg-9">
+                <!-- Results Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4>{{ loanTypes|length }} offre(s) trouvée(s)</h4>
+                    
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-secondary active" data-view="grid">
+                            <i class="fas fa-th"></i>
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" data-view="list">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loan Types Grid -->
+                {% if loanTypes is empty %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Aucun prêt trouvé</h5>
+                        <p class="text-muted">Essayez de modifier vos critères de recherche.</p>
+                        <a href="{{ path('app_loan_catalog') }}" class="btn btn-primary">
+                            Voir toutes les offres
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="row" id="loans-grid">
+                        {% for loanType in loanTypes %}
+                            <div class="col-lg-6 col-xl-4 mb-4">
+                                <div class="card loan-card h-100">
+                                    {% if loanType.image %}
+                                        <img src="{{ loanType.image.path }}" class="card-img-top" alt="{{ loanType.name }}" style="height: 200px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="card-img-top bg-gradient-primary d-flex align-items-center justify-content-center" style="height: 200px;">
+                                            <i class="fas fa-coins fa-3x text-white opacity-50"></i>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <div class="card-body d-flex flex-column">
+                                        <h5 class="card-title">{{ loanType.name }}</h5>
+                                        <p class="card-text text-muted flex-grow-1">
+                                            {{ loanType.description|slice(0, 120) }}{% if loanType.description|length > 120 %}...{% endif %}
+                                        </p>
+                                        
+                                        <!-- Details -->
+                                        <div class="row text-center mb-3">
+                                            <div class="col-6">
+                                                <small class="text-muted d-block">Montant</small>
+                                                <strong>{{ loanType.minAmount|number_format(0, ',', ' ') }}€ - {{ loanType.maxAmount|number_format(0, ',', ' ') }}€</strong>
+                                            </div>
+                                            <div class="col-6">
+                                                <small class="text-muted d-block">Durée</small>
+                                                <strong>{{ loanType.minDuration }} - {{ loanType.maxDuration }} mois</strong>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="text-center mb-3">
+                                            <small class="text-muted d-block">Taux à partir de</small>
+                                            <span class="h4 text-primary">{{ loanType.baseInterestRate }}%</span>
+                                        </div>
+                                        
+                                        <!-- Account Types -->
+                                        <div class="mb-3">
+                                            {% for accountType in loanType.allowedAccountTypes %}
+                                                {% if accountType == 'INDIVIDUAL' %}
+                                                    <span class="badge bg-info me-1">
+                                                        <i class="fas fa-user me-1"></i>Particulier
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-warning me-1">
+                                                        <i class="fas fa-building me-1"></i>Entreprise
+                                                    </span>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card-footer bg-transparent">
+                                        <div class="d-flex gap-2">
+                                            <a href="{{ path('app_loan_detail', {'slug': loanType.slug}) }}" 
+                                               class="btn btn-outline-primary flex-grow-1">
+                                                <i class="fas fa-eye me-1"></i>Voir détails
+                                            </a>
+                                            
+                                            {% if app.user and app.user.isVerified %}
+                                                <a href="{{ path('app_loan_application_new', {'loanType': loanType.id}) }}" 
+                                                   class="btn btn-primary">
+                                                    <i class="fas fa-paper-plane me-1"></i>Faire une demande
+                                                </a>
+                                            {% else %}
+                                                <button class="btn btn-secondary" disabled data-bs-toggle="tooltip" 
+                                                        title="Compte non vérifié">
+                                                    <i class="fas fa-lock me-1"></i>Demander
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="/assets/vendor/nouislider/distribute/nouislider.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize amount slider
+            const amountSlider = document.getElementById('amount-slider');
+            const minAmountInput = document.getElementById('min-amount');
+            const maxAmountInput = document.getElementById('max-amount');
+            const minAmountDisplay = document.getElementById('min-amount-display');
+            const maxAmountDisplay = document.getElementById('max-amount-display');
+            
+            if (amountSlider) {
+                noUiSlider.create(amountSlider, {
+                    start: [
+                        parseInt(minAmountInput.value) || {{ stats.minAmountOverall }},
+                        parseInt(maxAmountInput.value) || {{ stats.maxAmountOverall }}
+                    ],
+                    connect: true,
+                    range: {
+                        'min': {{ stats.minAmountOverall }},
+                        'max': {{ stats.maxAmountOverall }}
+                    },
+                    format: {
+                        to: function(value) {
+                            return Math.round(value);
+                        },
+                        from: function(value) {
+                            return Number(value);
+                        }
+                    }
+                });
+
+                amountSlider.noUiSlider.on('update', function(values, handle) {
+                    const value = parseInt(values[handle]);
+                    if (handle === 0) {
+                        minAmountInput.value = value;
+                        minAmountDisplay.textContent = value.toLocaleString('fr-FR');
+                    } else {
+                        maxAmountInput.value = value;
+                        maxAmountDisplay.textContent = value.toLocaleString('fr-FR');
+                    }
+                });
+            }
+
+            // Auto-submit form on radio change
+            const radioInputs = document.querySelectorAll('input[type="radio"]');
+            radioInputs.forEach(input => {
+                input.addEventListener('change', function() {
+                    document.getElementById('filter-form').submit();
+                });
+            });
+
+            // View toggle
+            const viewButtons = document.querySelectorAll('[data-view]');
+            const loansGrid = document.getElementById('loans-grid');
+
+            viewButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    viewButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+
+                    const view = this.dataset.view;
+                    if (view === 'list') {
+                        loansGrid.classList.remove('row');
+                        loansGrid.classList.add('d-flex', 'flex-column');
+                    } else {
+                        loansGrid.classList.add('row');
+                        loansGrid.classList.remove('d-flex', 'flex-column');
+                    }
+                });
+            });
+
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,554 @@
+{% extends 'frontend/base.html.twig' %}
+
+{% block title %}Calculateur de Prêt - EdgeLoan{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="/assets/vendor/nouislider/distribute/nouislider.min.css">
+    <style>
+        .calculator-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 80px 0;
+        }
+        .calculator-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            color: #333;
+        }
+        .slider-container {
+            margin: 30px 0;
+        }
+        .results-card {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+        }
+        .comparison-table {
+            background: #f8f9fa;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .loan-type-option {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .loan-type-option:hover,
+        .loan-type-option.selected {
+            border-color: #007bff;
+            background: #f0f8ff;
+        }
+        .chart-container {
+            height: 300px;
+            margin: 20px 0;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<!-- Hero Section -->
+<section class="calculator-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 text-center">
+                <h1 class="display-4 font-weight-bold mb-3">Calculateur de Prêt</h1>
+                <p class="lead mb-0">Simulez votre prêt en quelques clics et comparez les offres</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container py-5">
+    <div class="row">
+        <!-- Calculator Form -->
+        <div class="col-lg-8">
+            <div class="calculator-card">
+                <h3 class="mb-4 text-center">
+                    <i class="fas fa-calculator text-primary me-2"></i>
+                    Configurez votre simulation
+                </h3>
+                
+                <form id="loan-calculator-form">
+                    <!-- Loan Type Selection -->
+                    <div class="mb-4">
+                        <label class="form-label h5">Type de prêt</label>
+                        <div id="loan-types">
+                            {% for loanType in loanTypes %}
+                                <div class="loan-type-option" data-loan-type="{{ loanType.id }}"
+                                     data-min-amount="{{ loanType.minAmount }}"
+                                     data-max-amount="{{ loanType.maxAmount }}"
+                                     data-min-duration="{{ loanType.minDuration }}"
+                                     data-max-duration="{{ loanType.maxDuration }}"
+                                     data-rate="{{ loanType.baseInterestRate }}">
+                                    <div class="row align-items-center">
+                                        <div class="col-md-8">
+                                            <h6 class="mb-1">{{ loanType.name }}</h6>
+                                            <p class="text-muted mb-0 small">{{ loanType.description|slice(0, 100) }}...</p>
+                                        </div>
+                                        <div class="col-md-4 text-end">
+                                            <div class="row text-center">
+                                                <div class="col-6">
+                                                    <small class="text-muted d-block">Montant</small>
+                                                    <strong>{{ loanType.minAmount|number_format(0, ',', ' ') }}€ - {{ loanType.maxAmount|number_format(0, ',', ' ') }}€</strong>
+                                                </div>
+                                                <div class="col-6">
+                                                    <small class="text-muted d-block">Taux</small>
+                                                    <strong class="text-primary">{{ loanType.baseInterestRate }}%</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Amount Slider -->
+                    <div class="mb-4">
+                        <label class="form-label h5">Montant du prêt</label>
+                        <div class="slider-container">
+                            <div id="amount-slider"></div>
+                            <div class="d-flex justify-content-between mt-2">
+                                <small class="text-muted">
+                                    <span id="min-amount-display">1 000</span>€
+                                </small>
+                                <small class="text-muted">
+                                    <span id="max-amount-display">100 000</span>€
+                                </small>
+                            </div>
+                        </div>
+                        <div class="text-center mt-3">
+                            <div class="input-group d-inline-flex" style="width: auto;">
+                                <input type="number" class="form-control text-center" id="amount-input" 
+                                       style="width: 150px;" value="50000">
+                                <span class="input-group-text">€</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Duration Slider -->
+                    <div class="mb-4">
+                        <label class="form-label h5">Durée du prêt</label>
+                        <div class="slider-container">
+                            <div id="duration-slider"></div>
+                            <div class="d-flex justify-content-between mt-2">
+                                <small class="text-muted">
+                                    <span id="min-duration-display">12</span> mois
+                                </small>
+                                <small class="text-muted">
+                                    <span id="max-duration-display">120</span> mois
+                                </small>
+                            </div>
+                        </div>
+                        <div class="text-center mt-3">
+                            <div class="input-group d-inline-flex" style="width: auto;">
+                                <input type="number" class="form-control text-center" id="duration-input" 
+                                       style="width: 120px;" value="60">
+                                <span class="input-group-text">mois</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calculate Button -->
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg px-5">
+                            <i class="fas fa-calculator me-2"></i>Calculer ma mensualité
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Results Sidebar -->
+        <div class="col-lg-4">
+            <div id="calculation-results" style="display: none;">
+                <div class="results-card mb-4">
+                    <h4 class="mb-3">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Votre simulation
+                    </h4>
+                    
+                    <div class="row text-center">
+                        <div class="col-12 mb-3">
+                            <div class="h2 mb-1" id="monthly-payment">-</div>
+                            <small>Mensualité</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="h5 mb-1" id="total-amount">-</div>
+                            <small>Coût total</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="h5 mb-1" id="total-interest">-</div>
+                            <small>Intérêts</small>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-3 border-white-50">
+                    
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <small>Taux appliqué</small>
+                            <div class="h6 mb-0" id="applied-rate">-</div>
+                        </div>
+                        <div class="col-6">
+                            <small>Durée</small>
+                            <div class="h6 mb-0" id="applied-duration">-</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Chart -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h6 class="card-title">Répartition Capital/Intérêts</h6>
+                        <div class="chart-container">
+                            <canvas id="payment-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Button -->
+                <div id="apply-section" style="display: none;">
+                    <a href="#" id="apply-button" class="btn btn-success w-100 mb-3">
+                        <i class="fas fa-paper-plane me-2"></i>Faire une demande
+                    </a>
+                </div>
+                
+                <a href="{{ path('app_loan_catalog') }}" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-search me-2"></i>Voir toutes les offres
+                </a>
+            </div>
+            
+            <!-- Tips -->
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-lightbulb text-warning me-2"></i>
+                        Conseils
+                    </h6>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Vérifiez votre capacité de remboursement
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Comparez plusieurs durées
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Préparez vos documents à l'avance
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Un compte vérifié améliore vos conditions
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Comparison Table -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="comparison-table">
+                <div class="p-4">
+                    <h4 class="mb-4 text-center">
+                        <i class="fas fa-balance-scale text-primary me-2"></i>
+                        Comparaison des offres
+                    </h4>
+                    
+                    <div id="comparison-content">
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-calculator fa-3x mb-3"></i>
+                            <p>Calculez votre prêt pour voir la comparaison avec nos autres offres</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="/assets/vendor/nouislider/distribute/nouislider.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let selectedLoanType = null;
+            let amountSlider, durationSlider;
+            let paymentChart = null;
+            
+            // Loan type selection
+            const loanTypeOptions = document.querySelectorAll('.loan-type-option');
+            loanTypeOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    // Remove previous selection
+                    loanTypeOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    
+                    selectedLoanType = {
+                        id: this.dataset.loanType,
+                        minAmount: parseInt(this.dataset.minAmount),
+                        maxAmount: parseInt(this.dataset.maxAmount),
+                        minDuration: parseInt(this.dataset.minDuration),
+                        maxDuration: parseInt(this.dataset.maxDuration),
+                        rate: parseFloat(this.dataset.rate)
+                    };
+                    
+                    updateSliders();
+                });
+            });
+            
+            // Initialize sliders
+            initializeSliders();
+            
+            // Select first loan type by default
+            if (loanTypeOptions.length > 0) {
+                loanTypeOptions[0].click();
+            }
+            
+            function initializeSliders() {
+                const amountSliderEl = document.getElementById('amount-slider');
+                const durationSliderEl = document.getElementById('duration-slider');
+                const amountInput = document.getElementById('amount-input');
+                const durationInput = document.getElementById('duration-input');
+                
+                // Amount slider
+                noUiSlider.create(amountSliderEl, {
+                    start: [50000],
+                    connect: [true, false],
+                    range: {
+                        'min': 1000,
+                        'max': 100000
+                    },
+                    format: {
+                        to: function(value) {
+                            return Math.round(value);
+                        },
+                        from: function(value) {
+                            return Number(value);
+                        }
+                    }
+                });
+                
+                amountSlider = amountSliderEl.noUiSlider;
+                
+                amountSlider.on('update', function(values) {
+                    amountInput.value = values[0];
+                });
+                
+                amountInput.addEventListener('change', function() {
+                    amountSlider.set(this.value);
+                });
+                
+                // Duration slider
+                noUiSlider.create(durationSliderEl, {
+                    start: [60],
+                    connect: [true, false],
+                    range: {
+                        'min': 12,
+                        'max': 120
+                    },
+                    step: 1,
+                    format: {
+                        to: function(value) {
+                            return Math.round(value);
+                        },
+                        from: function(value) {
+                            return Number(value);
+                        }
+                    }
+                });
+                
+                durationSlider = durationSliderEl.noUiSlider;
+                
+                durationSlider.on('update', function(values) {
+                    durationInput.value = values[0];
+                });
+                
+                durationInput.addEventListener('change', function() {
+                    durationSlider.set(this.value);
+                });
+            }
+            
+            function updateSliders() {
+                if (!selectedLoanType) return;
+                
+                // Update amount slider
+                amountSlider.updateOptions({
+                    range: {
+                        'min': selectedLoanType.minAmount,
+                        'max': selectedLoanType.maxAmount
+                    }
+                });
+                
+                document.getElementById('min-amount-display').textContent = 
+                    selectedLoanType.minAmount.toLocaleString('fr-FR');
+                document.getElementById('max-amount-display').textContent = 
+                    selectedLoanType.maxAmount.toLocaleString('fr-FR');
+                
+                // Update duration slider
+                durationSlider.updateOptions({
+                    range: {
+                        'min': selectedLoanType.minDuration,
+                        'max': selectedLoanType.maxDuration
+                    }
+                });
+                
+                document.getElementById('min-duration-display').textContent = selectedLoanType.minDuration;
+                document.getElementById('max-duration-display').textContent = selectedLoanType.maxDuration;
+                
+                // Set to middle values
+                const midAmount = Math.round((selectedLoanType.minAmount + selectedLoanType.maxAmount) / 2);
+                const midDuration = Math.round((selectedLoanType.minDuration + selectedLoanType.maxDuration) / 2);
+                
+                amountSlider.set(midAmount);
+                durationSlider.set(midDuration);
+            }
+            
+            // Form submission
+            document.getElementById('loan-calculator-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (!selectedLoanType) {
+                    alert('Veuillez sélectionner un type de prêt');
+                    return;
+                }
+                
+                const amount = parseFloat(document.getElementById('amount-input').value);
+                const duration = parseInt(document.getElementById('duration-input').value);
+                
+                calculateLoan(amount, duration);
+            });
+            
+            function calculateLoan(amount, duration) {
+                fetch('{{ path('app_loan_calculate') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        amount: amount,
+                        duration: duration,
+                        loanTypeId: selectedLoanType.id
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    
+                    displayResults(data);
+                    createChart(data);
+                    updateComparison(amount, duration);
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    alert('Erreur lors du calcul. Veuillez réessayer.');
+                });
+            }
+            
+            function displayResults(data) {
+                document.getElementById('monthly-payment').textContent = 
+                    data.monthlyPayment.toLocaleString('fr-FR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }) + '€';
+                
+                document.getElementById('total-amount').textContent = 
+                    data.totalAmount.toLocaleString('fr-FR', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    }) + '€';
+                
+                document.getElementById('total-interest').textContent = 
+                    data.totalInterest.toLocaleString('fr-FR', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    }) + '€';
+                
+                document.getElementById('applied-rate').textContent = data.interestRate + '%';
+                document.getElementById('applied-duration').textContent = data.duration + ' mois';
+                
+                // Update apply button
+                const applyButton = document.getElementById('apply-button');
+                applyButton.href = `/demande/nouvelle?loanType=${data.loanType.id}&amount=${data.amount}&duration=${data.duration}`;
+                
+                document.getElementById('calculation-results').style.display = 'block';
+                document.getElementById('apply-section').style.display = 'block';
+            }
+            
+            function createChart(data) {
+                const ctx = document.getElementById('payment-chart').getContext('2d');
+                
+                if (paymentChart) {
+                    paymentChart.destroy();
+                }
+                
+                paymentChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Capital', 'Intérêts'],
+                        datasets: [{
+                            data: [data.amount, data.totalInterest],
+                            backgroundColor: ['#28a745', '#ffc107'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+            
+            function updateComparison(amount, duration) {
+                // Simuler la comparaison avec d'autres offres
+                const comparisonContent = document.getElementById('comparison-content');
+                comparisonContent.innerHTML = `
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Offre</th>
+                                    <th>Taux</th>
+                                    <th>Mensualité</th>
+                                    <th>Coût total</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="table-success">
+                                    <td><strong>Offre sélectionnée</strong></td>
+                                    <td>${selectedLoanType.rate}%</td>
+                                    <td>Calculé ci-dessus</td>
+                                    <td>Calculé ci-dessus</td>
+                                    <td><span class="badge bg-success">Sélectionnée</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        });
+    </script>
+{% endblock %}

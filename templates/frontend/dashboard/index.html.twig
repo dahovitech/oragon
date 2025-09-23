@@ -1,0 +1,496 @@
+{% extends 'frontend/base.html.twig' %}
+
+{% block title %}Mon Tableau de Bord - EdgeLoan{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .dashboard-card {
+            transition: transform 0.2s ease;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        .verification-status {
+            position: relative;
+        }
+        .verification-status::before {
+            content: '';
+            position: absolute;
+            left: -15px;
+            top: 50%;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            transform: translateY(-50%);
+        }
+        .verification-status.verified::before {
+            background: #28a745;
+        }
+        .verification-status.pending::before {
+            background: #ffc107;
+        }
+        .verification-status.rejected::before {
+            background: #dc3545;
+        }
+        .activity-timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .activity-timeline::before {
+            content: '';
+            position: absolute;
+            left: 12px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e9ecef;
+        }
+        .activity-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .activity-item::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #007bff;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px #007bff;
+        }
+        .quick-action-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+        }
+        .quick-action-card .card-body {
+            padding: 1.5rem;
+        }
+        .progress-circular {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+        .progress-circular svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+        .progress-circular .progress-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 14px;
+            font-weight: bold;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="page-content">
+    <!-- Header Section -->
+    <section class="page-header page-header-modern page-header-sm">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 align-self-center p-static order-2">
+                    <h1 class="text-dark font-weight-bold text-7">
+                        Bonjour {{ user.firstName ?? user.email }},
+                    </h1>
+                    <span class="sub-title text-dark">Voici un résumé de votre compte EdgeLoan</span>
+                </div>
+                <div class="col-md-4 text-end order-1">
+                    <div class="verification-status {{ user.isVerified ? 'verified' : 'pending' }}">
+                        {% if user.isVerified %}
+                            <span class="badge bg-success fs-6 px-3 py-2">
+                                <i class="fas fa-check-circle me-2"></i>Compte Vérifié
+                            </span>
+                        {% else %}
+                            <span class="badge bg-warning fs-6 px-3 py-2">
+                                <i class="fas fa-clock me-2"></i>Vérification Requise
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container py-5">
+        <!-- Quick Stats -->
+        <div class="row mb-5">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card dashboard-card h-100">
+                    <div class="card-body text-center">
+                        <div class="stat-icon bg-primary text-white mx-auto mb-3">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <h4 class="text-primary mb-1">{{ stats.totalApplications }}</h4>
+                        <p class="text-muted mb-0">Demandes de prêt</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card dashboard-card h-100">
+                    <div class="card-body text-center">
+                        <div class="stat-icon bg-warning text-white mx-auto mb-3">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <h4 class="text-warning mb-1">{{ stats.pendingApplications }}</h4>
+                        <p class="text-muted mb-0">En cours d'examen</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card dashboard-card h-100">
+                    <div class="card-body text-center">
+                        <div class="stat-icon bg-success text-white mx-auto mb-3">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h4 class="text-success mb-1">{{ stats.approvedApplications }}</h4>
+                        <p class="text-muted mb-0">Demandes approuvées</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="card dashboard-card h-100">
+                    <div class="card-body text-center">
+                        <div class="stat-icon bg-info text-white mx-auto mb-3">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h4 class="text-info mb-1">{{ stats.pendingVerifications }}</h4>
+                        <p class="text-muted mb-0">Vérifications pendantes</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if not user.isVerified %}
+        <!-- Verification Alert -->
+        <div class="alert alert-warning alert-dismissible fade show">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">Vérification de compte requise</h6>
+                    <p class="mb-0">
+                        Pour pouvoir faire des demandes de prêt, vous devez d'abord vérifier votre compte. 
+                        Ce processus est simple et sécurisé.
+                    </p>
+                </div>
+                <a href="{{ path('app_verification_index') }}" class="btn btn-warning">
+                    <i class="fas fa-arrow-right me-2"></i>Vérifier maintenant
+                </a>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <!-- Left Column -->
+            <div class="col-lg-8">
+                <!-- Recent Applications -->
+                <div class="card dashboard-card mb-4">
+                    <div class="card-header bg-white border-bottom">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-file-alt text-primary me-2"></i>Mes Dernières Demandes
+                            </h5>
+                            <a href="{{ path('app_dashboard_applications') }}" class="btn btn-outline-primary btn-sm">
+                                Voir tout
+                            </a>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        {% if loanApplications is empty %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                <h6 class="text-muted">Aucune demande de prêt</h6>
+                                <p class="text-muted mb-3">Vous n'avez pas encore fait de demande de prêt.</p>
+                                {% if user.isVerified %}
+                                    <a href="{{ path('app_loan_catalog') }}" class="btn btn-primary">
+                                        <i class="fas fa-plus me-2"></i>Faire une demande
+                                    </a>
+                                {% else %}
+                                    <a href="{{ path('app_verification_index') }}" class="btn btn-warning">
+                                        <i class="fas fa-shield-alt me-2"></i>Vérifier mon compte
+                                    </a>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Type de prêt</th>
+                                            <th>Montant</th>
+                                            <th>Statut</th>
+                                            <th>Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for application in loanApplications %}
+                                            <tr>
+                                                <td>
+                                                    <strong>{{ application.loanType.name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ application.duration }} mois</small>
+                                                </td>
+                                                <td>
+                                                    <strong>{{ application.requestedAmount|number_format(0, ',', ' ') }}€</strong>
+                                                    {% if application.monthlyPayment %}
+                                                        <br>
+                                                        <small class="text-muted">{{ application.monthlyPayment|number_format(2, ',', ' ') }}€/mois</small>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    {% set statusClass = 'secondary' %}
+                                                    {% if application.status.value == 'SUBMITTED' or application.status.value == 'UNDER_REVIEW' %}
+                                                        {% set statusClass = 'warning' %}
+                                                    {% elseif application.status.value == 'APPROVED' %}
+                                                        {% set statusClass = 'success' %}
+                                                    {% elseif application.status.value == 'REJECTED' %}
+                                                        {% set statusClass = 'danger' %}
+                                                    {% elseif application.status.value == 'DISBURSED' %}
+                                                        {% set statusClass = 'info' %}
+                                                    {% endif %}
+                                                    <span class="badge bg-{{ statusClass }}">
+                                                        {{ application.status.value|title }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {% if application.submittedAt %}
+                                                        {{ application.submittedAt|date('d/m/Y') }}
+                                                        <br>
+                                                        <small class="text-muted">{{ application.submittedAt|date('H:i') }}</small>
+                                                    {% else %}
+                                                        <span class="text-muted">Brouillon</span>
+                                                    {% endif %}
+                                                </td>
+                                                <td>
+                                                    <a href="{{ path('app_loan_application_detail', {'id': application.id}) }}" 
+                                                       class="btn btn-outline-primary btn-sm">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    {% if application.status.value == 'DRAFT' %}
+                                                        <a href="{{ path('app_loan_application_edit', {'id': application.id}) }}" 
+                                                           class="btn btn-outline-warning btn-sm">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Recent Activities -->
+                <div class="card dashboard-card">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="mb-0">
+                            <i class="fas fa-history text-primary me-2"></i>Activités Récentes
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if recentActivities is empty %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                                <h6 class="text-muted">Aucune activité récente</h6>
+                                <p class="text-muted mb-0">Vos activités récentes apparaîtront ici.</p>
+                            </div>
+                        {% else %}
+                            <div class="activity-timeline">
+                                {% for activity in recentActivities %}
+                                    <div class="activity-item">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-1">{{ activity.title }}</h6>
+                                                <p class="text-muted mb-1">{{ activity.description }}</p>
+                                                <small class="text-muted">
+                                                    {{ activity.date|date('d/m/Y à H:i') }}
+                                                </small>
+                                            </div>
+                                            <div class="ms-3">
+                                                {% set statusClass = 'secondary' %}
+                                                {% if activity.status.value == 'SUBMITTED' or activity.status.value == 'PENDING' or activity.status.value == 'UNDER_REVIEW' %}
+                                                    {% set statusClass = 'warning' %}
+                                                {% elseif activity.status.value == 'APPROVED' or activity.status.value == 'VERIFIED' %}
+                                                    {% set statusClass = 'success' %}
+                                                {% elseif activity.status.value == 'REJECTED' %}
+                                                    {% set statusClass = 'danger' %}
+                                                {% endif %}
+                                                <span class="badge bg-{{ statusClass }}">
+                                                    {{ activity.status.value|title }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="col-lg-4">
+                <!-- Quick Actions -->
+                <div class="card quick-action-card mb-4">
+                    <div class="card-body text-center">
+                        <h5 class="mb-4">Actions Rapides</h5>
+                        <div class="d-grid gap-2">
+                            {% if user.isVerified %}
+                                <a href="{{ path('app_loan_catalog') }}" class="btn btn-light">
+                                    <i class="fas fa-plus me-2"></i>Nouvelle demande de prêt
+                                </a>
+                                <a href="{{ path('app_loan_calculator') }}" class="btn btn-outline-light">
+                                    <i class="fas fa-calculator me-2"></i>Calculateur de prêt
+                                </a>
+                            {% else %}
+                                <a href="{{ path('app_verification_index') }}" class="btn btn-light">
+                                    <i class="fas fa-shield-alt me-2"></i>Vérifier mon compte
+                                </a>
+                            {% endif %}
+                            <a href="{{ path('app_dashboard_profile') }}" class="btn btn-outline-light">
+                                <i class="fas fa-user me-2"></i>Mon profil
+                            </a>
+                            <a href="{{ path('app_contact') }}" class="btn btn-outline-light">
+                                <i class="fas fa-envelope me-2"></i>Nous contacter
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Status -->
+                <div class="card dashboard-card mb-4">
+                    <div class="card-header bg-white border-bottom">
+                        <h6 class="mb-0">
+                            <i class="fas fa-user-check text-primary me-2"></i>État du Compte
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="progress-circular me-3">
+                                {% set verificationProgress = user.isVerified ? 100 : (stats.totalVerifications > 0 ? 50 : 0) %}
+                                <svg>
+                                    <circle cx="40" cy="40" r="35" fill="none" stroke="#e9ecef" stroke-width="6"></circle>
+                                    <circle cx="40" cy="40" r="35" fill="none" stroke="#007bff" stroke-width="6" 
+                                            stroke-dasharray="{{ 220 * verificationProgress / 100 }} 220" 
+                                            stroke-linecap="round"></circle>
+                                </svg>
+                                <div class="progress-value text-primary">{{ verificationProgress }}%</div>
+                            </div>
+                            <div>
+                                <h6 class="mb-1">Vérification</h6>
+                                <small class="text-muted">
+                                    {% if user.isVerified %}
+                                        Compte entièrement vérifié
+                                    {% elseif stats.totalVerifications > 0 %}
+                                        Documents en cours de vérification
+                                    {% else %}
+                                        Vérification non commencée
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="small">Type de compte</span>
+                                <span class="badge bg-info">
+                                    {% if user.accountType.value == 'INDIVIDUAL' %}
+                                        <i class="fas fa-user me-1"></i>Particulier
+                                    {% else %}
+                                        <i class="fas fa-building me-1"></i>Entreprise
+                                    {% endif %}
+                                </span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="small">Statut de vérification</span>
+                                {% if user.isVerified %}
+                                    <span class="badge bg-success">Vérifié</span>
+                                {% else %}
+                                    <span class="badge bg-warning">{{ stats.verificationStatus.value|title }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if not user.isVerified %}
+                            <a href="{{ path('app_verification_index') }}" class="btn btn-primary btn-sm w-100">
+                                <i class="fas fa-arrow-right me-2"></i>Compléter la vérification
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Help & Support -->
+                <div class="card dashboard-card">
+                    <div class="card-header bg-white border-bottom">
+                        <h6 class="mb-0">
+                            <i class="fas fa-question-circle text-primary me-2"></i>Aide & Support
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="small text-muted mb-3">
+                            Besoin d'aide ? Notre équipe de support est là pour vous accompagner.
+                        </p>
+                        <div class="d-grid gap-2">
+                            <a href="{{ path('app_faq') }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-book me-2"></i>FAQ
+                            </a>
+                            <a href="{{ path('app_contact') }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-envelope me-2"></i>Nous contacter
+                            </a>
+                            <a href="tel:+33123456789" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-phone me-2"></i>01 23 45 67 89
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Auto-refresh statistics every 5 minutes
+        setInterval(function() {
+            // You could add AJAX calls here to refresh stats
+        }, 300000);
+
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+{% endblock %}

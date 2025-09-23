@@ -1,0 +1,263 @@
+{% extends 'frontend/base.html.twig' %}
+
+{% block title %}Mes demandes de prêt - EdgeLoan{% endblock %}
+
+{% block body %}
+<div class="page-content">
+    <!-- Header Section -->
+    <section class="page-header page-header-modern page-header-md">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 align-self-center p-static order-2">
+                    <h1 class="text-dark font-weight-bold text-8">Mes demandes de prêt</h1>
+                    <span class="sub-title text-dark">Suivez l'évolution de vos demandes en cours</span>
+                </div>
+                <div class="col-md-4 text-end order-1">
+                    <a href="{{ path('app_loan_application_new') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Nouvelle demande
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container py-5">
+        <!-- Quick Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-file-alt fa-2x text-primary mb-2"></i>
+                        <h4>{{ applications|length }}</h4>
+                        <small class="text-muted">Total demandes</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                        <h4>{{ applications|filter(app => app.status.value in ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW'])|length }}</h4>
+                        <small class="text-muted">En cours</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                        <h4>{{ applications|filter(app => app.status.value == 'APPROVED')|length }}</h4>
+                        <small class="text-muted">Approuvées</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-handshake fa-2x text-info mb-2"></i>
+                        <h4>{{ applications|filter(app => app.status.value == 'DISBURSED')|length }}</h4>
+                        <small class="text-muted">Versées</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Applications List -->
+        {% if applications is empty %}
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">Aucune demande de prêt</h4>
+                    <p class="text-muted mb-4">Vous n'avez encore fait aucune demande de prêt.</p>
+                    <a href="{{ path('app_loan_application_new') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Faire ma première demande
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <div class="row">
+                {% for application in applications %}
+                    <div class="col-lg-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">
+                                    {{ application.loanType ? application.loanType.name : 'Type non défini' }}
+                                </h6>
+                                
+                                {% set status = application.status.value %}
+                                {% if status == 'DRAFT' %}
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-edit me-1"></i>Brouillon
+                                    </span>
+                                {% elseif status == 'SUBMITTED' %}
+                                    <span class="badge bg-primary">
+                                        <i class="fas fa-paper-plane me-1"></i>Soumise
+                                    </span>
+                                {% elseif status == 'UNDER_REVIEW' %}
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-search me-1"></i>En étude
+                                    </span>
+                                {% elseif status == 'APPROVED' %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check-circle me-1"></i>Approuvée
+                                    </span>
+                                {% elseif status == 'REJECTED' %}
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-times-circle me-1"></i>Rejetée
+                                    </span>
+                                {% elseif status == 'DISBURSED' %}
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-handshake me-1"></i>Versée
+                                    </span>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="card-body">
+                                <!-- Amount and Duration -->
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">Montant demandé</small>
+                                        {% if application.requestedAmount %}
+                                            <strong>{{ application.requestedAmount|number_format(0, ',', ' ') }}€</strong>
+                                        {% else %}
+                                            <span class="text-muted">Non défini</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">Durée</small>
+                                        {% if application.duration %}
+                                            <strong>{{ application.duration }} mois</strong>
+                                        {% else %}
+                                            <span class="text-muted">Non définie</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <!-- Monthly Payment -->
+                                {% if application.monthlyPayment %}
+                                    <div class="row mb-3">
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">Mensualité</small>
+                                            <strong class="text-primary">{{ application.monthlyPayment|number_format(2, ',', ' ') }}€</strong>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">Taux</small>
+                                            <strong>{{ application.interestRate ? application.interestRate ~ '%' : 'N/A' }}</strong>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                <!-- Purpose -->
+                                {% if application.purpose %}
+                                    <p class="text-muted mb-3">
+                                        <i class="fas fa-tag me-2"></i>
+                                        {% set purposes = {
+                                            'real_estate_purchase': 'Achat immobilier',
+                                            'renovation_works': 'Travaux et rénovation',
+                                            'vehicle_purchase': 'Achat véhicule',
+                                            'debt_consolidation': 'Consolidation de dettes',
+                                            'personal_project': 'Projet personnel',
+                                            'business_investment': 'Investissement professionnel',
+                                            'business_cash_flow': 'Trésorerie d\'entreprise',
+                                            'professional_equipment': 'Équipements professionnels',
+                                            'other': 'Autres'
+                                        } %}
+                                        {{ purposes[application.purpose] ?? application.purpose }}
+                                    </p>
+                                {% endif %}
+                                
+                                <!-- Dates -->
+                                <div class="row text-muted small">
+                                    <div class="col-12">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {% if application.submittedAt %}
+                                            Soumise le {{ application.submittedAt|date('d/m/Y à H:i') }}
+                                        {% else %}
+                                            Créée le {{ application.createdAt|date('d/m/Y à H:i') }}
+                                        {% endif %}
+                                    </div>
+                                    {% if application.reviewedAt %}
+                                        <div class="col-12 mt-1">
+                                            <i class="fas fa-user-check me-1"></i>
+                                            Traitée le {{ application.reviewedAt|date('d/m/Y à H:i') }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Rejection Reason -->
+                                {% if application.status.value == 'REJECTED' and application.rejectionReason %}
+                                    <div class="alert alert-danger mt-3">
+                                        <strong>Motif du rejet:</strong><br>
+                                        {{ application.rejectionReason }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="card-footer bg-transparent">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ path('app_loan_application_detail', {'id': application.id}) }}" 
+                                       class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>Voir détails
+                                    </a>
+                                    
+                                    {% if application.status.value == 'DRAFT' %}
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ path('app_loan_application_edit', {'id': application.id}) }}" 
+                                               class="btn btn-outline-warning">
+                                                <i class="fas fa-edit me-1"></i>Modifier
+                                            </a>
+                                            <form method="post" action="{{ path('app_loan_application_submit', {'id': application.id}) }}" 
+                                                  style="display: inline;" 
+                                                  onsubmit="return confirm('Êtes-vous sûr de vouloir soumettre cette demande ?')">
+                                                <button type="submit" class="btn btn-primary">
+                                                    <i class="fas fa-paper-plane me-1"></i>Soumettre
+                                                </button>
+                                            </form>
+                                        </div>
+                                    {% elseif application.status.value == 'APPROVED' %}
+                                        <a href="#" class="btn btn-success btn-sm">
+                                            <i class="fas fa-file-signature me-1"></i>Signer le contrat
+                                        </a>
+                                    {% elseif application.status.value == 'REJECTED' %}
+                                        <a href="{{ path('app_loan_application_new') }}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-redo me-1"></i>Nouvelle demande
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Help Section -->
+        <div class="row mt-5">
+            <div class="col-lg-8 mx-auto">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">
+                            <i class="fas fa-question-circle text-info me-2"></i>
+                            Besoin d'aide ?
+                        </h5>
+                        <p class="card-text">
+                            Notre équipe de conseillers est là pour vous accompagner dans vos démarches.
+                        </p>
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="tel:0123456789" class="btn btn-outline-primary">
+                                <i class="fas fa-phone me-2"></i>01 23 45 67 89
+                            </a>
+                            <a href="mailto:support@edgeloan.com" class="btn btn-outline-primary">
+                                <i class="fas fa-envelope me-2"></i>support@edgeloan.com
+                            </a>
+                            <a href="#" class="btn btn-outline-primary">
+                                <i class="fas fa-comments me-2"></i>Chat en ligne
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

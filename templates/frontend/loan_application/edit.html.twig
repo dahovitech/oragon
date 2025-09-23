@@ -1,0 +1,506 @@
+{% extends 'frontend/base.html.twig' %}
+
+{% block title %}Modifier ma Demande de Prêt - EdgeLoan{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .form-step {
+            display: none;
+        }
+        .form-step.active {
+            display: block;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+        .step-indicator .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 10px;
+            position: relative;
+            color: #6c757d;
+            font-weight: bold;
+        }
+        .step-indicator .step.active {
+            background: #007bff;
+            color: white;
+        }
+        .step-indicator .step.completed {
+            background: #28a745;
+            color: white;
+        }
+        .step-indicator .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 100%;
+            width: 20px;
+            height: 2px;
+            background: #e9ecef;
+            transform: translateY(-50%);
+        }
+        .step-indicator .step.completed:not(:last-child)::after {
+            background: #28a745;
+        }
+        .loan-summary {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-left: 4px solid #007bff;
+        }
+        .calculation-preview {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="page-content">
+    <!-- Header Section -->
+    <section class="page-header page-header-modern page-header-sm">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 align-self-center p-static order-2">
+                    <h1 class="text-dark font-weight-bold text-7">Modifier ma Demande</h1>
+                    <span class="sub-title text-dark">Demande #{{ application.id }} - {{ application.loanType.name }}</span>
+                </div>
+                <div class="col-md-4 text-end order-1">
+                    <a href="{{ path('app_loan_application_detail', {'id': application.id}) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Retour
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container py-5">
+        {% for message in app.flashes('success') %}
+            <div class="alert alert-success alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+        
+        {% for message in app.flashes('error') %}
+            <div class="alert alert-danger alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+
+        <div class="row">
+            <!-- Sidebar - Loan Summary -->
+            <div class="col-lg-4 mb-4">
+                <div class="loan-summary p-4 rounded">
+                    <h5 class="mb-3">
+                        <i class="fas fa-info-circle text-primary me-2"></i>Résumé de votre demande
+                    </h5>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Type de prêt</small>
+                        <strong>{{ application.loanType.name }}</strong>
+                    </div>
+                    
+                    {% if application.requestedAmount %}
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Montant demandé</small>
+                        <strong class="text-primary">{{ application.requestedAmount|number_format(2, ',', ' ') }}€</strong>
+                    </div>
+                    {% endif %}
+                    
+                    {% if application.duration %}
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Durée</small>
+                        <strong>{{ application.duration }} mois</strong>
+                    </div>
+                    {% endif %}
+                    
+                    {% if application.monthlyPayment %}
+                    <div class="calculation-preview p-3 mb-3">
+                        <small class="text-muted d-block">Mensualité estimée</small>
+                        <strong class="h5 text-warning">{{ application.monthlyPayment|number_format(2, ',', ' ') }}€</strong>
+                        <br>
+                        <small class="text-muted">
+                            Taux: {{ application.interestRate }}% - 
+                            Total: {{ application.totalAmount|number_format(2, ',', ' ') }}€
+                        </small>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Statut</small>
+                        <span class="badge bg-warning">{{ application.status.value|title }}</span>
+                    </div>
+                    
+                    {% if application.purpose %}
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Objet</small>
+                        <small>{{ application.purpose }}</small>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Help Section -->
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h6><i class="fas fa-lightbulb text-warning me-2"></i>Conseils</h6>
+                    <ul class="small text-muted mb-0">
+                        <li>Assurez-vous que toutes les informations sont exactes</li>
+                        <li>Joignez tous les documents demandés</li>
+                        <li>Vous pouvez sauvegarder en brouillon à tout moment</li>
+                        <li>Une fois soumise, la demande ne pourra plus être modifiée</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Main Form -->
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-edit me-2"></i>Modification de la demande
+                        </h5>
+                    </div>
+                    
+                    <div class="card-body">
+                        {{ form_start(form, {'attr': {'id': 'loan-application-form', 'novalidate': 'novalidate'}}) }}
+                        
+                        <!-- Step Indicator -->
+                        <div class="step-indicator">
+                            <div class="step active" data-step="1">1</div>
+                            <div class="step" data-step="2">2</div>
+                            <div class="step" data-step="3">3</div>
+                            <div class="step" data-step="4">4</div>
+                        </div>
+
+                        <!-- Step 1: Loan Details -->
+                        <div class="form-step active" data-step="1">
+                            <h5 class="mb-4">
+                                <i class="fas fa-calculator text-primary me-2"></i>Détails du prêt
+                            </h5>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form_row(form.loanType, {'attr': {'data-calculator': 'loanType'}}) }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form_row(form.purpose) }}
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{ form_row(form.requestedAmount, {'attr': {'data-calculator': 'amount'}}) }}
+                                </div>
+                                <div class="col-md-6">
+                                    {{ form_row(form.duration, {'attr': {'data-calculator': 'duration'}}) }}
+                                </div>
+                            </div>
+
+                            <!-- Real-time calculation preview -->
+                            <div id="calculation-result" class="calculation-preview p-3 mt-3" style="display: none;">
+                                <div class="row text-center">
+                                    <div class="col-md-4">
+                                        <small class="text-muted d-block">Mensualité</small>
+                                        <strong class="h6 text-primary" id="monthly-payment">-</strong>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <small class="text-muted d-block">Coût total</small>
+                                        <strong class="h6 text-info" id="total-cost">-</strong>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <small class="text-muted d-block">Intérêts</small>
+                                        <strong class="h6 text-warning" id="total-interest">-</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Personal Information -->
+                        <div class="form-step" data-step="2">
+                            <h5 class="mb-4">
+                                <i class="fas fa-user text-primary me-2"></i>Informations complémentaires
+                            </h5>
+                            
+                            {{ form_row(form.personalInfo) }}
+                            {{ form_row(form.guarantees) }}
+                        </div>
+
+                        <!-- Step 3: Documents -->
+                        <div class="form-step" data-step="3">
+                            <h5 class="mb-4">
+                                <i class="fas fa-paperclip text-primary me-2"></i>Documents justificatifs
+                            </h5>
+                            
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-info-circle me-2"></i>Documents requis :</h6>
+                                <ul class="mb-0">
+                                    <li>3 derniers bulletins de salaire ou justificatifs de revenus</li>
+                                    <li>Relevé d'identité bancaire (RIB)</li>
+                                    <li>Justificatif de domicile de moins de 3 mois</li>
+                                    {% if app.user.accountType.value == 'BUSINESS' %}
+                                    <li>Kbis de moins de 3 mois</li>
+                                    <li>Bilans comptables des 2 dernières années</li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                            
+                            {{ form_row(form.documents) }}
+
+                            <!-- Existing documents -->
+                            {% if application.documents|length > 0 %}
+                                <div class="mt-4">
+                                    <h6>Documents déjà uploadés :</h6>
+                                    <div class="list-group">
+                                        {% for document in application.documents %}
+                                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <i class="fas fa-file-pdf text-danger me-2"></i>
+                                                    {{ document.originalName }}
+                                                    <small class="text-muted d-block">
+                                                        Uploadé le {{ document.uploadedAt|date('d/m/Y H:i') }}
+                                                    </small>
+                                                </div>
+                                                {% if document.isVerified %}
+                                                    <span class="badge bg-success">Vérifié</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning">En attente</span>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Step 4: Review -->
+                        <div class="form-step" data-step="4">
+                            <h5 class="mb-4">
+                                <i class="fas fa-check text-primary me-2"></i>Vérification et soumission
+                            </h5>
+                            
+                            <div class="alert alert-warning">
+                                <h6><i class="fas fa-exclamation-triangle me-2"></i>Avant de soumettre :</h6>
+                                <ul class="mb-0">
+                                    <li>Vérifiez que toutes les informations sont correctes</li>
+                                    <li>Assurez-vous d'avoir joint tous les documents requis</li>
+                                    <li>Une fois soumise, votre demande ne pourra plus être modifiée</li>
+                                    <li>Vous recevrez une réponse sous 48-72 heures</li>
+                                </ul>
+                            </div>
+
+                            <div class="card border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h6 class="mb-0">Récapitulatif de votre demande</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p><strong>Type:</strong> <span id="review-loan-type">{{ application.loanType.name }}</span></p>
+                                            <p><strong>Montant:</strong> <span id="review-amount">{{ application.requestedAmount|number_format(2, ',', ' ') }}€</span></p>
+                                            <p><strong>Durée:</strong> <span id="review-duration">{{ application.duration }} mois</span></p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p><strong>Mensualité estimée:</strong> <span id="review-monthly">{{ application.monthlyPayment|number_format(2, ',', ' ') }}€</span></p>
+                                            <p><strong>Coût total:</strong> <span id="review-total">{{ application.totalAmount|number_format(2, ',', ' ') }}€</span></p>
+                                            <p><strong>Objet:</strong> <span id="review-purpose">{{ application.purpose }}</span></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Navigation Buttons -->
+                        <div class="d-flex justify-content-between mt-4">
+                            <button type="button" class="btn btn-outline-secondary" id="prev-step" style="display: none;">
+                                <i class="fas fa-arrow-left me-2"></i>Précédent
+                            </button>
+                            
+                            <div class="ms-auto">
+                                <button type="button" class="btn btn-outline-primary me-2" id="save-draft">
+                                    <i class="fas fa-save me-2"></i>Sauvegarder
+                                </button>
+                                
+                                <button type="button" class="btn btn-primary" id="next-step">
+                                    Suivant<i class="fas fa-arrow-right ms-2"></i>
+                                </button>
+                                
+                                <button type="submit" class="btn btn-success" id="submit-btn" style="display: none;">
+                                    <i class="fas fa-paper-plane me-2"></i>Soumettre la demande
+                                </button>
+                            </div>
+                        </div>
+
+                        {{ form_end(form) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let currentStep = 1;
+            const totalSteps = 4;
+
+            // Form navigation
+            const nextBtn = document.getElementById('next-step');
+            const prevBtn = document.getElementById('prev-step');
+            const submitBtn = document.getElementById('submit-btn');
+            const saveDraftBtn = document.getElementById('save-draft');
+
+            function updateStepDisplay() {
+                // Hide all steps
+                document.querySelectorAll('.form-step').forEach(step => {
+                    step.classList.remove('active');
+                });
+                
+                // Show current step
+                document.querySelector(`[data-step="${currentStep}"]`).classList.add('active');
+                
+                // Update step indicators
+                document.querySelectorAll('.step').forEach((step, index) => {
+                    const stepNum = index + 1;
+                    if (stepNum < currentStep) {
+                        step.classList.add('completed');
+                        step.classList.remove('active');
+                    } else if (stepNum === currentStep) {
+                        step.classList.add('active');
+                        step.classList.remove('completed');
+                    } else {
+                        step.classList.remove('active', 'completed');
+                    }
+                });
+
+                // Update buttons
+                prevBtn.style.display = currentStep === 1 ? 'none' : 'inline-block';
+                nextBtn.style.display = currentStep === totalSteps ? 'none' : 'inline-block';
+                submitBtn.style.display = currentStep === totalSteps ? 'inline-block' : 'none';
+            }
+
+            nextBtn.addEventListener('click', function() {
+                if (currentStep < totalSteps) {
+                    currentStep++;
+                    updateStepDisplay();
+                }
+            });
+
+            prevBtn.addEventListener('click', function() {
+                if (currentStep > 1) {
+                    currentStep--;
+                    updateStepDisplay();
+                }
+            });
+
+            // Real-time calculation
+            const calculatorFields = document.querySelectorAll('[data-calculator]');
+            const calculationResult = document.getElementById('calculation-result');
+
+            function updateCalculation() {
+                const loanTypeSelect = document.querySelector('[data-calculator="loanType"]');
+                const amountInput = document.querySelector('[data-calculator="amount"]');
+                const durationInput = document.querySelector('[data-calculator="duration"]');
+
+                if (!loanTypeSelect.value || !amountInput.value || !durationInput.value) {
+                    calculationResult.style.display = 'none';
+                    return;
+                }
+
+                const formData = {
+                    loanTypeId: loanTypeSelect.value,
+                    amount: parseFloat(amountInput.value),
+                    duration: parseInt(durationInput.value)
+                };
+
+                fetch('{{ path("app_loan_calculate") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        calculationResult.style.display = 'none';
+                        return;
+                    }
+
+                    document.getElementById('monthly-payment').textContent = 
+                        data.monthlyPayment.toLocaleString('fr-FR', {minimumFractionDigits: 2}) + '€';
+                    document.getElementById('total-cost').textContent = 
+                        data.totalAmount.toLocaleString('fr-FR', {minimumFractionDigits: 2}) + '€';
+                    document.getElementById('total-interest').textContent = 
+                        data.totalInterest.toLocaleString('fr-FR', {minimumFractionDigits: 2}) + '€';
+                    
+                    calculationResult.style.display = 'block';
+
+                    // Update review section
+                    document.getElementById('review-monthly').textContent = 
+                        data.monthlyPayment.toLocaleString('fr-FR', {minimumFractionDigits: 2}) + '€';
+                    document.getElementById('review-total').textContent = 
+                        data.totalAmount.toLocaleString('fr-FR', {minimumFractionDigits: 2}) + '€';
+                })
+                .catch(error => {
+                    console.error('Erreur de calcul:', error);
+                    calculationResult.style.display = 'none';
+                });
+            }
+
+            calculatorFields.forEach(field => {
+                field.addEventListener('change', updateCalculation);
+                field.addEventListener('input', updateCalculation);
+            });
+
+            // Initial calculation if values are present
+            updateCalculation();
+
+            // Save draft functionality
+            saveDraftBtn.addEventListener('click', function() {
+                const form = document.getElementById('loan-application-form');
+                const formData = new FormData(form);
+                formData.append('save_draft', '1');
+
+                // Show loading state
+                const originalText = saveDraftBtn.innerHTML;
+                saveDraftBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sauvegarde...';
+                saveDraftBtn.disabled = true;
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Show success message
+                        const alert = document.createElement('div');
+                        alert.className = 'alert alert-success alert-dismissible fade show';
+                        alert.innerHTML = `
+                            Brouillon sauvegardé avec succès !
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        `;
+                        document.querySelector('.container').insertBefore(alert, document.querySelector('.row'));
+                    }
+                })
+                .finally(() => {
+                    saveDraftBtn.innerHTML = originalText;
+                    saveDraftBtn.disabled = false;
+                });
+            });
+
+            // Initialize step display
+            updateStepDisplay();
+        });
+    </script>
+{% endblock %}
