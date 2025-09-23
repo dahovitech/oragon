@@ -10,56 +10,76 @@ edit:1049 Uncaught (in promise) TypeError: Cannot read properties of null (readi
     at HTMLInputElement.handleFileSelection (edit:1038:5)
 ```
 
+**Mise à jour**: Le problème persistait avec un message plus spécifique :
+```
+Éléments requis non trouvés: {progressContainer: div#uploadProgress.mt-4, successMessage: null}
+```
+
 ## Cause du problème
 
-La fonction `uploadFiles` tentait d'accéder à la propriété `style` des éléments DOM `progressContainer` et `successMessage` sans vérifier au préalable si ces éléments existaient. Dans certains contextes, ces éléments pouvaient être `null`, provoquant l'erreur.
+1. **Première version** : La fonction `uploadFiles` tentait d'accéder à la propriété `style` des éléments DOM sans vérifications
+2. **Problème persistant** : L'élément `uploadSuccessMessage` n'était pas disponible dans certains contextes, bloquant complètement l'upload même si `progressContainer` existait
 
 ## Solution appliquée
 
-### 1. Vérifications de sécurité ajoutées
+### 1. Première correction - Vérifications de sécurité
+
+```javascript
+// Version trop stricte (problématique)
+if (!progressContainer || !successMessage) {
+    console.error('Éléments requis non trouvés:', { progressContainer, successMessage });
+    return;
+}
+```
+
+### 2. Correction finale - Logique assouple
 
 ```javascript
 async function uploadFiles(files) {
     const progressContainer = document.getElementById('uploadProgress');
     const successMessage = document.getElementById('uploadSuccessMessage');
     
-    // Vérifications de sécurité avant d'accéder aux propriétés
-    if (!progressContainer || !successMessage) {
-        console.error('Éléments requis non trouvés:', { progressContainer, successMessage });
+    // Vérification critique : progressContainer est indispensable
+    if (!progressContainer) {
+        console.error('Élément uploadProgress requis non trouvé');
         return;
     }
     
+    // Affichage de la progression (toujours possible)
     progressContainer.style.display = 'block';
     progressContainer.innerHTML = '';
-    successMessage.style.display = 'none';
-    // ... reste du code
-}
-```
-
-### 2. Sécurisation du setTimeout
-
-```javascript
-// Afficher le message de succès
-setTimeout(() => {
-    if (successMessage && progressContainer) {
-        successMessage.style.display = 'block';
-        progressContainer.style.display = 'none';
+    
+    // Masquer le message de succès seulement s'il existe
+    if (successMessage) {
+        successMessage.style.display = 'none';
     }
-}, 1500);
+    
+    // ... reste du code avec gestion séparée
+    
+    // Affichage final avec vérifications individuelles
+    setTimeout(() => {
+        if (successMessage) {
+            successMessage.style.display = 'block';
+        }
+        if (progressContainer) {
+            progressContainer.style.display = 'none';
+        }
+    }, 1500);
+}
 ```
 
 ## Bénéfices
 
-- **Robustesse** : La fonction ne plante plus si les éléments DOM ne sont pas disponibles
-- **Debugging** : Message d'erreur informatif dans la console si les éléments manquent
-- **Expérience utilisateur** : Évite les erreurs JavaScript visibles par l'utilisateur
-- **Compatibilité** : Fonctionne correctement même si le DOM n'est pas complètement chargé
+- **Robustesse** : L'upload fonctionne même si `successMessage` n'est pas disponible
+- **Flexibilité** : Seul `progressContainer` est vraiment indispensable
+- **Expérience utilisateur** : L'upload ne s'arrête plus à cause d'un élément manquant
+- **Compatibilité** : Fonctionne dans différents contextes de rendu DOM
 
-## Commit
+## Commits
 
-**Hash:** `84da701`
-**Auteur:** Prudence ASSOGBA
-**Message:** Fix: Ajouter des vérifications de sécurité dans uploadFiles pour éviter l'erreur null pointer
+- **`84da701`** : Première correction avec vérifications strictes
+- **`3898ea0`** : Documentation initiale
+- **`4081395`** : Correction finale avec logique assouplie
 
 ## Test recommandé
 
@@ -70,3 +90,4 @@ Pour vérifier que la correction fonctionne :
 3. Sélectionner ou glisser des fichiers
 4. Vérifier qu'aucune erreur JavaScript n'apparaît dans la console
 5. Confirmer que l'upload fonctionne normalement
+6. Vérifier que la progression s'affiche même si le message de succès n'est pas disponible
