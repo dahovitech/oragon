@@ -32,7 +32,7 @@ class LoanTypeTranslation
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $shortDescription = null;
 
-    #[ORM\ManyToOne(targetEntity: Language::class)]
+    #[ORM\ManyToOne(targetEntity: Language::class, inversedBy: 'loanTypeTranslations')]
     #[ORM\JoinColumn(nullable: false)]
     private Language $language;
 

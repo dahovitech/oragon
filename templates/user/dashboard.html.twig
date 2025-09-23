@@ -1,0 +1,240 @@
+{% extends 'auth_base.html.twig' %}
+
+{% block title %}Dashboard - EdgeLoan{% endblock %}
+
+{% block body %}
+    <!-- User Dashboard Page -->
+    <section class="page-header">
+        <div class="page-header__bg" style="background-image: url({{ asset('assets/images/backgrounds/page-header-bg-1-1.jpg') }});"></div>
+        <div class="container">
+            <h2 class="page-header__title">User Dashboard</h2>
+            <ul class="easilon-breadcrumb list-unstyled">
+                <li><a href="{{ path('frontend_homepage') }}">Home</a></li>
+                <li><span>Dashboard</span></li>
+            </ul>
+        </div>
+    </section>
+
+    <section class="dashboard-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="dashboard-welcome">
+                        <h3>Welcome, {{ user.firstName }} {{ user.lastName }}!</h3>
+                        <p>Manage your loan applications and account settings from your dashboard.</p>
+                    </div>
+
+                    {% if not user.isVerified %}
+                        <div class="alert alert-warning">
+                            <i class="fa fa-exclamation-triangle"></i>
+                            Your email address is not verified yet. Please check your email for the verification link.
+                        </div>
+                    {% endif %}
+
+                    <div class="row">
+                        <div class="col-md-6 col-lg-4">
+                            <div class="dashboard-card">
+                                <div class="dashboard-card__icon">
+                                    <i class="icon-loan"></i>
+                                </div>
+                                <div class="dashboard-card__content">
+                                    <h4>Apply for Loan</h4>
+                                    <p>Start your loan application process</p>
+                                    <a href="#" class="easilon-btn">
+                                        <span>Apply Now</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4">
+                            <div class="dashboard-card">
+                                <div class="dashboard-card__icon">
+                                    <i class="icon-file"></i>
+                                </div>
+                                <div class="dashboard-card__content">
+                                    <h4>My Applications</h4>
+                                    <p>View and track your loan applications</p>
+                                    <a href="#" class="easilon-btn">
+                                        <span>View Applications</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4">
+                            <div class="dashboard-card">
+                                <div class="dashboard-card__icon">
+                                    <i class="icon-user"></i>
+                                </div>
+                                <div class="dashboard-card__content">
+                                    <h4>Account Settings</h4>
+                                    <p>Update your profile and preferences</p>
+                                    <a href="#" class="easilon-btn">
+                                        <span>Settings</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4">
+                            <div class="dashboard-card">
+                                <div class="dashboard-card__icon">
+                                    <i class="icon-document"></i>
+                                </div>
+                                <div class="dashboard-card__content">
+                                    <h4>Documents</h4>
+                                    <p>Manage your uploaded documents</p>
+                                    <a href="#" class="easilon-btn">
+                                        <span>View Documents</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4">
+                            <div class="dashboard-card">
+                                <div class="dashboard-card__icon">
+                                    <i class="icon-payment"></i>
+                                </div>
+                                <div class="dashboard-card__content">
+                                    <h4>Payments</h4>
+                                    <p>View payment history and schedule</p>
+                                    <a href="#" class="easilon-btn">
+                                        <span>View Payments</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-lg-4">
+                            <div class="dashboard-card">
+                                <div class="dashboard-card__icon">
+                                    <i class="icon-support"></i>
+                                </div>
+                                <div class="dashboard-card__content">
+                                    <h4>Support</h4>
+                                    <p>Get help and contact support</p>
+                                    <a href="#" class="easilon-btn">
+                                        <span>Contact Support</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="account-info">
+                        <h4>Account Information</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Name:</strong> {{ user.firstName }} {{ user.lastName }}</p>
+                                <p><strong>Email:</strong> {{ user.email }}</p>
+                                <p><strong>Status:</strong> 
+                                    {% if user.isVerified %}
+                                        <span class="badge badge-success">Verified</span>
+                                    {% else %}
+                                        <span class="badge badge-warning">Pending Verification</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Member Since:</strong> {{ user.createdAt|date('F j, Y') }}</p>
+                                <p><strong>Last Login:</strong> {{ user.lastLoginAt ? user.lastLoginAt|date('F j, Y g:i A') : 'Never' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_javascripts %}
+<style>
+    .dashboard-section {
+        padding: 80px 0;
+    }
+
+    .dashboard-welcome {
+        background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+        color: white;
+        padding: 40px;
+        border-radius: 15px;
+        margin-bottom: 40px;
+        text-align: center;
+    }
+
+    .dashboard-welcome h3 {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+    }
+
+    .dashboard-card {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        text-align: center;
+        margin-bottom: 30px;
+        transition: transform 0.3s ease;
+    }
+
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .dashboard-card__icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 2rem;
+        color: white;
+    }
+
+    .dashboard-card h4 {
+        color: #333;
+        margin-bottom: 15px;
+        font-size: 1.5rem;
+    }
+
+    .dashboard-card p {
+        color: #666;
+        margin-bottom: 20px;
+    }
+
+    .account-info {
+        background: #f8f9fa;
+        padding: 30px;
+        border-radius: 15px;
+        margin-top: 40px;
+    }
+
+    .account-info h4 {
+        color: #333;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #4a90e2;
+        padding-bottom: 10px;
+    }
+
+    .badge {
+        padding: 8px 12px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+
+    .badge-success {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .badge-warning {
+        background-color: #ffc107;
+        color: #212529;
+    }
+</style>
+{% endblock %}

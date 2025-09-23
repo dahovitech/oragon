@@ -1,0 +1,147 @@
+{% extends 'auth_base.html.twig' %}
+
+{% block title %}Login - EdgeLoan{% endblock %}
+
+{% block body %}
+    <!-- Login Page -->
+    <section class="login-page">
+        <div class="login-page__bg" style="background-image: url({{ asset('assets/images/backgrounds/login-bg-1-1.jpg') }});"></div>
+        <!-- /.login-page__bg -->
+        <div class="container">
+            <div class="login-page__wrap">
+                <div class="login-page__wrap__top">
+                    <div class="login-page__wrap__content">
+                        <h3 class="login-page__wrap__title">Welcome to EdgeLoan</h3>
+                    </div><!-- /.login-page__wrap__content -->
+                    <ul class="tab-buttons">
+                        <li data-tab="#login" class="easilon-btn easilon-btn--white tab-btn active-btn">
+                            <span>Log In</span>
+                        </li>
+                        <li data-tab="#register" class="easilon-btn easilon-btn--white tab-btn">
+                            <span>Register</span>
+                        </li>
+                    </ul><!-- /.tab-buttons -->
+                </div><!-- /.login-page__wrap__top -->
+                
+                <div class="tabs-content">
+                    <!-- Login Tab -->
+                    <div class="tab active-tab fadeInUp animated" data-wow-delay="200ms" id="login" style="display: block;">
+                        <span class="login-page__tab-title">Sign in to your account</span>
+                        
+                        {% if error %}
+                            <div class="alert alert-danger">
+                                {{ error.messageKey|trans(error.messageData, 'security') }}
+                            </div>
+                        {% endif %}
+
+                        {% if app.user %}
+                            <div class="alert alert-info">
+                                You are logged in as {{ app.user.userIdentifier }}, 
+                                <a href="{{ path('logout') }}">Logout</a>
+                            </div>
+                        {% endif %}
+
+                        <form class="login-page__form" method="post">
+                            <div class="login-page__form__input-box">
+                                <input type="email" 
+                                       name="email" 
+                                       value="{{ last_username }}" 
+                                       placeholder="Your Email"
+                                       required 
+                                       autofocus>
+                                <span class="login-page__form__icon">
+                                    <i class="icon-mail-2"></i>
+                                </span><!-- /.login-page__form__icon -->
+                            </div><!-- /.login-page__form__input-box -->
+                            
+                            <div class="login-page__form__input-box">
+                                <input type="password" 
+                                       name="password" 
+                                       placeholder="Password" 
+                                       class="login-page__password"
+                                       required>
+                                <span class="login-page__form__icon">
+                                    <i class="icon-padlock"></i>
+                                </span><!-- /.login-page__form__icon -->
+                                <i class="toggle-password pass-field-icon fa fa-fw fa-eye-slash"></i>
+                            </div><!-- /.login-page__form__input-box -->
+                            
+                            <div class="login-page__form__input-box login-page__form__input-box--bottom">
+                                <div class="login-page__form__checked-box">
+                                    <input type="checkbox" name="_remember_me" id="remember-me">
+                                    <label for="remember-me"><span></span>Remember me</label>
+                                </div>
+                                <a href="#" class="login-page__form__forgot">Forgot password?</a>
+                            </div><!-- /.login-page__form__input-box -->
+                            
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                            
+                            <div class="login-page__form__input-box login-page__form__input-box--button">
+                                <button type="submit" class="easilon-btn login-page__form__btn">
+                                    <span>Log In</span>
+                                </button>
+                            </div><!-- /.login-page__form__button -->
+                        </form><!-- /.login-page__form -->
+                        
+                        <div class="login-page__signin">
+                            <h4 class="login-page__signin__title">
+                                Don't have an account? 
+                                <a href="{{ path('app_register') }}">Register here</a>
+                            </h4><!-- /.login-page__signin__title -->
+                        </div><!-- /.login-page__signin -->
+                    </div><!-- /.login-tab -->
+
+                    <!-- Register Tab -->
+                    <div class="tab fadeInUp animated" data-wow-delay="200ms" id="register" style="display: none;">
+                        <span class="login-page__tab-title">Create your account</span>
+                        <p class="login-page__register-text">
+                            Already have an account? 
+                            <a href="{{ path('login') }}">Sign in here</a>
+                        </p>
+                        
+                        <div class="login-page__form__input-box login-page__form__input-box--button">
+                            <a href="{{ path('app_register') }}" class="easilon-btn login-page__form__btn">
+                                <span>Go to Registration</span>
+                            </a>
+                        </div>
+                    </div><!-- /.register-tab -->
+                </div><!-- /.tabs-content -->
+            </div><!-- /.login-page__wrap -->
+        </div><!-- /.container -->
+    </section><!-- /.login-page -->
+{% endblock %}
+
+{% block extra_javascripts %}
+<script>
+    // Tab switching functionality
+    $(document).ready(function() {
+        $('.tab-btn').on('click', function() {
+            var tabId = $(this).data('tab');
+            
+            // Remove active classes
+            $('.tab-btn').removeClass('active-btn');
+            $('.tab').removeClass('active-tab').hide();
+            
+            // Add active class to clicked button
+            $(this).addClass('active-btn');
+            
+            // Show corresponding tab
+            $(tabId).addClass('active-tab').show();
+        });
+
+        // Password toggle functionality
+        $('.toggle-password').on('click', function() {
+            var passwordField = $(this).siblings('.login-page__password');
+            var fieldType = passwordField.attr('type');
+            
+            if (fieldType === 'password') {
+                passwordField.attr('type', 'text');
+                $(this).removeClass('fa-eye-slash').addClass('fa-eye');
+            } else {
+                passwordField.attr('type', 'password');
+                $(this).removeClass('fa-eye').addClass('fa-eye-slash');
+            }
+        });
+    });
+</script>
+{% endblock %}

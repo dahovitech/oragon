@@ -44,9 +44,9 @@ class LanguageRepository extends ServiceEntityRepository
     }
 
     /**
-     * Find language by code
+     * Find active language by code
      */
-    public function findByCode(string $code): ?Language
+    public function findActiveByCode(string $code): ?Language
     {
         return $this->createQueryBuilder('l')
             ->where('l.code = :code')

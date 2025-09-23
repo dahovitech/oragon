@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="{{ app.request.locale }}">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}EdgeLoan - Modern Loan & Finance Platform{% endblock %}</title>
+    
+    <!-- favicons Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('assets/images/favicons/apple-touch-icon.png') }}" />
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('assets/images/favicons/favicon-32x32.png') }}" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('assets/images/favicons/favicon-16x16.png') }}" />
+    <link rel="manifest" href="{{ asset('assets/images/favicons/site.webmanifest') }}" />
+    
+    {% block meta %}
+        <meta name="description" content="{% block meta_description %}EdgeLoan is a modern loan & finance platform. Specially designed for quick loans, finance businesses, loan calculators, credit card loans, home loans, car loans, mortgages, financial, banking, and all other loan and finance-related businesses.{% endblock %}" />
+        <meta name="author" content="EdgeLoan">
+        <meta property="og:title" content="{% block og_title %}{{ block('title') }}{% endblock %}">
+        <meta property="og:type" content="website">
+        <meta property="og:description" content="{% block og_description %}{{ block('meta_description') }}{% endblock %}">
+    {% endblock %}
+
+    <!-- fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
+    {% block stylesheets %}
+        <link rel="stylesheet" href="{{ asset('assets/vendors/bootstrap/css/bootstrap.min.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/bootstrap-select/bootstrap-select.min.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/animate/animate.min.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/fontawesome/css/all.min.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/jquery-ui/jquery-ui.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/jarallax/jarallax.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/jquery-magnific-popup/jquery.magnific-popup.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/nouislider/nouislider.min.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/nouislider/nouislider.pips.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/tiny-slider/tiny-slider.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/easilon-icons/style.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/owl-carousel/css/owl.carousel.min.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/owl-carousel/css/owl.theme.default.min.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/slick/slick.css') }}" />
+
+        <!-- template styles -->
+        <link rel="stylesheet" href="{{ asset('assets/css/easilon.css') }}" />
+    {% endblock %}
+</head>
+
+<body class="custom-cursor">
+
+    <div class="custom-cursor__cursor"></div>
+    <div class="custom-cursor__cursor-two"></div>
+
+    <div class="preloader">
+        <div class="preloader__image" style="background-image: url({{ asset('assets/images/loader.png') }});"></div>
+    </div>
+    <!-- /.preloader -->
+    
+    <div class="page-wrapper">
+        {% block header %}
+            <div class="topbar">
+                <div class="container-fluid">
+                    <div class="topbar__inner">
+                        <ul class="list-unstyled topbar__info">
+                            <li>
+                                <span class="topbar__info__icon">
+                                    <i class="icon-mail-1"></i>
+                                </span>
+                                <a href="mailto:support@edgeloan.com">support@edgeloan.com</a>
+                            </li>
+                            <li>
+                                <span class="topbar__info__icon topbar__info__icon--phone">
+                                    <i class="icon-headset"></i>
+                                </span>
+                                <a href="tel:+1234567890">+1 (234) 567-890</a>
+                            </li>
+                        </ul><!-- /.list-unstyled topbar__info -->
+                        <div class="topbar__right">
+                            <ul class="list-unstyled topbar__pages">
+                                {% if app.user %}
+                                    <li><a href="{{ path('user_dashboard') }}">Dashboard</a></li>
+                                    <li><a href="{{ path('logout') }}">Logout</a></li>
+                                {% else %}
+                                    <li><a href="{{ path('login') }}">Log in</a></li>
+                                    <li><a href="{{ path('app_register') }}">Register</a></li>
+                                {% endif %}
+                                <li><a href="{{ path('frontend_homepage') }}">About</a></li>
+                                <li><a href="{{ path('frontend_homepage') }}">FAQ</a></li>
+                            </ul><!-- /.topbar__pages -->
+                            <div class="topbar__social">
+                                <a href="https://facebook.com">
+                                    <i class="fab fa-facebook-f" aria-hidden="true"></i>
+                                    <span class="sr-only">Facebook</span>
+                                </a>
+                                <a href="https://twitter.com">
+                                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                                    <span class="sr-only">Twitter</span>
+                                </a>
+                                <a href="https://linkedin.com">
+                                    <i class="fab fa-linkedin-in" aria-hidden="true"></i>
+                                    <span class="sr-only">Linkedin</span>
+                                </a>
+                            </div><!-- /.topbar__social -->
+                        </div><!-- /.list-unstyled topbar__right -->
+                    </div><!-- /.topbar__inner -->
+                </div><!-- /.container-fluid -->
+            </div><!-- /.topbar -->
+
+            <header class="main-header sticky-header sticky-header--normal">
+                <div class="container-fluid">
+                    <div class="main-header__inner">
+                        <div class="main-header__logo logo-retina">
+                            <a href="{{ path('frontend_homepage') }}">
+                                <img src="{{ asset('assets/images/logo-dark.png') }}" alt="EdgeLoan" width="150">
+                            </a>
+                        </div><!-- /.main-header__logo -->
+                        <div class="main-header__right">
+                            <nav class="main-header__nav main-menu">
+                                <ul class="main-menu__list">
+                                    <li><a href="{{ path('frontend_homepage') }}">Home</a></li>
+                                    <li><a href="{{ path('frontend_homepage') }}">About Us</a></li>
+                                    <li><a href="{{ path('frontend_homepage') }}">Services</a></li>
+                                    <li><a href="{{ path('frontend_homepage') }}">Apply for Loan</a></li>
+                                    <li><a href="{{ path('frontend_homepage') }}">Contact</a></li>
+                                </ul>
+                            </nav><!-- /.main-header__nav -->
+                        </div><!-- /.main-header__right -->
+                    </div><!-- /.main-header__inner -->
+                </div><!-- /.container-fluid -->
+            </header><!-- /.main-header -->
+        {% endblock %}
+
+        {% block body %}{% endblock %}
+
+        {% block footer %}
+            <footer class="main-footer background-black">
+                <div class="main-footer__bg" style="background-image: url({{ asset('assets/images/shapes/footer-bg-1-1.png') }});"></div>
+                <!-- /.main-footer__bg -->
+                <div class="main-footer__top">
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-md-6 col-lg-4">
+                                <div class="footer-widget footer-widget--about">
+                                    <a href="{{ path('frontend_homepage') }}" class="footer-widget__logo">
+                                        <img src="{{ asset('assets/images/logo-light.png') }}" alt="EdgeLoan" width="150">
+                                    </a><!-- /.footer-widget__logo -->
+                                    <p class="footer-widget__about__text">EdgeLoan is a modern loan & finance platform designed to help you achieve your financial goals.</p>
+                                    <ul class="list-unstyled footer-widget__info">
+                                        <li>
+                                            <i class="icon-location footer-widget__info__icon"></i>
+                                            <span>123 Financial Street, Loan City, LC 12345</span>
+                                        </li>
+                                        <li>
+                                            <i class="icon-envelope footer-widget__info__icon"></i>
+                                            <a href="mailto:support@edgeloan.com">support@edgeloan.com</a>
+                                        </li>
+                                        <li>
+                                            <i class="icon-telephone footer-widget__info__icon"></i>
+                                            <a href="tel:+1234567890">+1 (234) 567-890</a>
+                                        </li>
+                                    </ul><!-- /.list-unstyled -->
+                                </div><!-- /.footer-widget -->
+                            </div><!-- /.col-md-6 -->
+                            <div class="col-md-6 col-lg-2">
+                                <div class="footer-widget footer-widget--links">
+                                    <h2 class="footer-widget__title">Quick Links</h2><!-- /.footer-widget__title -->
+                                    <ul class="list-unstyled footer-widget__links">
+                                        <li><a href="{{ path('frontend_homepage') }}">About Us</a></li>
+                                        <li><a href="{{ path('frontend_homepage') }}">Our Services</a></li>
+                                        <li><a href="{{ path('frontend_homepage') }}">Apply Now</a></li>
+                                        <li><a href="{{ path('frontend_homepage') }}">Contact</a></li>
+                                    </ul><!-- /.list-unstyled footer-widget__links -->
+                                </div><!-- /.footer-widget -->
+                            </div><!-- /.col-md-6 -->
+                            <div class="col-md-6 col-lg-3">
+                                <div class="footer-widget footer-widget--links">
+                                    <h2 class="footer-widget__title">Our Services</h2><!-- /.footer-widget__title -->
+                                    <ul class="list-unstyled footer-widget__links">
+                                        <li><a href="{{ path('frontend_homepage') }}">Personal Loan</a></li>
+                                        <li><a href="{{ path('frontend_homepage') }}">Business Loan</a></li>
+                                        <li><a href="{{ path('frontend_homepage') }}">Home Loan</a></li>
+                                        <li><a href="{{ path('frontend_homepage') }}">Auto Loan</a></li>
+                                    </ul><!-- /.list-unstyled footer-widget__links -->
+                                </div><!-- /.footer-widget -->
+                            </div><!-- /.col-md-6 -->
+                            <div class="col-md-6 col-lg-3">
+                                <div class="footer-widget footer-widget--newsletter">
+                                    <h2 class="footer-widget__title">Newsletter</h2><!-- /.footer-widget__title -->
+                                    <p class="footer-widget__newsletter__text">Subscribe to our newsletter for updates</p>
+                                    <form class="footer-widget__newsletter">
+                                        <input type="email" placeholder="Email Address">
+                                        <button type="submit" class="easilon-btn footer-widget__newsletter__btn">
+                                            <span>Subscribe</span>
+                                        </button>
+                                    </form><!-- /.footer-widget__newsletter -->
+                                </div><!-- /.footer-widget -->
+                            </div><!-- /.col-md-6 -->
+                        </div><!-- /.row -->
+                    </div><!-- /.container -->
+                </div><!-- /.main-footer__top -->
+                <div class="main-footer__bottom">
+                    <div class="container">
+                        <div class="main-footer__bottom__inner">
+                            <p class="main-footer__copyright">© 2025 EdgeLoan. All Rights Reserved.</p>
+                            <div class="main-footer__social">
+                                <a href="https://facebook.com">
+                                    <i class="fab fa-facebook-f" aria-hidden="true"></i>
+                                    <span class="sr-only">Facebook</span>
+                                </a>
+                                <a href="https://twitter.com">
+                                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                                    <span class="sr-only">Twitter</span>
+                                </a>
+                                <a href="https://linkedin.com">
+                                    <i class="fab fa-linkedin-in" aria-hidden="true"></i>
+                                    <span class="sr-only">Linkedin</span>
+                                </a>
+                            </div><!-- /.main-footer__social -->
+                        </div><!-- /.main-footer__bottom__inner -->
+                    </div><!-- /.container -->
+                </div><!-- /.main-footer__bottom -->
+            </footer><!-- /.main-footer -->
+        {% endblock %}
+    </div><!-- /.page-wrapper -->
+
+    {# Flash messages #}
+    {% for type, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ type == 'error' ? 'danger' : type }} alert-dismissible fade show position-fixed" 
+                 style="top: 20px; right: 20px; z-index: 1040; max-width: 400px;" role="alert">
+                <i class="fa fa-{% if type == 'success' %}check-circle{% elseif type == 'error' or type == 'danger' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endfor %}
+
+    {% block javascripts %}
+        <script src="{{ asset('assets/vendors/jquery/jquery-3.7.0.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/bootstrap-select/bootstrap-select.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/jarallax/jarallax.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/jquery-ui/jquery-ui.js') }}"></script>
+        <script src="{{ asset('assets/vendors/jquery-ajaxchimp/jquery.ajaxchimp.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/jquery-appear/jquery.appear.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/jquery-circle-progress/jquery.circle-progress.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/jquery-magnific-popup/jquery.magnific-popup.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/jquery-validate/jquery.validate.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/nouislider/nouislider.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/tiny-slider/tiny-slider.js') }}"></script>
+        <script src="{{ asset('assets/vendors/wnumb/wNumb.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/owl-carousel/js/owl.carousel.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/wow/wow.js') }}"></script>
+        <script src="{{ asset('assets/vendors/tilt/tilt.jquery.js') }}"></script>
+        <script src="{{ asset('assets/vendors/simpleParallax/simpleParallax.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/slick/slick.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/jquery-sidebar-content/jquery-sidebar-content.js') }}"></script>
+        <script src="{{ asset('assets/vendors/countdown/countdown.min.js') }}"></script>
+
+        <!-- template js -->
+        <script src="{{ asset('assets/js/easilon.js') }}"></script>
+    {% endblock %}
+
+    {% block extra_javascripts %}{% endblock %}
+</body>
+
+</html>

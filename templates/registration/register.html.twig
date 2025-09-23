@@ -1,0 +1,189 @@
+{% extends 'auth_base.html.twig' %}
+
+{% block title %}Register - EdgeLoan{% endblock %}
+
+{% block body %}
+    <!-- Registration Page -->
+    <section class="login-page">
+        <div class="login-page__bg" style="background-image: url({{ asset('assets/images/backgrounds/login-bg-1-1.jpg') }});"></div>
+        <!-- /.login-page__bg -->
+        <div class="container">
+            <div class="login-page__wrap">
+                <div class="login-page__wrap__top">
+                    <div class="login-page__wrap__content">
+                        <h3 class="login-page__wrap__title">Join EdgeLoan</h3>
+                    </div><!-- /.login-page__wrap__content -->
+                    <ul class="tab-buttons">
+                        <li data-tab="#login" class="easilon-btn easilon-btn--white tab-btn">
+                            <span>Log In</span>
+                        </li>
+                        <li data-tab="#register" class="easilon-btn easilon-btn--white tab-btn active-btn">
+                            <span>Register</span>
+                        </li>
+                    </ul><!-- /.tab-buttons -->
+                </div><!-- /.login-page__wrap__top -->
+                
+                <div class="tabs-content">
+                    <!-- Login Tab -->
+                    <div class="tab fadeInUp animated" data-wow-delay="200ms" id="login" style="display: none;">
+                        <span class="login-page__tab-title">Sign in to your account</span>
+                        <p class="login-page__register-text">
+                            Already have an account? 
+                            <a href="{{ path('login') }}">Sign in here</a>
+                        </p>
+                        
+                        <div class="login-page__form__input-box login-page__form__input-box--button">
+                            <a href="{{ path('login') }}" class="easilon-btn login-page__form__btn">
+                                <span>Go to Login</span>
+                            </a>
+                        </div>
+                    </div><!-- /.login-tab -->
+
+                    <!-- Register Tab -->
+                    <div class="tab active-tab fadeInUp animated" data-wow-delay="200ms" id="register" style="display: block;">
+                        <span class="login-page__tab-title">Create your account</span>
+                        
+                        {{ form_start(registrationForm, {'attr': {'class': 'login-page__form'}}) }}
+                            
+                            {# First Name #}
+                            <div class="login-page__form__input-box">
+                                {{ form_widget(registrationForm.firstName, {
+                                    'attr': {
+                                        'placeholder': 'First Name'
+                                    }
+                                }) }}
+                                <span class="login-page__form__icon">
+                                    <i class="icon-user"></i>
+                                </span>
+                                {{ form_errors(registrationForm.firstName) }}
+                            </div>
+
+                            {# Last Name #}
+                            <div class="login-page__form__input-box">
+                                {{ form_widget(registrationForm.lastName, {
+                                    'attr': {
+                                        'placeholder': 'Last Name'
+                                    }
+                                }) }}
+                                <span class="login-page__form__icon">
+                                    <i class="icon-user"></i>
+                                </span>
+                                {{ form_errors(registrationForm.lastName) }}
+                            </div>
+
+                            {# Email #}
+                            <div class="login-page__form__input-box">
+                                {{ form_widget(registrationForm.email, {
+                                    'attr': {
+                                        'placeholder': 'Your Email'
+                                    }
+                                }) }}
+                                <span class="login-page__form__icon">
+                                    <i class="icon-mail-2"></i>
+                                </span>
+                                {{ form_errors(registrationForm.email) }}
+                            </div>
+
+                            {# Password #}
+                            <div class="login-page__form__input-box">
+                                {{ form_widget(registrationForm.plainPassword.first, {
+                                    'attr': {
+                                        'placeholder': 'Password',
+                                        'class': 'login-page__password'
+                                    }
+                                }) }}
+                                <span class="login-page__form__icon">
+                                    <i class="icon-padlock"></i>
+                                </span>
+                                <i class="toggle-password pass-field-icon fa fa-fw fa-eye-slash"></i>
+                                {{ form_errors(registrationForm.plainPassword.first) }}
+                            </div>
+
+                            {# Confirm Password #}
+                            <div class="login-page__form__input-box">
+                                {{ form_widget(registrationForm.plainPassword.second, {
+                                    'attr': {
+                                        'placeholder': 'Confirm Password',
+                                        'class': 'login-page__password'
+                                    }
+                                }) }}
+                                <span class="login-page__form__icon">
+                                    <i class="icon-padlock"></i>
+                                </span>
+                                <i class="toggle-password pass-field-icon fa fa-fw fa-eye-slash"></i>
+                                {{ form_errors(registrationForm.plainPassword.second) }}
+                            </div>
+
+                            {# Terms and Conditions #}
+                            <div class="login-page__form__input-box login-page__form__input-box--bottom">
+                                <div class="login-page__form__checked-box">
+                                    {{ form_widget(registrationForm.agreeTerms, {
+                                        'attr': {
+                                            'id': 'accept-policy'
+                                        }
+                                    }) }}
+                                    <label for="accept-policy">
+                                        <span></span>I accept the 
+                                        <a href="#" target="_blank">terms and conditions</a> and 
+                                        <a href="#" target="_blank">privacy policy</a>.
+                                    </label>
+                                </div>
+                                {{ form_errors(registrationForm.agreeTerms) }}
+                            </div>
+
+                            {# Submit Button #}
+                            <div class="login-page__form__input-box login-page__form__input-box--button">
+                                <button type="submit" class="easilon-btn login-page__form__btn">
+                                    <span>Create Account</span>
+                                </button>
+                            </div>
+
+                        {{ form_end(registrationForm) }}
+                        
+                        <div class="login-page__signin">
+                            <h4 class="login-page__signin__title">
+                                Already have an account? 
+                                <a href="{{ path('login') }}">Sign in here</a>
+                            </h4>
+                        </div>
+                    </div><!-- /.register-tab -->
+                </div><!-- /.tabs-content -->
+            </div><!-- /.login-page__wrap -->
+        </div><!-- /.container -->
+    </section><!-- /.registration-page -->
+{% endblock %}
+
+{% block extra_javascripts %}
+<script>
+    // Tab switching functionality
+    $(document).ready(function() {
+        $('.tab-btn').on('click', function() {
+            var tabId = $(this).data('tab');
+            
+            // Remove active classes
+            $('.tab-btn').removeClass('active-btn');
+            $('.tab').removeClass('active-tab').hide();
+            
+            // Add active class to clicked button
+            $(this).addClass('active-btn');
+            
+            // Show corresponding tab
+            $(tabId).addClass('active-tab').show();
+        });
+
+        // Password toggle functionality for multiple password fields
+        $('.toggle-password').on('click', function() {
+            var passwordField = $(this).siblings('.login-page__password');
+            var fieldType = passwordField.attr('type');
+            
+            if (fieldType === 'password') {
+                passwordField.attr('type', 'text');
+                $(this).removeClass('fa-eye-slash').addClass('fa-eye');
+            } else {
+                passwordField.attr('type', 'password');
+                $(this).removeClass('fa-eye').addClass('fa-eye-slash');
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -21,7 +21,7 @@ class ServiceTranslation
     #[ORM\JoinColumn(nullable: false)]
     private ?Service $service = null;
 
-    #[ORM\ManyToOne(targetEntity: Language::class)]
+    #[ORM\ManyToOne(targetEntity: Language::class, inversedBy: 'serviceTranslations')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Language $language = null;
 
