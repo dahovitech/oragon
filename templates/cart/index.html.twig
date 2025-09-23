@@ -1,0 +1,129 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Shopping Cart - Viva Shop{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+    <h1 class="mb-4">Shopping Cart</h1>
+
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+
+    {% if items|length > 0 %}
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Price</th>
+                                        <th>Quantity</th>
+                                        <th>Subtotal</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in items %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    <img src="https://via.placeholder.com/80x80" alt="{{ item.product.name }}" class="me-3 rounded" style="width: 80px;">
+                                                    <div>
+                                                        <h6 class="mb-0">{{ item.product.name }}</h6>
+                                                        <small class="text-muted">SKU: {{ item.product.sku }}</small>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="align-middle">${{ item.product.price }}</td>
+                                            <td class="align-middle">
+                                                <form method="post" action="{{ path('app_cart_update', {'id': item.product.id}) }}" class="d-inline">
+                                                    <div class="input-group" style="width: 120px;">
+                                                        <button class="btn btn-sm btn-outline-secondary" type="button" onclick="this.parentElement.querySelector('input').stepDown(); this.parentElement.parentElement.submit();">-</button>
+                                                        <input type="number" name="quantity" class="form-control form-control-sm text-center" value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}">
+                                                        <button class="btn btn-sm btn-outline-secondary" type="button" onclick="this.parentElement.querySelector('input').stepUp(); this.parentElement.parentElement.submit();">+</button>
+                                                    </div>
+                                                </form>
+                                            </td>
+                                            <td class="align-middle fw-bold">${{ item.subtotal|number_format(2) }}</td>
+                                            <td class="align-middle">
+                                                <a href="{{ path('app_cart_remove', {'id': item.product.id}) }}" class="btn btn-sm btn-danger">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ path('app_shop_index') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left me-2"></i>Continue Shopping
+                    </a>
+                    <a href="{{ path('app_cart_clear') }}" class="btn btn-outline-danger" onclick="return confirm('Are you sure you want to clear your cart?')">
+                        <i class="fas fa-trash me-2"></i>Clear Cart
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Order Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Subtotal:</span>
+                            <span>${{ total|number_format(2) }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Shipping:</span>
+                            <span>$0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Tax:</span>
+                            <span>$0.00</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-4">
+                            <strong>Total:</strong>
+                            <strong class="text-primary h4">${{ total|number_format(2) }}</strong>
+                        </div>
+                        <a href="#" class="btn btn-primary w-100 btn-lg">
+                            Proceed to Checkout
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h6>Have a coupon?</h6>
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Coupon code">
+                            <button class="btn btn-outline-secondary" type="button">Apply</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-shopping-cart fa-5x text-muted mb-4"></i>
+            <h3>Your cart is empty</h3>
+            <p class="text-muted mb-4">Start adding some products to your cart!</p>
+            <a href="{{ path('app_shop_index') }}" class="btn btn-primary">
+                <i class="fas fa-arrow-left me-2"></i>Continue Shopping
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

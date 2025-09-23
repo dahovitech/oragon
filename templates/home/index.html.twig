@@ -1,0 +1,69 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Welcome to Viva Shop{% endblock %}
+
+{% block body %}
+<!-- Hero Section -->
+<section class="hero bg-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-3 fw-bold mb-4">Welcome to Viva Shop</h1>
+                <p class="lead mb-4">Discover amazing products at unbeatable prices. Shop the latest trends and enjoy fast, reliable shipping.</p>
+                <a href="{{ path('app_shop_index') }}" class="btn btn-light btn-lg">
+                    Shop Now <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+            <div class="col-lg-6">
+                <img src="https://via.placeholder.com/600x400" alt="Hero" class="img-fluid rounded">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features py-5">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-4 mb-4">
+                <div class="card border-0 h-100">
+                    <div class="card-body">
+                        <i class="fas fa-shipping-fast fa-3x text-primary mb-3"></i>
+                        <h5 class="card-title">Fast Shipping</h5>
+                        <p class="card-text">Get your orders delivered quickly and reliably to your doorstep.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card border-0 h-100">
+                    <div class="card-body">
+                        <i class="fas fa-shield-alt fa-3x text-success mb-3"></i>
+                        <h5 class="card-title">Secure Payment</h5>
+                        <p class="card-text">Shop with confidence using our secure payment system.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="card border-0 h-100">
+                    <div class="card-body">
+                        <i class="fas fa-headset fa-3x text-info mb-3"></i>
+                        <h5 class="card-title">24/7 Support</h5>
+                        <p class="card-text">Our support team is always here to help you with any questions.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta bg-light py-5">
+    <div class="container text-center">
+        <h2 class="mb-4">Ready to Start Shopping?</h2>
+        <p class="lead mb-4">Browse our collection of premium products</p>
+        <a href="{{ path('app_shop_index') }}" class="btn btn-primary btn-lg">
+            Explore Shop
+        </a>
+    </div>
+</section>
+{% endblock %}
