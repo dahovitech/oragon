@@ -12,7 +12,8 @@ class TranslationService
     public function __construct(
         private EntityManagerInterface $entityManager,
         private LanguageRepository $languageRepository,
-        private LocaleService $localeService
+        private LocaleService $localeService,
+        private CacheService $cacheService
     ) {
     }
 
@@ -21,9 +22,22 @@ class TranslationService
      */
     public function getTranslation(object $entity, string $field, string $locale): ?string
     {
+        // Generate cache key
+        $entityId = method_exists($entity, 'getId') ? $entity->getId() : spl_object_id($entity);
+        $entityType = (new \ReflectionClass($entity))->getShortName();
+        $cacheKey = "{$entityType}_{$entityId}_{$field}";
+        
+        // Try cache first
+        $cachedTranslation = $this->cacheService->getTranslation($cacheKey, $locale);
+        if ($cachedTranslation !== null) {
+            return $cachedTranslation['value'] ?? null;
+        }
+
         $translationEntity = $this->getTranslationEntity($entity, $locale);
         
         if (!$translationEntity) {
+            // Cache null result to avoid repeated database queries
+            $this->cacheService->setTranslation($cacheKey, $locale, ['value' => null], 1800); // 30 min for null
             return null;
         }
 
@@ -33,7 +47,12 @@ class TranslationService
             return null;
         }
 
-        return $translationEntity->$getter();
+        $value = $translationEntity->$getter();
+        
+        // Cache the result
+        $this->cacheService->setTranslation($cacheKey, $locale, ['value' => $value]);
+        
+        return $value;
     }
 
     /**
@@ -153,6 +172,14 @@ class TranslationService
             $setter = 'set' . ucfirst($field);
             if (method_exists($translationEntity, $setter)) {
                 $translationEntity->$setter($value);
+                
+                // Invalidate cache for this field
+                $entityId = method_exists($entity, 'getId') ? $entity->getId() : spl_object_id($entity);
+                $entityType = (new \ReflectionClass($entity))->getShortName();
+                $cacheKey = "{$entityType}_{$entityId}_{$field}";
+                
+                // Update cache with new value
+                $this->cacheService->setTranslation($cacheKey, $locale, ['value' => $value]);
             }
         }
 

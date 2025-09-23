@@ -22,3 +22,33 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+    
+    # Cache Services Configuration
+    App\Service\CacheService:
+        arguments:
+            $translationCache: '@translation_cache'
+            $productCache: '@product_cache'
+            $categoryCache: '@category_cache'
+            $logger: '@logger'
+    
+    # Cache pools binding
+    translation_cache:
+        class: Symfony\Component\Cache\Adapter\RedisAdapter
+        arguments:
+            - '@cache.adapter.redis.provider'
+            - 'translation_cache'
+            - 86400  # 24 hours default TTL
+    
+    product_cache:
+        class: Symfony\Component\Cache\Adapter\RedisAdapter
+        arguments:
+            - '@cache.adapter.redis.provider'
+            - 'product_cache'
+            - 3600   # 1 hour default TTL
+    
+    category_cache:
+        class: Symfony\Component\Cache\Adapter\RedisAdapter
+        arguments:
+            - '@cache.adapter.redis.provider'
+            - 'category_cache'
+            - 7200   # 2 hours default TTL
