@@ -1,0 +1,59 @@
+framework:
+    cache:
+        # Adds a default cache pool using Redis
+        default_redis_provider: '%env(REDIS_URL)%'
+        
+        app: cache.adapter.redis
+        system: cache.adapter.redis
+        
+        pools:
+            # Application cache pool
+            cache.app:
+                adapter: cache.adapter.redis
+                default_lifetime: 3600
+                
+            # Sessions cache
+            cache.sessions:
+                adapter: cache.adapter.redis
+                default_lifetime: 86400
+                
+            # Doctrine cache
+            cache.doctrine:
+                adapter: cache.adapter.redis
+                default_lifetime: 7200
+                
+            # Rate limiter cache
+            cache.rate_limiter:
+                adapter: cache.adapter.redis
+                default_lifetime: 3600
+                
+            # 2FA cache
+            cache.two_factor:
+                adapter: cache.adapter.redis
+                default_lifetime: 1800
+
+    # Session configuration
+    session:
+        handler_id: cache.sessions
+        cookie_secure: auto
+        cookie_samesite: lax
+        
+    # Rate limiter configuration
+    rate_limiter:
+        # Login attempts limiter
+        login_limiter:
+            policy: 'sliding_window'
+            limit: 5
+            interval: '15 minutes'
+            
+        # API requests limiter
+        api_limiter:
+            policy: 'token_bucket'
+            limit: 100
+            rate: { interval: '1 minute', amount: 20 }
+            
+        # General requests limiter
+        general_limiter:
+            policy: 'fixed_window'
+            limit: 1000
+            interval: '1 hour'

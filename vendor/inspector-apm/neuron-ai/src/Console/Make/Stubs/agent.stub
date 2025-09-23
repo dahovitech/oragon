@@ -1,0 +1,24 @@
+<?php
+
+declare(strict_types=1);
+
+namespace [namespace];
+
+use NeuronAI\Agent;
+use NeuronAI\SystemPrompt;
+use NeuronAI\Providers\AIProviderInterface;
+
+class [classname] extends Agent
+{
+    protected function provider(): AIProviderInterface
+    {
+        // return an instance of Anthropic, OpenAI, Gemini, Ollama, etc...
+    }
+
+    public function instructions(): string
+    {
+        return (string) new SystemPrompt(
+            background: ["You are a friendly AI Agent created with NeuronAI framework."],
+        );
+    }
+}

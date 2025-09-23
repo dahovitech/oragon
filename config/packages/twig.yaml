@@ -1,0 +1,13 @@
+twig:
+    default_path: '%kernel.project_dir%/templates'
+    debug: '%kernel.debug%'
+    strict_variables: '%kernel.debug%'
+    exception_controller: null
+    
+    globals:
+        site_name: '%app.site.name%'
+        site_url: '%app.site.url%'
+    
+    # Additional paths for notification templates
+    paths:
+        '%kernel.project_dir%/templates/notification': notification
