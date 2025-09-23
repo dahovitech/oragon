@@ -1,0 +1,403 @@
+{% extends 'ecommerce_base.html.twig' %}
+
+{% block title %}Welcome to Oragon - Premium E-commerce Experience{% endblock %}
+
+{% block meta_description %}Discover premium products at Oragon. Shop the latest collections with fast shipping, secure checkout, and exceptional customer service.{% endblock %}
+
+{% block body %}
+<!-- Hero Section -->
+<section class="hero-section position-relative overflow-hidden">
+    <div class="hero-bg position-absolute w-100 h-100" style="
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+        opacity: 0.9;
+    "></div>
+    
+    <div class="container position-relative" style="z-index: 2;">
+        <div class="row align-items-center min-vh-75">
+            <div class="col-lg-6">
+                <div class="hero-content text-white">
+                    <h1 class="display-4 fw-bold mb-4 fade-in">
+                        Discover Premium Products
+                        <span class="text-warning d-block">Just for You</span>
+                    </h1>
+                    <p class="lead mb-4 fade-in" style="animation-delay: 0.2s;">
+                        Experience the finest selection of products with unmatched quality, 
+                        fast shipping, and exceptional customer service.
+                    </p>
+                    <div class="hero-buttons fade-in" style="animation-delay: 0.4s;">
+                        <a href="{{ path('ecommerce_product_list') }}" class="btn btn-warning btn-lg me-3 shadow-lg">
+                            <i class="fas fa-shopping-bag me-2"></i>Shop Now
+                        </a>
+                        <a href="{{ path('ecommerce_product_list', {featured: 1}) }}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-star me-2"></i>Featured Products
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-image text-center fade-in" style="animation-delay: 0.6s;">
+                    <img src="{{ asset('images/hero-product.png') }}" 
+                         class="img-fluid" 
+                         alt="Premium Products"
+                         style="max-height: 400px; filter: drop-shadow(0 20px 40px rgba(0,0,0,0.3));">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scroll indicator -->
+    <div class="position-absolute bottom-0 start-50 translate-middle-x mb-4">
+        <div class="scroll-indicator">
+            <i class="fas fa-chevron-down text-white fa-2x animate-bounce"></i>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="feature-card text-center h-100 p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-shipping-fast fa-3x text-primary"></i>
+                    </div>
+                    <h5 class="fw-bold">Free Shipping</h5>
+                    <p class="text-muted">Free shipping on orders over €100 worldwide</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="feature-card text-center h-100 p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-undo fa-3x text-success"></i>
+                    </div>
+                    <h5 class="fw-bold">30-Day Returns</h5>
+                    <p class="text-muted">Easy returns within 30 days of purchase</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="feature-card text-center h-100 p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-shield-alt fa-3x text-info"></i>
+                    </div>
+                    <h5 class="fw-bold">Secure Payment</h5>
+                    <p class="text-muted">Your payment information is safe and secure</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="feature-card text-center h-100 p-4">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-headset fa-3x text-warning"></i>
+                    </div>
+                    <h5 class="fw-bold">24/7 Support</h5>
+                    <p class="text-muted">Dedicated customer support anytime you need</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Products Section -->
+{% if featured_products|length > 0 %}
+<section class="featured-products py-5">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h2 class="display-5 fw-bold mb-3">Featured Products</h2>
+                <p class="lead text-muted">Discover our hand-picked selection of premium products</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            {% for product in featured_products|slice(0, 8) %}
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="card product-card h-100 border-0 shadow-sm">
+                        <div class="position-relative overflow-hidden">
+                            {% if product.featuredImage %}
+                                <img src="{{ product.featuredImage.path }}" 
+                                     class="card-img-top" 
+                                     alt="{{ product.name }}" 
+                                     style="height: 250px; object-fit: cover;">
+                            {% else %}
+                                <div class="card-img-top d-flex align-items-center justify-content-center bg-light" 
+                                     style="height: 250px;">
+                                    <i class="fas fa-image fa-3x text-muted"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Product badges -->
+                            {% if product.isFeatured %}
+                                <span class="badge bg-warning position-absolute top-0 start-0 m-2">Featured</span>
+                            {% endif %}
+                            
+                            {% if product.comparePrice and product.price < product.comparePrice %}
+                                <span class="badge bg-danger position-absolute top-0 end-0 m-2">
+                                    Sale
+                                </span>
+                            {% endif %}
+                            
+                            <!-- Quick view overlay -->
+                            <div class="card-overlay position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
+                                <a href="{{ path('ecommerce_product_show', {slug: product.slug}) }}" 
+                                   class="btn btn-light btn-sm opacity-0 quick-view-btn">
+                                    <i class="fas fa-eye me-1"></i>Quick View
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="card-body d-flex flex-column">
+                            <h6 class="card-title fw-bold">
+                                <a href="{{ path('ecommerce_product_show', {slug: product.slug}) }}" 
+                                   class="text-decoration-none text-dark">
+                                    {{ product.name }}
+                                </a>
+                            </h6>
+                            
+                            {% if product.shortDescription %}
+                                <p class="card-text text-muted small flex-grow-1">
+                                    {{ product.shortDescription|length > 60 ? product.shortDescription|slice(0, 60) ~ '...' : product.shortDescription }}
+                                </p>
+                            {% endif %}
+                            
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="price-section">
+                                        <span class="h5 text-primary fw-bold mb-0">€{{ product.price }}</span>
+                                        {% if product.comparePrice and product.price < product.comparePrice %}
+                                            <span class="text-muted text-decoration-line-through small ms-2">
+                                                €{{ product.comparePrice }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    {% if product.trackStock %}
+                                        {% if product.stock > 0 %}
+                                            <span class="badge bg-success-subtle text-success">In Stock</span>
+                                        {% else %}
+                                            <span class="badge bg-danger-subtle text-danger">Sold Out</span>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                
+                                <button class="btn btn-primary w-100 add-to-cart-btn" 
+                                        onclick="quickAddToCart({{ product.id }}, '{{ product.name|e('js') }}')"
+                                        {% if product.trackStock and product.stock == 0 %}disabled{% endif %}>
+                                    <i class="fas fa-shopping-cart me-2"></i>
+                                    {% if product.trackStock and product.stock == 0 %}
+                                        Sold Out
+                                    {% else %}
+                                        Add to Cart
+                                    {% endif %}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{{ path('ecommerce_product_list') }}" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-th me-2"></i>View All Products
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Categories Section -->
+<section class="categories-section py-5 bg-light">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h2 class="display-5 fw-bold mb-3">Shop by Category</h2>
+                <p class="lead text-muted">Browse our carefully curated categories</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            {% set sample_categories = [
+                {name: 'Electronics', icon: 'fas fa-laptop', color: 'primary'},
+                {name: 'Fashion', icon: 'fas fa-tshirt', color: 'danger'},
+                {name: 'Home & Garden', icon: 'fas fa-home', color: 'success'},
+                {name: 'Sports', icon: 'fas fa-dumbbell', color: 'warning'},
+                {name: 'Books', icon: 'fas fa-book', color: 'info'},
+                {name: 'Toys', icon: 'fas fa-gamepad', color: 'purple'}
+            ] %}
+            
+            {% for category in sample_categories %}
+                <div class="col-lg-2 col-md-4 col-6 mb-4">
+                    <a href="{{ path('ecommerce_product_list') }}" class="text-decoration-none">
+                        <div class="category-card text-center p-4 h-100 bg-white rounded shadow-sm hover-lift">
+                            <div class="category-icon mb-3">
+                                <i class="{{ category.icon }} fa-3x text-{{ category.color }}"></i>
+                            </div>
+                            <h6 class="fw-bold text-dark">{{ category.name }}</h6>
+                        </div>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Newsletter Section -->
+<section class="newsletter-section py-5 bg-primary text-white">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <div class="newsletter-content">
+                    <h3 class="fw-bold mb-2">Stay in the Loop</h3>
+                    <p class="mb-0">Subscribe to our newsletter for exclusive deals, new products, and special offers.</p>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <form class="newsletter-form" onsubmit="subscribeNewsletter(event)">
+                    <div class="input-group input-group-lg">
+                        <input type="email" 
+                               class="form-control" 
+                               placeholder="Enter your email address" 
+                               required>
+                        <button class="btn btn-warning fw-bold" type="submit">
+                            Subscribe
+                        </button>
+                    </div>
+                    <small class="text-white-50 mt-2 d-block">
+                        We respect your privacy. Unsubscribe at any time.
+                    </small>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Quick add to cart functionality
+        function quickAddToCart(productId, productName) {
+            const button = event.target;
+            const originalText = button.innerHTML;
+            
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+            
+            const formData = new FormData();
+            formData.append('product_id', productId);
+            formData.append('quantity', 1);
+            
+            fetch('{{ path('ecommerce_cart_add') }}', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(`${productName} added to cart!`, 'success');
+                    updateCartCount();
+                    
+                    // Animate button
+                    button.innerHTML = '<i class="fas fa-check me-2"></i>Added!';
+                    button.classList.add('btn-success');
+                    
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.classList.remove('btn-success');
+                        button.disabled = false;
+                    }, 2000);
+                } else {
+                    showToast(data.message || 'Error adding product to cart', 'error');
+                    button.innerHTML = originalText;
+                    button.disabled = false;
+                }
+            })
+            .catch(error => {
+                showToast('Error adding product to cart', 'error');
+                button.innerHTML = originalText;
+                button.disabled = false;
+            });
+        }
+        
+        // Newsletter subscription
+        function subscribeNewsletter(event) {
+            event.preventDefault();
+            const form = event.target;
+            const email = form.querySelector('input[type="email"]').value;
+            const button = form.querySelector('button');
+            const originalText = button.innerHTML;
+            
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Subscribing...';
+            
+            // Simulate newsletter subscription (implement actual logic)
+            setTimeout(() => {
+                showToast('Successfully subscribed to newsletter!', 'success');
+                form.reset();
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }, 1000);
+        }
+        
+        // Initialize animations on scroll
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate elements when they come into view
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animationDelay = '0s';
+                        entry.target.classList.add('fade-in');
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.feature-card, .product-card, .category-card').forEach(el => {
+                observer.observe(el);
+            });
+        });
+    </script>
+
+    <style>
+        .min-vh-75 {
+            min-height: 75vh;
+        }
+        
+        .hover-lift {
+            transition: transform 0.3s ease;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-5px);
+        }
+        
+        .animate-bounce {
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 53%, 80%, 100% {
+                animation-timing-function: cubic-bezier(0.215, 0.610, 0.355, 1.000);
+                transform: translate3d(0,0,0);
+            }
+            40%, 43% {
+                animation-timing-function: cubic-bezier(0.755, 0.050, 0.855, 0.060);
+                transform: translate3d(0, -8px, 0);
+            }
+            70% {
+                animation-timing-function: cubic-bezier(0.755, 0.050, 0.855, 0.060);
+                transform: translate3d(0, -4px, 0);
+            }
+            90% {
+                transform: translate3d(0,-2px,0);
+            }
+        }
+        
+        .card-overlay .quick-view-btn {
+            transition: opacity 0.3s ease;
+        }
+        
+        .product-card:hover .card-overlay .quick-view-btn {
+            opacity: 1 !important;
+        }
+    </style>
+{% endblock %}

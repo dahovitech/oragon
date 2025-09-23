@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="{{ app.request.locale }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Oragon - E-commerce{% endblock %}</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="{% block meta_description %}Professional e-commerce platform with quality products{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}ecommerce, shop, products, online store{% endblock %}">
+    <meta name="author" content="Oragon">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ app.request.uri }}">
+    <meta property="og:title" content="{% block og_title %}{{ block('title') }}{% endblock %}">
+    <meta property="og:description" content="{{ block('meta_description') }}">
+    <meta property="og:image" content="{% block og_image %}{{ asset('images/og-default.jpg') }}{% endblock %}">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{ app.request.uri }}">
+    <meta property="twitter:title" content="{{ block('title') }}">
+    <meta property="twitter:description" content="{{ block('meta_description') }}">
+    <meta property="twitter:image" content="{{ block('og_image') }}">
+    
+    <!-- Favicons -->
+    <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
+    <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    {% block stylesheets %}
+        {{ encore_entry_link_tags('app') }}
+        <link href="{{ asset('build/ecommerce.css') }}" rel="stylesheet">
+    {% endblock %}
+
+    {% block javascripts_head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    <!-- Skip to main content -->
+    <a class="visually-hidden-focusable" href="#main-content">Skip to main content</a>
+    
+    <!-- Header -->
+    <header class="site-header" role="banner">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
+            <div class="container">
+                <!-- Brand -->
+                <a class="navbar-brand d-flex align-items-center" href="{{ path('frontend_homepage') }}">
+                    <div class="brand-logo me-2">
+                        <i class="fas fa-gem text-primary"></i>
+                    </div>
+                    <span class="brand-text fw-bold text-gradient">Oragon</span>
+                </a>
+
+                <!-- Mobile toggle -->
+                <div class="d-lg-none d-flex align-items-center">
+                    <!-- Mobile Cart -->
+                    <div class="cart-dropdown me-2">
+                        <button class="btn btn-outline-primary position-relative" 
+                                type="button" 
+                                data-bs-toggle="offcanvas" 
+                                data-bs-target="#mobileCart">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span class="cart-count position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                                  id="mobile-cart-count">0</span>
+                        </button>
+                    </div>
+                    
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                </div>
+
+                <!-- Navigation -->
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav mx-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('frontend_homepage') }}">
+                                <i class="fas fa-home me-1"></i>Home
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-store me-1"></i>Shop
+                            </a>
+                            <ul class="dropdown-menu border-0 shadow">
+                                <li><a class="dropdown-item" href="{{ path('ecommerce_product_list') }}">All Products</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ path('ecommerce_product_list', {featured: 1}) }}">Featured</a></li>
+                                <li><a class="dropdown-item" href="{{ path('ecommerce_product_list', {sort: 'created', order: 'DESC'}) }}">New Arrivals</a></li>
+                                <li><a class="dropdown-item" href="{{ path('ecommerce_product_list', {sort: 'popularity'}) }}">Best Sellers</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('frontend_services_index') }}">
+                                <i class="fas fa-concierge-bell me-1"></i>Services
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('frontend_about') }}">
+                                <i class="fas fa-info-circle me-1"></i>About
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('frontend_contact') }}">
+                                <i class="fas fa-envelope me-1"></i>Contact
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- Right side navigation -->
+                    <div class="navbar-nav">
+                        <!-- Search -->
+                        <div class="nav-item dropdown me-2">
+                            <button class="nav-link btn btn-link" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-search"></i>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end p-3" style="width: 300px;">
+                                <form action="{{ path('ecommerce_product_search') }}" method="GET">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" name="q" placeholder="Search products...">
+                                        <button class="btn btn-primary" type="submit">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Cart -->
+                        <div class="nav-item dropdown me-2 d-none d-lg-block">
+                            <button class="nav-link btn btn-link position-relative" 
+                                    type="button" 
+                                    data-bs-toggle="dropdown"
+                                    onclick="loadMiniCart()">
+                                <i class="fas fa-shopping-cart"></i>
+                                <span class="cart-count position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                                      id="cart-count">0</span>
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-end border-0 shadow" style="width: 350px;" id="mini-cart-content">
+                                <div class="p-3 text-center">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User Account -->
+                        {% if app.user %}
+                            <div class="nav-item dropdown">
+                                <button class="nav-link btn btn-link dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user-circle me-1"></i>
+                                    {{ app.user.firstName ?? app.user.email }}
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
+                                    <li><a class="dropdown-item" href="{{ path('user_profile') }}">
+                                        <i class="fas fa-user me-2"></i>Profile
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ path('user_orders') }}">
+                                        <i class="fas fa-shopping-bag me-2"></i>Orders
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ path('user_wishlist') }}">
+                                        <i class="fas fa-heart me-2"></i>Wishlist
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_logout') }}">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                    </a></li>
+                                </ul>
+                            </div>
+                        {% else %}
+                            <div class="nav-item">
+                                <a class="nav-link" href="{{ path('app_login') }}">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Login
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Announcement Bar -->
+        {% block announcement_bar %}
+            <div class="announcement-bar bg-primary text-white py-2">
+                <div class="container">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-shipping-fast me-2"></i>
+                                <span class="small">Free shipping on orders over €100 | 30-day return policy</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <small>
+                                <i class="fas fa-phone me-1"></i>
+                                Support: +33 1 23 45 67 89
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endblock %}
+    </header>
+
+    <!-- Main Content -->
+    <main id="main-content" role="main">
+        {% block body %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer bg-dark text-white mt-5">
+        <div class="container py-5">
+            <div class="row">
+                <!-- Company Info -->
+                <div class="col-lg-3 col-md-6 mb-4">
+                    <div class="footer-section">
+                        <h5 class="text-gradient mb-3">Oragon</h5>
+                        <p class="text-muted">Your trusted e-commerce partner for quality products and exceptional service.</p>
+                        <div class="social-links">
+                            <a href="#" class="text-white me-3"><i class="fab fa-facebook"></i></a>
+                            <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="text-white me-3"><i class="fab fa-instagram"></i></a>
+                            <a href="#" class="text-white"><i class="fab fa-linkedin"></i></a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Links -->
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <div class="footer-section">
+                        <h6 class="fw-bold mb-3">Quick Links</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><a href="{{ path('ecommerce_product_list') }}" class="text-muted text-decoration-none">Shop</a></li>
+                            <li class="mb-2"><a href="{{ path('frontend_about') }}" class="text-muted text-decoration-none">About Us</a></li>
+                            <li class="mb-2"><a href="{{ path('frontend_contact') }}" class="text-muted text-decoration-none">Contact</a></li>
+                            <li class="mb-2"><a href="#" class="text-muted text-decoration-none">FAQ</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Customer Service -->
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <div class="footer-section">
+                        <h6 class="fw-bold mb-3">Customer Service</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Shipping Info</a></li>
+                            <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Returns</a></li>
+                            <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Size Guide</a></li>
+                            <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Terms & Conditions</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Categories -->
+                <div class="col-lg-2 col-md-6 mb-4">
+                    <div class="footer-section">
+                        <h6 class="fw-bold mb-3">Categories</h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Featured</a></li>
+                            <li class="mb-2"><a href="#" class="text-muted text-decoration-none">New Arrivals</a></li>
+                            <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Best Sellers</a></li>
+                            <li class="mb-2"><a href="#" class="text-muted text-decoration-none">Sale</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Newsletter -->
+                <div class="col-lg-3 col-md-12 mb-4">
+                    <div class="footer-section">
+                        <h6 class="fw-bold mb-3">Newsletter</h6>
+                        <p class="text-muted small mb-3">Subscribe to get updates on new products and exclusive offers.</p>
+                        <form class="newsletter-form">
+                            <div class="input-group">
+                                <input type="email" class="form-control" placeholder="Your email">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <hr class="my-4 border-secondary">
+
+            <!-- Copyright -->
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="text-muted small mb-0">
+                        © {{ "now"|date("Y") }} Oragon. All rights reserved. | 
+                        <a href="#" class="text-muted">Privacy Policy</a>
+                    </p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="payment-methods">
+                        <span class="text-muted small me-3">We accept:</span>
+                        <i class="fab fa-cc-visa fa-2x text-muted me-2"></i>
+                        <i class="fab fa-cc-mastercard fa-2x text-muted me-2"></i>
+                        <i class="fab fa-cc-paypal fa-2x text-muted"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mobile Cart Offcanvas -->
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="mobileCart">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title">Shopping Cart</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body" id="mobile-cart-content">
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scroll to Top Button -->
+    <button class="btn btn-primary position-fixed bottom-0 end-0 m-4 rounded-circle shadow d-none" 
+            id="scrollToTop" 
+            style="z-index: 1050; width: 50px; height: 50px;">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1060">
+        <!-- Toasts will be dynamically added here -->
+    </div>
+
+    {% block javascripts %}
+        {{ encore_entry_script_tags('app') }}
+        <script>
+            // Initialize cart count on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                updateCartCount();
+                initializeScrollToTop();
+            });
+
+            // Update cart count
+            function updateCartCount() {
+                fetch('{{ path('ecommerce_cart_count') }}')
+                .then(response => response.json())
+                .then(data => {
+                    const cartCount = document.getElementById('cart-count');
+                    const mobileCartCount = document.getElementById('mobile-cart-count');
+                    
+                    if (cartCount) cartCount.textContent = data.total_quantity || 0;
+                    if (mobileCartCount) mobileCartCount.textContent = data.total_quantity || 0;
+                    
+                    // Hide/show cart count badges
+                    const hasItems = data.total_quantity > 0;
+                    if (cartCount) cartCount.style.display = hasItems ? 'block' : 'none';
+                    if (mobileCartCount) mobileCartCount.style.display = hasItems ? 'block' : 'none';
+                })
+                .catch(error => console.log('Error updating cart count:', error));
+            }
+
+            // Load mini cart content
+            function loadMiniCart() {
+                fetch('{{ path('ecommerce_cart_mini') }}')
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('mini-cart-content').innerHTML = html;
+                })
+                .catch(error => {
+                    document.getElementById('mini-cart-content').innerHTML = 
+                        '<div class="p-3 text-center text-danger">Error loading cart</div>';
+                });
+            }
+
+            // Initialize scroll to top button
+            function initializeScrollToTop() {
+                const scrollBtn = document.getElementById('scrollToTop');
+                
+                window.addEventListener('scroll', function() {
+                    if (window.scrollY > 300) {
+                        scrollBtn.classList.remove('d-none');
+                    } else {
+                        scrollBtn.classList.add('d-none');
+                    }
+                });
+                
+                scrollBtn.addEventListener('click', function() {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            }
+
+            // Show toast notification
+            function showToast(message, type = 'success') {
+                const toastContainer = document.querySelector('.toast-container');
+                const toastId = 'toast-' + Date.now();
+                const bgClass = type === 'success' ? 'bg-success' : 
+                                type === 'error' ? 'bg-danger' : 'bg-primary';
+                
+                const toastHTML = `
+                    <div id="${toastId}" class="toast ${bgClass} text-white" role="alert">
+                        <div class="d-flex">
+                            <div class="toast-body">${message}</div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" 
+                                    data-bs-dismiss="toast"></button>
+                        </div>
+                    </div>
+                `;
+                
+                toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+                const toastElement = document.getElementById(toastId);
+                const toast = new bootstrap.Toast(toastElement);
+                toast.show();
+                
+                // Remove toast element after it's hidden
+                toastElement.addEventListener('hidden.bs.toast', () => {
+                    toastElement.remove();
+                });
+            }
+        </script>
+    {% endblock %}
+</body>
+</html>
