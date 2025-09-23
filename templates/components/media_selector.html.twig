@@ -140,7 +140,7 @@
                                     <div class="upload-content text-center">
                                         <i class="bi bi-cloud-upload text-primary" style="font-size: 3rem;"></i>
                                         <h6 class="mt-3 mb-2">Glissez vos images ici</h6>
-                                        <p class="mb-3">ou <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('mediaUploadInput').click()">
+                                        <p class="mb-3">ou <button type="button" class="btn btn-primary btn-sm" id="browseFilesBtn">
                                             <i class="bi bi-folder2-open me-1"></i>parcourez vos fichiers
                                         </button></p>
                                         <small class="text-muted">Formats acceptés: JPG, PNG, GIF, WebP • Taille max: 10 Mo par fichier</small>
@@ -536,6 +536,11 @@ function openMediaLibrary(inputName) {
     // Charger les médias
     loadMediaLibrary();
     
+    // Initialiser l'upload
+    setTimeout(() => {
+        initializeUpload();
+    }, 300);
+    
     // Vérifier si Bootstrap est disponible
     if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
         const modal = new bootstrap.Modal(modalElement);
@@ -554,6 +559,11 @@ function openMediaLibrary(inputName) {
         backdrop.className = 'modal-backdrop fade show';
         backdrop.id = 'mediaModalBackdrop';
         document.body.appendChild(backdrop);
+        
+        // Initialiser l'upload après affichage
+        setTimeout(() => {
+            initializeUpload();
+        }, 100);
     }
 }
 
@@ -788,17 +798,47 @@ function goToMediaLibraryPage(page) {
 function initializeUpload() {
     const uploadInput = document.getElementById('mediaUploadInput');
     const dropzone = document.getElementById('uploadDropzone');
+    const browseBtn = document.getElementById('browseFilesBtn');
     
     if (uploadInput) {
+        // Retirer les anciens event listeners pour éviter les doublons
+        uploadInput.removeEventListener('change', handleFileSelection);
         uploadInput.addEventListener('change', handleFileSelection);
     }
     
     if (dropzone) {
+        // Retirer les anciens event listeners pour éviter les doublons
+        dropzone.removeEventListener('dragover', handleDragOver);
+        dropzone.removeEventListener('dragleave', handleDragLeave);
+        dropzone.removeEventListener('drop', handleFileDrop);
+        
         // Gestionnaires drag & drop
         dropzone.addEventListener('dragover', handleDragOver);
         dropzone.addEventListener('dragleave', handleDragLeave);
         dropzone.addEventListener('drop', handleFileDrop);
-        dropzone.addEventListener('click', () => uploadInput.click());
+        
+        // Clic sur la dropzone pour ouvrir le sélecteur
+        dropzone.addEventListener('click', function(e) {
+            // Éviter de déclencher si c'est déjà le bouton qui a été cliqué
+            if (!e.target.closest('#browseFilesBtn') && uploadInput) {
+                uploadInput.click();
+            }
+        });
+    }
+    
+    if (browseBtn) {
+        // Retirer l'ancien event listener pour éviter les doublons
+        browseBtn.removeEventListener('click', triggerFileSelection);
+        browseBtn.addEventListener('click', triggerFileSelection);
+    }
+}
+
+function triggerFileSelection(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    const uploadInput = document.getElementById('mediaUploadInput');
+    if (uploadInput) {
+        uploadInput.click();
     }
 }
 
@@ -981,8 +1021,13 @@ function initializeTabs() {
                 loadMediaLibrary();
             }
             
-            // Si on passe à l'onglet upload, masquer le message de succès
+            // Si on passe à l'onglet upload, réinitialiser l'upload et masquer le message de succès
             if (targetTab === '#upload-panel') {
+                // Réinitialiser l'upload pour s'assurer que les event listeners sont attachés
+                setTimeout(() => {
+                    initializeUpload();
+                }, 100);
+                
                 const successMessage = document.getElementById('uploadSuccessMessage');
                 if (successMessage) {
                     successMessage.style.display = 'none';
@@ -990,6 +1035,34 @@ function initializeTabs() {
             }
         });
     });
+    
+    // Fallback pour les navigateurs sans support Bootstrap JS
+    const selectTab = document.getElementById('select-tab');
+    const uploadTab = document.getElementById('upload-tab');
+    
+    if (selectTab && uploadTab) {
+        selectTab.addEventListener('click', function() {
+            setTimeout(() => {
+                const selectPanel = document.getElementById('select-panel');
+                if (selectPanel && selectPanel.classList.contains('active')) {
+                    loadMediaLibrary();
+                }
+            }, 100);
+        });
+        
+        uploadTab.addEventListener('click', function() {
+            setTimeout(() => {
+                const uploadPanel = document.getElementById('upload-panel');
+                if (uploadPanel && uploadPanel.classList.contains('active')) {
+                    initializeUpload();
+                    const successMessage = document.getElementById('uploadSuccessMessage');
+                    if (successMessage) {
+                        successMessage.style.display = 'none';
+                    }
+                }
+            }, 100);
+        });
+    }
 }
 
 // Event listeners pour la recherche et les filtres
@@ -1013,8 +1086,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Initialiser l'upload
-    initializeUpload();
+    // Initialiser l'upload avec délai pour s'assurer que le DOM est prêt
+    setTimeout(() => {
+        initializeUpload();
+    }, 500);
     
     // Initialiser les onglets
     initializeTabs();
@@ -1047,6 +1122,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 (modalElement.style.display === 'block' || modalElement.classList.contains('show'))) {
                 closeMediaLibrary();
             }
+        });
+        
+        // Réinitialiser l'upload quand le modal s'ouvre
+        modalElement.addEventListener('shown.bs.modal', function() {
+            setTimeout(() => {
+                initializeUpload();
+            }, 100);
         });
     }
 });
