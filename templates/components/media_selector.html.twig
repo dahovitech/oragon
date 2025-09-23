@@ -64,6 +64,24 @@
                 <button type="button" class="btn-close" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                <!-- Section d'upload multiple -->
+                <div class="upload-section mb-4 p-3 border rounded bg-light">
+                    <h6 class="mb-3">
+                        <i class="bi bi-cloud-upload me-2"></i>Uploader de nouveaux médias
+                    </h6>
+                    <div class="upload-dropzone" id="uploadDropzone">
+                        <input type="file" id="mediaUploadInput" multiple accept="image/*" style="display: none;">
+                        <div class="upload-content text-center">
+                            <i class="bi bi-cloud-upload text-primary" style="font-size: 2rem;"></i>
+                            <p class="mb-2">Glissez vos images ici ou <button type="button" class="btn btn-link p-0" onclick="document.getElementById('mediaUploadInput').click()">cliquez pour parcourir</button></p>
+                            <small class="text-muted">Formats acceptés: JPG, PNG, GIF, WebP</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress bars pour les uploads -->
+                    <div id="uploadProgress" class="mt-3" style="display: none;"></div>
+                </div>
+                
                 <!-- Barre de recherche et filtres -->
                 <div class="row mb-3">
                     <div class="col-md-8">
@@ -212,6 +230,43 @@
     padding: 0.5rem;
     font-size: 0.8rem;
 }
+
+/* Styles pour la zone d'upload */
+.upload-dropzone {
+    border: 2px dashed #dee2e6;
+    border-radius: 0.375rem;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.upload-dropzone:hover,
+.upload-dropzone.dragover {
+    border-color: #0d6efd;
+    background-color: #f8f9fa;
+}
+
+.upload-dropzone.dragover {
+    border-color: #0d6efd;
+    background-color: #e7f1ff;
+}
+
+.upload-progress-item {
+    margin-bottom: 0.5rem;
+}
+
+.upload-progress-bar {
+    transition: width 0.3s ease;
+}
+
+.upload-success {
+    color: #198754;
+}
+
+.upload-error {
+    color: #dc3545;
+}
 </style>
 
 <script>
@@ -262,22 +317,44 @@ function removeSelectedMedia(inputName) {
 }
 
 function selectMedia(mediaId, mediaUrl, mediaAlt) {
+    // Vérification de sécurité
+    if (!currentInputName) {
+        console.error('currentInputName is not defined');
+        return;
+    }
+    
     // Mettre à jour le champ caché
-    document.getElementById('mediaInput_' + currentInputName).value = mediaId;
+    const hiddenInput = document.getElementById('mediaInput_' + currentInputName);
+    if (hiddenInput) {
+        hiddenInput.value = mediaId;
+    }
     
     // Mettre à jour l'aperçu
     const previewContainer = document.getElementById('mediaPreview_' + currentInputName);
     const emptyContainer = document.getElementById('mediaEmpty_' + currentInputName);
     
-    previewContainer.querySelector('.media-preview-image').src = mediaUrl;
-    previewContainer.querySelector('.media-preview-image').alt = mediaAlt || '';
-    previewContainer.querySelector('.media-preview-info small').textContent = mediaAlt || '';
-    
-    previewContainer.classList.remove('d-none');
-    emptyContainer.classList.add('d-none');
-    
-    // Fermer la modal
-    closeMediaLibrary();
+    if (previewContainer && emptyContainer) {
+        // Vérifier que les éléments enfants existent
+        const previewImage = previewContainer.querySelector('.media-preview-image');
+        const previewInfo = previewContainer.querySelector('.media-preview-info small');
+        
+        if (previewImage) {
+            previewImage.src = mediaUrl;
+            previewImage.alt = mediaAlt || '';
+        }
+        
+        if (previewInfo) {
+            previewInfo.textContent = mediaAlt || '';
+        }
+        
+        previewContainer.classList.remove('d-none');
+        emptyContainer.classList.add('d-none');
+        
+        // Fermer la modal
+        closeMediaLibrary();
+    } else {
+        console.error('Preview containers not found for input:', currentInputName);
+    }
 }
 
 function closeMediaLibrary() {
@@ -407,6 +484,161 @@ function goToMediaLibraryPage(page) {
     loadMediaLibrary();
 }
 
+// Fonctions pour l'upload multiple
+function initializeUpload() {
+    const uploadInput = document.getElementById('mediaUploadInput');
+    const dropzone = document.getElementById('uploadDropzone');
+    
+    if (uploadInput) {
+        uploadInput.addEventListener('change', handleFileSelection);
+    }
+    
+    if (dropzone) {
+        // Gestionnaires drag & drop
+        dropzone.addEventListener('dragover', handleDragOver);
+        dropzone.addEventListener('dragleave', handleDragLeave);
+        dropzone.addEventListener('drop', handleFileDrop);
+        dropzone.addEventListener('click', () => uploadInput.click());
+    }
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.add('dragover');
+}
+
+function handleDragLeave(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.remove('dragover');
+}
+
+function handleFileDrop(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.currentTarget.classList.remove('dragover');
+    
+    const files = Array.from(e.dataTransfer.files);
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    
+    if (imageFiles.length > 0) {
+        uploadFiles(imageFiles);
+    } else {
+        alert('Veuillez sélectionner uniquement des fichiers image.');
+    }
+}
+
+function handleFileSelection(e) {
+    const files = Array.from(e.target.files);
+    uploadFiles(files);
+    // Réinitialiser l'input pour permettre la sélection du même fichier
+    e.target.value = '';
+}
+
+async function uploadFiles(files) {
+    const progressContainer = document.getElementById('uploadProgress');
+    progressContainer.style.display = 'block';
+    progressContainer.innerHTML = '';
+    
+    const formData = new FormData();
+    
+    // Ajouter tous les fichiers au FormData
+    files.forEach((file, index) => {
+        formData.append(`files[${index}]`, file);
+        
+        // Créer la barre de progression pour chaque fichier
+        const progressItem = createProgressItem(file.name, index);
+        progressContainer.appendChild(progressItem);
+    });
+    
+    try {
+        // Upload avec suivi de progression
+        const response = await fetch('{{ path("admin_media_upload") }}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Marquer tous les fichiers comme réussis
+            files.forEach((file, index) => {
+                updateProgressItem(index, 100, 'success', 'Upload réussi');
+            });
+            
+            // Recharger la bibliothèque de médias
+            setTimeout(() => {
+                loadMediaLibrary();
+                progressContainer.style.display = 'none';
+            }, 2000);
+        } else {
+            // Gérer les erreurs individuelles si disponibles
+            if (result.errors && Array.isArray(result.errors)) {
+                result.errors.forEach((error, index) => {
+                    updateProgressItem(index, 0, 'error', error);
+                });
+            } else {
+                files.forEach((file, index) => {
+                    updateProgressItem(index, 0, 'error', result.message || 'Erreur d\'upload');
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Erreur upload:', error);
+        files.forEach((file, index) => {
+            updateProgressItem(index, 0, 'error', 'Erreur réseau');
+        });
+    }
+}
+
+function createProgressItem(fileName, index) {
+    const item = document.createElement('div');
+    item.className = 'upload-progress-item';
+    item.id = `progress-${index}`;
+    
+    item.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <small class="text-truncate" style="max-width: 70%;">${fileName}</small>
+            <small class="upload-status">En cours...</small>
+        </div>
+        <div class="progress" style="height: 6px;">
+            <div class="progress-bar upload-progress-bar" role="progressbar" style="width: 0%"></div>
+        </div>
+    `;
+    
+    return item;
+}
+
+function updateProgressItem(index, percentage, status, message) {
+    const item = document.getElementById(`progress-${index}`);
+    if (!item) return;
+    
+    const progressBar = item.querySelector('.upload-progress-bar');
+    const statusElement = item.querySelector('.upload-status');
+    
+    if (progressBar) {
+        progressBar.style.width = `${percentage}%`;
+        
+        // Changer la couleur selon le statut
+        if (status === 'success') {
+            progressBar.classList.remove('bg-danger');
+            progressBar.classList.add('bg-success');
+        } else if (status === 'error') {
+            progressBar.classList.remove('bg-success');
+            progressBar.classList.add('bg-danger');
+        }
+    }
+    
+    if (statusElement) {
+        statusElement.textContent = message;
+        statusElement.className = `upload-status ${status === 'success' ? 'upload-success' : status === 'error' ? 'upload-error' : ''}`;
+    }
+}
+
 // Event listeners pour la recherche et les filtres
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('mediaLibrarySearch');
@@ -427,6 +659,9 @@ document.addEventListener('DOMContentLoaded', function() {
             loadMediaLibrary();
         });
     }
+    
+    // Initialiser l'upload
+    initializeUpload();
     
     // Gestionnaires pour fermer la modal
     const modalElement = document.getElementById('mediaLibraryModal');
