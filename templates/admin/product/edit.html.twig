@@ -1,0 +1,87 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit Product - Admin{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Edit Product: {{ product.name }}</h1>
+        <a href="{{ path('app_admin_product_index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to list
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {{ form_start(form) }}
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form_row(form.sku) }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form_row(form.name) }}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    {{ form_row(form.slug) }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form_row(form.description) }}
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        {{ form_row(form.price) }}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        {{ form_row(form.compareAtPrice) }}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        {{ form_row(form.costPerItem) }}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form_row(form.stock) }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form_row(form.weight) }}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    {{ form_row(form.category) }}
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form_row(form.isActive) }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form_row(form.isFeatured) }}
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Update Product
+                    </button>
+                    <a href="{{ path('app_admin_product_index') }}" class="btn btn-secondary">
+                        Cancel
+                    </a>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title text-danger">Danger Zone</h5>
+            {{ include('admin/product/_delete_form.html.twig') }}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Product: {{ product.name }} - Admin{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Product Details</h1>
+        <div>
+            <a href="{{ path('app_admin_product_edit', {'id': product.id}) }}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{{ path('app_admin_product_index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to list
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Basic Information</h5>
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th width="30%">ID</th>
+                                <td>{{ product.id }}</td>
+                            </tr>
+                            <tr>
+                                <th>SKU</th>
+                                <td>{{ product.sku }}</td>
+                            </tr>
+                            <tr>
+                                <th>Name</th>
+                                <td>{{ product.name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Slug</th>
+                                <td>{{ product.slug }}</td>
+                            </tr>
+                            <tr>
+                                <th>Category</th>
+                                <td>{{ product.category ? product.category.name : '-' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Description</th>
+                                <td>{{ product.description|nl2br }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h5>Pricing & Inventory</h5>
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th width="40%">Price</th>
+                                <td>{{ product.price }}</td>
+                            </tr>
+                            <tr>
+                                <th>Compare at Price</th>
+                                <td>{{ product.compareAtPrice ?? '-' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Cost per Item</th>
+                                <td>{{ product.costPerItem ?? '-' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Stock</th>
+                                <td>{{ product.stock }}</td>
+                            </tr>
+                            <tr>
+                                <th>Weight</th>
+                                <td>{{ product.weight ? product.weight ~ ' kg' : '-' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h5 class="mt-4">Status</h5>
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th width="40%">Active</th>
+                                <td>
+                                    {% if product.isActive %}
+                                        <span class="badge bg-success">Yes</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">No</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Featured</th>
+                                <td>
+                                    {% if product.isFeatured %}
+                                        <span class="badge bg-success">Yes</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">No</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Created At</th>
+                                <td>{{ product.createdAt ? product.createdAt|date('Y-m-d H:i:s') : '-' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Updated At</th>
+                                <td>{{ product.updatedAt ? product.updatedAt|date('Y-m-d H:i:s') : '-' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title text-danger">Danger Zone</h5>
+            {{ include('admin/product/_delete_form.html.twig') }}
+        </div>
+    </div>
+</div>
+{% endblock %}

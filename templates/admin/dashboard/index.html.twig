@@ -1,0 +1,95 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+    <h1 class="mb-5">Admin Dashboard</h1>
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-box text-primary"></i> Products
+                    </h5>
+                    <p class="card-text">Manage your product catalog, inventory and pricing.</p>
+                    <a href="{{ path('app_admin_product_index') }}" class="btn btn-primary">
+                        Manage Products
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-folder text-success"></i> Categories
+                    </h5>
+                    <p class="card-text">Organize products with categories and subcategories.</p>
+                    <a href="{{ path('app_admin_category_index') }}" class="btn btn-success">
+                        Manage Categories
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-shopping-cart text-info"></i> Orders
+                    </h5>
+                    <p class="card-text">View and manage customer orders and shipments.</p>
+                    <a href="{{ path('app_admin_order_index') }}" class="btn btn-info">
+                        View Orders
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-blog text-warning"></i> Blog Posts
+                    </h5>
+                    <p class="card-text">Create and manage blog posts and articles.</p>
+                    <a href="{{ path('app_admin_blog_index') }}" class="btn btn-warning">
+                        Manage Blog
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-file-alt text-secondary"></i> Pages
+                    </h5>
+                    <p class="card-text">Manage static pages like About, Contact, etc.</p>
+                    <a href="{{ path('app_admin_page_index') }}" class="btn btn-secondary">
+                        Manage Pages
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-cog text-dark"></i> Settings
+                    </h5>
+                    <p class="card-text">Configure store settings and preferences.</p>
+                    <a href="#" class="btn btn-dark disabled">
+                        Settings (Coming Soon)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ page.id ? 'Edit' : 'New' }} Page - Admin{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>{{ page.id ? 'Edit Page: ' ~ page.title : 'Create New Page' }}</h1>
+        <a href="{{ path('app_admin_page_index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to list
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {{ form_start(form) }}
+                {{ form_row(form.title) }}
+                {{ form_row(form.slug) }}
+                {{ form_row(form.content) }}
+                {{ form_row(form.metaDescription) }}
+                {{ form_row(form.isPublished) }}
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> {{ page.id ? 'Update' : 'Create' }} Page
+                    </button>
+                    <a href="{{ path('app_admin_page_index') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+
+    {% if page.id %}
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title text-danger">Danger Zone</h5>
+            <form method="post" action="{{ path('app_admin_page_delete', {'id': page.id}) }}" onsubmit="return confirm('Are you sure?');">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ page.id) }}">
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> Delete Page
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
