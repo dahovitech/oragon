@@ -164,7 +164,7 @@ Cette réorganisation apporte une **séparation claire** des fonctionnalités et
 Le système d'onglets offre une **navigation claire** tout en conservant la **puissance fonctionnelle** du composant original. L'interface est également **entièrement responsive** et **compatible mode sombre**.
 
 ---
-**Auteur :** MiniMax Agent  
+**Auteur :** Prudence ASSOGBA  
 **Date :** 2025-09-23  
 **Version :** 1.0  
 **Status :** ✅ Implémenté et testé
