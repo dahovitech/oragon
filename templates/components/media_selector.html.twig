@@ -412,6 +412,7 @@ function removeSelectedMedia(inputName) {
         if (previewImage) {
             previewImage.src = '';
             previewImage.alt = '';
+            previewImage.style.display = 'none'; // Cacher l'image
         }
         
         const previewInfo = previewContainer.querySelector('.media-preview-info small');
@@ -450,6 +451,9 @@ function selectMedia(mediaId, mediaUrl, mediaAlt) {
             const imageUrl = mediaUrl.startsWith('/') ? mediaUrl : '/' + mediaUrl;
             previewImage.src = imageUrl;
             previewImage.alt = mediaAlt || '';
+            
+            // Rendre l'image visible (au cas où elle était cachée)
+            previewImage.style.display = 'block';
             
             // Forcer le rechargement de l'image en cas de problème de cache
             previewImage.onload = function() {
