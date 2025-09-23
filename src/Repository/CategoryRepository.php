@@ -46,6 +46,19 @@ class CategoryRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * Count active categories
+     */
+    public function countActiveCategories(): int
+    {
+        return $this->createQueryBuilder('c')
+            ->select('COUNT(c.id)')
+            ->andWhere('c.isActive = :active')
+            ->setParameter('active', true)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     public function save(Category $entity, bool $flush = false): void
     {
         $this->getEntityManager()->persist($entity);

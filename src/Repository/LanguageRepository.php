@@ -94,4 +94,17 @@ class LanguageRepository extends ServiceEntityRepository
 
         return array_column($languages, 'code');
     }
+
+    /**
+     * Count active languages
+     */
+    public function countActiveLanguages(): int
+    {
+        return $this->createQueryBuilder('l')
+            ->select('COUNT(l.id)')
+            ->where('l.isActive = :active')
+            ->setParameter('active', true)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

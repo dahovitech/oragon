@@ -214,6 +214,49 @@ class ProductRepository extends ServiceEntityRepository
         return $results;
     }
 
+    /**
+     * Count active products
+     */
+    public function countActiveProducts(): int
+    {
+        return $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->andWhere('p.isActive = :active')
+            ->setParameter('active', true)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Find recent products
+     */
+    public function findRecentProducts(int $limit = 5): array
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.isActive = :active')
+            ->setParameter('active', true)
+            ->orderBy('p.createdAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Find most popular products (based on featured status for now)
+     */
+    public function findMostPopularProducts(int $limit = 10): array
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.isActive = :active')
+            ->andWhere('p.isFeatured = :featured')
+            ->setParameter('active', true)
+            ->setParameter('featured', true)
+            ->orderBy('p.createdAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
     public function save(Product $entity, bool $flush = false): void
     {
         $this->getEntityManager()->persist($entity);

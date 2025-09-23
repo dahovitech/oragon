@@ -1,0 +1,315 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}{{ 'dashboard.advanced.title'|trans({}, 'admin') }} - Administration - Oragon{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .stats-card:hover {
+            transform: translateY(-2px);
+            transition: all 0.3s ease;
+        }
+        .activity-item {
+            border-left: 3px solid #007bff;
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+        .health-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .health-healthy { background-color: #28a745; }
+        .health-warning { background-color: #ffc107; }
+        .health-error { background-color: #dc3545; }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="bi bi-speedometer2 me-2 text-primary"></i>{{ 'dashboard.advanced.title'|trans({}, 'admin') }}
+    </h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <div class="btn-group me-2">
+            <a href="{{ path('admin_dashboard') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-house me-1"></i>{{ 'dashboard.basic'|trans({}, 'admin') }}
+            </a>
+            <a href="{{ path('admin_dashboard_analytics') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-graph-up me-1"></i>{{ 'dashboard.analytics'|trans({}, 'admin') }}
+            </a>
+            <a href="{{ path('admin_dashboard_reports') }}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-file-earmark-text me-1"></i>{{ 'dashboard.reports'|trans({}, 'admin') }}
+            </a>
+        </div>
+    </div>
+</div>
+
+{# Overview Statistics #}
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2 stats-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            {{ 'dashboard.products.total'|trans({}, 'admin') }}
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.products.total }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-box-seam fa-2x text-primary"></i>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <small class="text-success">{{ stats.products.active }} {{ 'dashboard.active'|trans({}, 'admin') }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2 stats-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            {{ 'dashboard.categories.total'|trans({}, 'admin') }}
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.categories.total }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-tags fa-2x text-success"></i>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <small class="text-success">{{ stats.categories.active }} {{ 'dashboard.active'|trans({}, 'admin') }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2 stats-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            {{ 'dashboard.users.total'|trans({}, 'admin') }}
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.users.total }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-people fa-2x text-info"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2 stats-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            {{ 'dashboard.languages.total'|trans({}, 'admin') }}
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.languages.total }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-globe fa-2x text-warning"></i>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <small class="text-success">{{ stats.languages.active }} {{ 'dashboard.active'|trans({}, 'admin') }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {# Recent Activity #}
+    <div class="col-xl-8 col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-activity me-2"></i>{{ 'dashboard.recent_activity'|trans({}, 'admin') }}
+                </h6>
+                <a href="#" class="btn btn-sm btn-primary">
+                    {{ 'dashboard.view_all'|trans({}, 'admin') }}
+                </a>
+            </div>
+            <div class="card-body">
+                {% for activity in recent_activity %}
+                <div class="activity-item">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <strong>{{ activity.description }}</strong>
+                            <br>
+                            <small class="text-muted">{{ 'dashboard.by'|trans({}, 'admin') }} {{ activity.user }}</small>
+                        </div>
+                        <small class="text-muted">{{ activity.timestamp|date('H:i') }}</small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {# System Health #}
+    <div class="col-xl-4 col-lg-5">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-shield-check me-2"></i>{{ 'dashboard.system_health'|trans({}, 'admin') }}
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for component, status in system_health %}
+                    {% if component != 'last_check' %}
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <span class="health-indicator health-{{ status }}"></span>
+                            <strong>{{ ('dashboard.health.' ~ component)|trans({}, 'admin') }}</strong>
+                        </div>
+                        <span class="badge bg-{{ status == 'healthy' ? 'success' : (status == 'warning' ? 'warning' : 'danger') }}">
+                            {{ ('dashboard.status.' ~ status)|trans({}, 'admin') }}
+                        </span>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+                <hr>
+                <small class="text-muted">
+                    {{ 'dashboard.last_check'|trans({}, 'admin') }}: {{ system_health.last_check|date('d/m/Y H:i') }}
+                </small>
+            </div>
+        </div>
+
+        {# Quick Actions #}
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-lightning-fill me-2"></i>{{ 'dashboard.quick_actions'|trans({}, 'admin') }}
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ path('admin_product_new') }}" class="btn btn-success btn-sm">
+                        <i class="bi bi-plus-circle me-2"></i>{{ 'dashboard.actions.new_product'|trans({}, 'admin') }}
+                    </a>
+                    <a href="{{ path('admin_category_new') }}" class="btn btn-info btn-sm">
+                        <i class="bi bi-plus-circle me-2"></i>{{ 'dashboard.actions.new_category'|trans({}, 'admin') }}
+                    </a>
+                    <a href="{{ path('admin_language_new') }}" class="btn btn-warning btn-sm">
+                        <i class="bi bi-plus-circle me-2"></i>{{ 'dashboard.actions.new_language'|trans({}, 'admin') }}
+                    </a>
+                    <a href="{{ path('homepage') }}" class="btn btn-outline-primary btn-sm" target="_blank">
+                        <i class="bi bi-eye me-2"></i>{{ 'dashboard.actions.view_site'|trans({}, 'admin') }}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Recent Products and Users #}
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-box-seam me-2"></i>{{ 'dashboard.recent_products'|trans({}, 'admin') }}
+                </h6>
+                <a href="{{ path('admin_product_index') }}" class="btn btn-sm btn-outline-primary">
+                    {{ 'dashboard.view_all'|trans({}, 'admin') }}
+                </a>
+            </div>
+            <div class="card-body">
+                {% if stats.products.recent|length > 0 %}
+                    {% for product in stats.products.recent %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <strong>{{ product.name }}</strong>
+                            <br>
+                            <small class="text-muted">{{ product.createdAt|date('d/m/Y') }}</small>
+                        </div>
+                        <span class="badge bg-{{ product.active ? 'success' : 'secondary' }}">
+                            {{ product.active ? 'Active' : 'Inactive' }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="bi bi-box text-muted"></i>
+                        <p class="text-muted">{{ 'dashboard.no_recent_products'|trans({}, 'admin') }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="bi bi-people me-2"></i>{{ 'dashboard.recent_users'|trans({}, 'admin') }}
+                </h6>
+                <a href="{{ path('admin_user_index') }}" class="btn btn-sm btn-outline-primary">
+                    {{ 'dashboard.view_all'|trans({}, 'admin') }}
+                </a>
+            </div>
+            <div class="card-body">
+                {% if stats.users.recent|length > 0 %}
+                    {% for user in stats.users.recent %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <strong>{{ user.firstName ~ ' ' ~ user.lastName }}</strong>
+                            <br>
+                            <small class="text-muted">{{ user.email }}</small>
+                        </div>
+                        <small class="text-muted">{{ user.createdAt|date('d/m/Y') }}</small>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="bi bi-people text-muted"></i>
+                        <p class="text-muted">{{ 'dashboard.no_recent_users'|trans({}, 'admin') }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Auto-refresh dashboard every 5 minutes
+        setTimeout(function() {
+            location.reload();
+        }, 300000);
+
+        // Add some interactive features
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate statistics cards on hover
+            const statsCards = document.querySelectorAll('.stats-card');
+            statsCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.boxShadow = '0 0.5rem 1rem rgba(0, 0, 0, 0.15)';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.boxShadow = '';
+                });
+            });
+        });
+    </script>
+{% endblock %}
