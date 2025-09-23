@@ -1,0 +1,43 @@
+<!-- Mini Cart Widget -->
+<div class="mini-cart-content">
+    {% if cart.items|length > 0 %}
+        <div class="mini-cart-items">
+            {% for item in cart.items %}
+                <div class="d-flex align-items-center mb-3">
+                    {% if item.product.featuredImage %}
+                        <img src="{{ item.product.featuredImage.path }}" class="me-2 rounded" alt="{{ item.displayName }}" style="width: 40px; height: 40px; object-fit: cover;">
+                    {% else %}
+                        <div class="me-2 rounded bg-light d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="fas fa-image text-muted small"></i>
+                        </div>
+                    {% endif %}
+                    <div class="flex-grow-1">
+                        <h6 class="mb-0 small">{{ item.displayName }}</h6>
+                        <small class="text-muted">{{ item.quantity }} × €{{ item.unitPrice }}</small>
+                    </div>
+                    <div class="text-end">
+                        <small class="fw-bold">€{{ item.lineTotal }}</small>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <hr class="my-3">
+        
+        <div class="d-flex justify-content-between mb-3">
+            <strong>Total:</strong>
+            <strong class="text-primary">€{{ cart.total }}</strong>
+        </div>
+        
+        <div class="d-grid gap-2">
+            <a href="{{ path('ecommerce_cart_show') }}" class="btn btn-outline-primary btn-sm">View Cart</a>
+            <a href="{{ path('ecommerce_checkout_index') }}" class="btn btn-primary btn-sm">Checkout</a>
+        </div>
+    {% else %}
+        <div class="text-center py-3">
+            <i class="fas fa-shopping-cart fa-2x text-muted mb-2"></i>
+            <p class="mb-2">Your cart is empty</p>
+            <a href="{{ path('ecommerce_product_list') }}" class="btn btn-primary btn-sm">Start Shopping</a>
+        </div>
+    {% endif %}
+</div>
