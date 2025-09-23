@@ -59,6 +59,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $lastLoginAt = null;
 
+    #[ORM\Column(type: 'string', length: 20, nullable: true)]
+    #[Assert\Length(max: 20)]
+    private ?string $phone = null;
+
+    #[ORM\Column(type: 'date', nullable: true)]
+    private ?\DateTimeInterface $birthDate = null;
+
+    #[ORM\Column(type: 'string', length: 10, nullable: true)]
+    #[Assert\Choice(choices: ['male', 'female', 'other'])]
+    private ?string $gender = null;
+
+    #[ORM\Column(type: 'json', nullable: true)]
+    private ?array $preferences = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -170,9 +184,65 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getPhone(): ?string
+    {
+        return $this->phone;
+    }
+
+    public function setPhone(?string $phone): static
+    {
+        $this->phone = $phone;
+        return $this;
+    }
+
+    public function getBirthDate(): ?\DateTimeInterface
+    {
+        return $this->birthDate;
+    }
+
+    public function setBirthDate(?\DateTimeInterface $birthDate): static
+    {
+        $this->birthDate = $birthDate;
+        return $this;
+    }
+
+    public function getGender(): ?string
+    {
+        return $this->gender;
+    }
+
+    public function setGender(?string $gender): static
+    {
+        $this->gender = $gender;
+        return $this;
+    }
+
+    public function getPreferences(): ?array
+    {
+        return $this->preferences;
+    }
+
+    public function setPreferences(?array $preferences): static
+    {
+        $this->preferences = $preferences;
+        return $this;
+    }
+
+    public function getPreference(string $key, $default = null)
+    {
+        return $this->preferences[$key] ?? $default;
+    }
+
+    public function setPreference(string $key, $value): static
+    {
+        if ($this->preferences === null) {
+            $this->preferences = [];
+        }
+        $this->preferences[$key] = $value;
+        return $this;
+    }
+
     /**
-     * A visual identifier that represents this user.
-     *
      * @see UserInterface
      */
     public function getUserIdentifier(): string

@@ -165,10 +165,24 @@ class LocaleListener
             '/about',
             '/contact',
             '/news',
-            '/portfolio'
+            '/portfolio',
+            // E-commerce routes
+            '/products',
+            '/categories',
+            '/brands',
+            '/cart',
+            '/checkout',
+            '/account',
+            '/wishlist',
+            '/orders',
+            '/search',
+            '/sale',
+            '/new-arrivals',
+            '/featured'
         ];
         
         return in_array($pathInfo, $pathsToRedirect) || 
-               preg_match('#^/[^/]+$#', $pathInfo); // Single level paths
+               preg_match('#^/[^/]+$#', $pathInfo) || // Single level paths
+               preg_match('#^/(product|category|brand|page)/[^/]+$#', $pathInfo); // E-commerce detail pages
     }
 }

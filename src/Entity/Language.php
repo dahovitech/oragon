@@ -38,6 +38,18 @@ class Language
     #[ORM\Column(type: 'integer')]
     private int $sortOrder = 0;
 
+    #[ORM\Column(type: 'string', length: 3, nullable: true)]
+    private ?string $currency = null;
+
+    #[ORM\Column(type: 'string', length: 10, nullable: true)]
+    private ?string $dateFormat = null;
+
+    #[ORM\Column(type: 'boolean')]
+    private bool $isRtl = false;
+
+    #[ORM\Column(type: 'string', length: 10, nullable: true)]
+    private ?string $region = null;
+
     public function __construct()
     {
     }
@@ -110,6 +122,50 @@ class Language
     public function setSortOrder(int $sortOrder): static
     {
         $this->sortOrder = $sortOrder;
+        return $this;
+    }
+
+    public function getCurrency(): ?string
+    {
+        return $this->currency;
+    }
+
+    public function setCurrency(?string $currency): static
+    {
+        $this->currency = $currency;
+        return $this;
+    }
+
+    public function getDateFormat(): ?string
+    {
+        return $this->dateFormat;
+    }
+
+    public function setDateFormat(?string $dateFormat): static
+    {
+        $this->dateFormat = $dateFormat;
+        return $this;
+    }
+
+    public function isRtl(): bool
+    {
+        return $this->isRtl;
+    }
+
+    public function setIsRtl(bool $isRtl): static
+    {
+        $this->isRtl = $isRtl;
+        return $this;
+    }
+
+    public function getRegion(): ?string
+    {
+        return $this->region;
+    }
+
+    public function setRegion(?string $region): static
+    {
+        $this->region = $region;
         return $this;
     }
 
