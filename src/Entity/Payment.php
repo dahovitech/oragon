@@ -2,44 +2,13 @@
 
 namespace App\Entity;
 
+use App\Enum\PaymentStatus;
 use App\Repository\PaymentRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
-
-enum PaymentStatus: string
-{
-    case PENDING = 'PENDING';
-    case PAID = 'PAID';
-    case LATE = 'LATE';
-    case MISSED = 'MISSED';
-    case PARTIAL = 'PARTIAL';
-
-    public function getLabel(): string
-    {
-        return match($this) {
-            self::PENDING => 'En attente',
-            self::PAID => 'Payé',
-            self::LATE => 'En retard',
-            self::MISSED => 'Manqué',
-            self::PARTIAL => 'Partiel',
-        };
-    }
-
-    public function getBadgeClass(): string
-    {
-        return match($this) {
-            self::PENDING => 'badge bg-warning',
-            self::PAID => 'badge bg-success',
-            self::LATE => 'badge bg-danger',
-            self::MISSED => 'badge bg-dark',
-            self::PARTIAL => 'badge bg-info',
-        };
-    }
-}
 
 #[ORM\Entity(repositoryClass: PaymentRepository::class)]
 #[ORM\Table(name: 'payments')]
-#[ORM\HasLifecycleCallbacks]
 class Payment
 {
     #[ORM\Id]
@@ -47,82 +16,71 @@ class Payment
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'payments')]
+    #[ORM\ManyToOne(targetEntity: LoanContract::class, inversedBy: 'payments')]
     #[ORM\JoinColumn(nullable: false)]
-    private LoanContract $loanContract;
+    private ?LoanContract $loanContract = null;
 
-    #[ORM\Column(type: 'integer')]
-    private int $paymentNumber;
+    #[ORM\Column(type: Types::INTEGER)]
+    private ?int $paymentNumber = null;
 
-    #[ORM\Column(type: 'date')]
-    private \DateTimeInterface $dueDate;
+    #[ORM\Column(type: Types::DATE_MUTABLE)]
+    private ?\DateTime $dueDate = null;
 
-    #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private string $amount;
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
+    private ?string $amount = null;
 
-    #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private string $principalAmount;
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
+    private ?string $principalAmount = null;
 
-    #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private string $interestAmount;
-
-    #[ORM\Column(type: 'decimal', precision: 10, scale: 2)]
-    private string $paidAmount = '0.00';
+    #[ORM\Column(type: Types::DECIMAL, precision: 10, scale: 2)]
+    private ?string $interestAmount = null;
 
     #[ORM\Column(type: 'string', enumType: PaymentStatus::class)]
-    private PaymentStatus $status = PaymentStatus::PENDING;
+    private PaymentStatus $status;
 
-    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
-    private ?\DateTimeImmutable $paidAt = null;
+    #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
+    private ?\DateTime $paidAt = null;
 
-    #[ORM\Column(length: 100, nullable: true)]
+    #[ORM\Column(type: Types::STRING, length: 50, nullable: true)]
     private ?string $paymentMethod = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $transactionId = null;
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    private ?\DateTime $createdAt = null;
 
-    #[ORM\Column(type: 'text', nullable: true)]
-    private ?string $notes = null;
-
-    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
-    private ?string $lateFees = null;
-
-    #[ORM\Column(type: 'datetime_immutable')]
-    private \DateTimeImmutable $createdAt;
-
-    #[ORM\Column(type: 'datetime_immutable')]
-    private \DateTimeImmutable $updatedAt;
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    private ?\DateTime $updatedAt = null;
 
     public function __construct()
     {
-        $this->createdAt = new \DateTimeImmutable();
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->status = PaymentStatus::PENDING;
+        $this->createdAt = new \DateTime();
+        $this->updatedAt = new \DateTime();
     }
 
     #[ORM\PreUpdate]
-    public function updateTimestamp(): void
+    public function setUpdatedAtValue(): void
     {
-        $this->updatedAt = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTime();
     }
 
-    // Getters et Setters
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getLoanContract(): LoanContract
+    public function getLoanContract(): ?LoanContract
     {
         return $this->loanContract;
     }
 
-    public function setLoanContract(LoanContract $loanContract): static
+    public function setLoanContract(?LoanContract $loanContract): static
     {
         $this->loanContract = $loanContract;
+
         return $this;
     }
 
-    public function getPaymentNumber(): int
+    public function getPaymentNumber(): ?int
     {
         return $this->paymentNumber;
     }
@@ -130,62 +88,55 @@ class Payment
     public function setPaymentNumber(int $paymentNumber): static
     {
         $this->paymentNumber = $paymentNumber;
+
         return $this;
     }
 
-    public function getDueDate(): \DateTimeInterface
+    public function getDueDate(): ?\DateTime
     {
         return $this->dueDate;
     }
 
-    public function setDueDate(\DateTimeInterface $dueDate): static
+    public function setDueDate(\DateTime $dueDate): static
     {
         $this->dueDate = $dueDate;
+
         return $this;
     }
 
-    public function getAmount(): string
+    public function getAmount(): ?string
     {
         return $this->amount;
     }
 
-    public function setAmount(string $amount): static
+    public function setAmount(string|float $amount): static
     {
-        $this->amount = $amount;
+        $this->amount = (string)$amount;
+
         return $this;
     }
 
-    public function getPrincipalAmount(): string
+    public function getPrincipalAmount(): ?string
     {
         return $this->principalAmount;
     }
 
-    public function setPrincipalAmount(string $principalAmount): static
+    public function setPrincipalAmount(string|float $principalAmount): static
     {
-        $this->principalAmount = $principalAmount;
+        $this->principalAmount = (string)$principalAmount;
+
         return $this;
     }
 
-    public function getInterestAmount(): string
+    public function getInterestAmount(): ?string
     {
         return $this->interestAmount;
     }
 
-    public function setInterestAmount(string $interestAmount): static
+    public function setInterestAmount(string|float $interestAmount): static
     {
-        $this->interestAmount = $interestAmount;
-        return $this;
-    }
+        $this->interestAmount = (string)$interestAmount;
 
-    public function getPaidAmount(): string
-    {
-        return $this->paidAmount;
-    }
-
-    public function setPaidAmount(string $paidAmount): static
-    {
-        $this->paidAmount = $paidAmount;
-        $this->updatePaymentStatus();
         return $this;
     }
 
@@ -197,23 +148,19 @@ class Payment
     public function setStatus(PaymentStatus $status): static
     {
         $this->status = $status;
-        
-        // Auto-set payment timestamp for paid status
-        if ($status === PaymentStatus::PAID && !$this->paidAt) {
-            $this->paidAt = new \DateTimeImmutable();
-        }
-        
+
         return $this;
     }
 
-    public function getPaidAt(): ?\DateTimeImmutable
+    public function getPaidAt(): ?\DateTime
     {
         return $this->paidAt;
     }
 
-    public function setPaidAt(?\DateTimeImmutable $paidAt): static
+    public function setPaidAt(?\DateTime $paidAt): static
     {
         $this->paidAt = $paidAt;
+
         return $this;
     }
 
@@ -225,56 +172,56 @@ class Payment
     public function setPaymentMethod(?string $paymentMethod): static
     {
         $this->paymentMethod = $paymentMethod;
+
         return $this;
     }
 
-    public function getTransactionId(): ?string
-    {
-        return $this->transactionId;
-    }
-
-    public function setTransactionId(?string $transactionId): static
-    {
-        $this->transactionId = $transactionId;
-        return $this;
-    }
-
-    public function getNotes(): ?string
-    {
-        return $this->notes;
-    }
-
-    public function setNotes(?string $notes): static
-    {
-        $this->notes = $notes;
-        return $this;
-    }
-
-    public function getLateFees(): ?string
-    {
-        return $this->lateFees;
-    }
-
-    public function setLateFees(?string $lateFees): static
-    {
-        $this->lateFees = $lateFees;
-        return $this;
-    }
-
-    public function getCreatedAt(): \DateTimeImmutable
+    public function getCreatedAt(): ?\DateTime
     {
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): \DateTimeImmutable
+    public function setCreatedAt(\DateTime $createdAt): static
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    public function getUpdatedAt(): ?\DateTime
     {
         return $this->updatedAt;
     }
 
-    // Méthodes utilitaires
-    public function isPending(): bool
+    public function setUpdatedAt(\DateTime $updatedAt): static
     {
-        return $this->status === PaymentStatus::PENDING;
+        $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    // Méthodes utilitaires
+
+    public function isOverdue(): bool
+    {
+        return $this->status === PaymentStatus::PENDING && 
+               $this->dueDate < new \DateTime();
+    }
+
+    public function isDue(): bool
+    {
+        return $this->status === PaymentStatus::PENDING && 
+               $this->dueDate <= new \DateTime();
+    }
+
+    public function isUpcoming(int $days = 7): bool
+    {
+        $futureDate = new \DateTime();
+        $futureDate->modify("+{$days} days");
+        
+        return $this->status === PaymentStatus::PENDING && 
+               $this->dueDate <= $futureDate && 
+               $this->dueDate > new \DateTime();
     }
 
     public function isPaid(): bool
@@ -282,149 +229,62 @@ class Payment
         return $this->status === PaymentStatus::PAID;
     }
 
-    public function isLate(): bool
-    {
-        return $this->status === PaymentStatus::LATE;
-    }
-
-    public function isMissed(): bool
-    {
-        return $this->status === PaymentStatus::MISSED;
-    }
-
-    public function isPartial(): bool
-    {
-        return $this->status === PaymentStatus::PARTIAL;
-    }
-
-    public function isOverdue(): bool
-    {
-        return $this->dueDate < new \DateTime() && !$this->isPaid();
-    }
-
     public function getDaysOverdue(): int
     {
         if (!$this->isOverdue()) {
             return 0;
         }
-        
-        return (new \DateTime())->diff($this->dueDate)->days;
+
+        $today = new \DateTime();
+        return $today->diff($this->dueDate)->days;
     }
 
     public function getDaysUntilDue(): int
     {
-        $diff = $this->dueDate->diff(new \DateTime());
-        return $diff->invert ? $diff->days : 0;
-    }
-
-    public function getRemainingAmount(): float
-    {
-        return max(0, (float) $this->amount - (float) $this->paidAmount);
-    }
-
-    public function getPaymentPercentage(): float
-    {
-        $totalAmount = (float) $this->amount;
-        if ($totalAmount == 0) {
+        if ($this->status !== PaymentStatus::PENDING) {
             return 0;
         }
-        
-        return ((float) $this->paidAmount / $totalAmount) * 100;
-    }
 
-    public function isFullyPaid(): bool
-    {
-        return (float) $this->paidAmount >= (float) $this->amount;
-    }
-
-    public function updatePaymentStatus(): void
-    {
-        $paidAmount = (float) $this->paidAmount;
-        $totalAmount = (float) $this->amount;
-        
-        if ($paidAmount >= $totalAmount) {
-            $this->status = PaymentStatus::PAID;
-            if (!$this->paidAt) {
-                $this->paidAt = new \DateTimeImmutable();
-            }
-        } elseif ($paidAmount > 0) {
-            $this->status = PaymentStatus::PARTIAL;
-        } elseif ($this->isOverdue()) {
-            $this->status = $this->getDaysOverdue() > 30 ? PaymentStatus::MISSED : PaymentStatus::LATE;
-        } else {
-            $this->status = PaymentStatus::PENDING;
+        $today = new \DateTime();
+        if ($this->dueDate < $today) {
+            return -$this->getDaysOverdue(); // Négatif si en retard
         }
+
+        return $today->diff($this->dueDate)->days;
     }
 
-    public function recordPayment(float $amount, string $method = null, string $transactionId = null): void
+    public function getStatusLabel(): string
     {
-        $currentPaid = (float) $this->paidAmount;
-        $newPaidAmount = $currentPaid + $amount;
-        
-        $this->setPaidAmount((string) $newPaidAmount);
-        $this->setPaymentMethod($method);
-        $this->setTransactionId($transactionId);
-        
-        if ($this->isFullyPaid()) {
-            $this->setPaidAt(new \DateTimeImmutable());
-        }
-        
-        $this->updatePaymentStatus();
+        return match($this->status) {
+            PaymentStatus::PENDING => 'En attente',
+            PaymentStatus::PAID => 'Payé',
+            PaymentStatus::LATE => 'En retard',
+            PaymentStatus::MISSED => 'Manqué',
+        };
     }
 
-    public function calculateLateFees(): float
+    public function getStatusColor(): string
     {
-        if (!$this->isOverdue()) {
-            return 0;
-        }
-        
-        $daysOverdue = $this->getDaysOverdue();
-        $baseAmount = (float) $this->amount;
-        
-        // 0.1% par jour de retard, maximum 10% du montant
-        $feeRate = min(0.10, $daysOverdue * 0.001);
-        
-        return $baseAmount * $feeRate;
+        return match($this->status) {
+            PaymentStatus::PENDING => 'warning',
+            PaymentStatus::PAID => 'success',
+            PaymentStatus::LATE => 'danger',
+            PaymentStatus::MISSED => 'dark',
+        };
     }
 
-    public function applyLateFees(): void
+    public function getAmountFloat(): float
     {
-        if ($this->isOverdue() && !$this->lateFees) {
-            $fees = $this->calculateLateFees();
-            $this->setLateFees((string) $fees);
-        }
+        return (float)$this->amount;
     }
 
-    public function getTotalAmountDue(): float
+    public function getPrincipalAmountFloat(): float
     {
-        $amount = (float) $this->amount;
-        $lateFees = (float) ($this->lateFees ?? 0);
-        return $amount + $lateFees;
+        return (float)$this->principalAmount;
     }
 
-    public function getFormattedAmount(): string
+    public function getInterestAmountFloat(): float
     {
-        return number_format((float) $this->amount, 2, ',', ' ') . ' €';
-    }
-
-    public function getFormattedPaidAmount(): string
-    {
-        return number_format((float) $this->paidAmount, 2, ',', ' ') . ' €';
-    }
-
-    public function getFormattedRemainingAmount(): string
-    {
-        return number_format($this->getRemainingAmount(), 2, ',', ' ') . ' €';
-    }
-
-    public function getFormattedLateFees(): string
-    {
-        $fees = (float) ($this->lateFees ?? 0);
-        return number_format($fees, 2, ',', ' ') . ' €';
-    }
-
-    public function __toString(): string
-    {
-        return "Paiement #{$this->paymentNumber} - {$this->getFormattedAmount()}";
+        return (float)$this->interestAmount;
     }
 }

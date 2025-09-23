@@ -1,0 +1,517 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Demande #{{ application.id }} - Administration{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .detail-card {
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .status-timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .status-timeline::before {
+            content: '';
+            position: absolute;
+            left: 12px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e9ecef;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 0 2px #007bff;
+        }
+        .timeline-item.completed::before {
+            background: #28a745;
+            box-shadow: 0 0 0 2px #28a745;
+        }
+        .timeline-item.rejected::before {
+            background: #dc3545;
+            box-shadow: 0 0 0 2px #dc3545;
+        }
+        .risk-gauge {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto;
+        }
+        .risk-gauge svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+        .risk-score {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .document-thumbnail {
+            width: 50px;
+            height: 50px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .action-buttons {
+            position: sticky;
+            top: 20px;
+            z-index: 100;
+        }
+        .user-info-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <!-- En-tête -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{{ path('admin_loan_applications_index') }}">Demandes de prêt</a>
+                    </li>
+                    <li class="breadcrumb-item active">Demande #{{ application.id }}</li>
+                </ol>
+            </nav>
+            <h1 class="h3 mb-0">Demande de Prêt #{{ application.id }}</h1>
+            <p class="text-muted mb-0">{{ application.loanType.name }} - {{ application.requestedAmount|number_format(0, ',', ' ') }}€</p>
+        </div>
+        
+        <!-- Statut actuel -->
+        <div>
+            {% set statusClass = 'secondary' %}
+            {% set statusIcon = 'fas fa-circle' %}
+            {% if application.status.value == 'SUBMITTED' %}
+                {% set statusClass = 'info' %}
+                {% set statusIcon = 'fas fa-paper-plane' %}
+            {% elseif application.status.value == 'UNDER_REVIEW' %}
+                {% set statusClass = 'warning' %}
+                {% set statusIcon = 'fas fa-eye' %}
+            {% elseif application.status.value == 'APPROVED' %}
+                {% set statusClass = 'success' %}
+                {% set statusIcon = 'fas fa-check-circle' %}
+            {% elseif application.status.value == 'REJECTED' %}
+                {% set statusClass = 'danger' %}
+                {% set statusIcon = 'fas fa-times-circle' %}
+            {% elseif application.status.value == 'DISBURSED' %}
+                {% set statusClass = 'dark' %}
+                {% set statusIcon = 'fas fa-money-check-alt' %}
+            {% endif %}
+            
+            <span class="badge bg-{{ statusClass }} fs-6 px-3 py-2">
+                <i class="{{ statusIcon }} me-2"></i>
+                {{ application.status.value|title }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Messages flash -->
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+    
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+
+    <div class="row">
+        <!-- Colonne principale -->
+        <div class="col-lg-8">
+            <!-- Informations de l'emprunteur -->
+            <div class="card detail-card user-info-card">
+                <div class="card-header border-0">
+                    <h5 class="mb-0 text-white">
+                        <i class="fas fa-user me-2"></i>Informations Emprunteur
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-white-50">Identité</h6>
+                            {% if application.user.accountType.value == 'INDIVIDUAL' %}
+                                <p class="mb-2">
+                                    <strong>{{ application.user.firstName }} {{ application.user.lastName }}</strong>
+                                    <i class="fas fa-user ms-2" title="Particulier"></i>
+                                </p>
+                                {% if application.user.dateOfBirth %}
+                                    <p class="mb-2">Né(e) le {{ application.user.dateOfBirth|date('d/m/Y') }}</p>
+                                {% endif %}
+                                {% if application.user.nationalId %}
+                                    <p class="mb-2">N° ID: {{ application.user.nationalId }}</p>
+                                {% endif %}
+                            {% else %}
+                                <p class="mb-2">
+                                    <strong>{{ application.user.companyName }}</strong>
+                                    <i class="fas fa-building ms-2" title="Entreprise"></i>
+                                </p>
+                                {% if application.user.siretNumber %}
+                                    <p class="mb-2">SIRET: {{ application.user.siretNumber }}</p>
+                                {% endif %}
+                                {% if application.user.businessSector %}
+                                    <p class="mb-2">Secteur: {{ application.user.businessSector }}</p>
+                                {% endif %}
+                            {% endif %}
+                            
+                            <p class="mb-1">📧 {{ application.user.email }}</p>
+                            {% if application.user.phoneNumber %}
+                                <p class="mb-1">📞 {{ application.user.phoneNumber }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h6 class="text-white-50">Adresse</h6>
+                            {% if application.user.address %}
+                                <p class="mb-2">{{ application.user.address }}</p>
+                                <p class="mb-2">{{ application.user.postalCode }} {{ application.user.city }}</p>
+                                {% if application.user.country %}
+                                    <p class="mb-2">{{ application.user.country }}</p>
+                                {% endif %}
+                            {% else %}
+                                <p class="text-white-50">Adresse non renseignée</p>
+                            {% endif %}
+                            
+                            <h6 class="text-white-50 mt-3">Vérification</h6>
+                            {% if application.user.isVerified %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle me-1"></i>Compte vérifié
+                                </span>
+                            {% else %}
+                                <span class="badge bg-warning">
+                                    <i class="fas fa-clock me-1"></i>{{ application.user.verificationStatus.value|title }}
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Détails de la demande -->
+            <div class="card detail-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-alt text-primary me-2"></i>Détails de la Demande
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Type de prêt :</strong></td>
+                                    <td>{{ application.loanType.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Montant demandé :</strong></td>
+                                    <td class="text-primary fw-bold">{{ application.requestedAmount|number_format(2, ',', ' ') }}€</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Durée :</strong></td>
+                                    <td>{{ application.duration }} mois</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Taux d'intérêt :</strong></td>
+                                    <td>{{ application.interestRate ?? application.loanType.baseInterestRate }}%</td>
+                                </tr>
+                                {% if application.monthlyPayment %}
+                                    <tr>
+                                        <td><strong>Mensualité :</strong></td>
+                                        <td class="text-success fw-bold">{{ application.monthlyPayment|number_format(2, ',', ' ') }}€</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Coût total :</strong></td>
+                                        <td>{{ application.totalAmount|number_format(2, ',', ' ') }}€</td>
+                                    </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            {% if application.purpose %}
+                                <h6>Objet du prêt</h6>
+                                <p class="text-muted">{{ application.purpose }}</p>
+                            {% endif %}
+                            
+                            {% if application.guarantees %}
+                                <h6>Garanties proposées</h6>
+                                <p class="text-muted">{{ application.guarantees }}</p>
+                            {% endif %}
+                            
+                            {% if application.personalInfo %}
+                                <h6>Informations complémentaires</h6>
+                                <p class="text-muted">{{ application.personalInfo }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents -->
+            <div class="card detail-card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-paperclip text-primary me-2"></i>Documents Justificatifs
+                            <span class="badge bg-secondary">{{ application.documents|length }}</span>
+                        </h5>
+                        <a href="{{ path('admin_loan_applications_documents', {'id': application.id}) }}" 
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-external-link-alt me-1"></i>Gérer les documents
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if application.documents is empty %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Aucun document uploadé</p>
+                        </div>
+                    {% else %}
+                        <div class="row">
+                            {% for document in application.documents %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="d-flex align-items-center p-3 border rounded">
+                                        <div class="document-thumbnail me-3">
+                                            <i class="fas fa-file-pdf text-danger fa-lg"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">{{ document.originalName }}</h6>
+                                            <small class="text-muted">
+                                                Uploadé le {{ document.uploadedAt|date('d/m/Y H:i') }}
+                                            </small>
+                                            <br>
+                                            {% if document.isVerified %}
+                                                <span class="badge bg-success mt-1">
+                                                    <i class="fas fa-check me-1"></i>Vérifié
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-warning mt-1">
+                                                    <i class="fas fa-clock me-1"></i>En attente
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        <div>
+                                            {% if not document.isVerified %}
+                                                <button class="btn btn-sm btn-success" 
+                                                        onclick="verifyDocument({{ application.id }}, {{ document.id }})">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Historique des statuts -->
+            <div class="card detail-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history text-primary me-2"></i>Historique
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="status-timeline">
+                        {% for history in statusHistory %}
+                            <div class="timeline-item {{ history.status == 'APPROVED' ? 'completed' : (history.status == 'REJECTED' ? 'rejected' : '') }}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">{{ history.description }}</h6>
+                                        <small class="text-muted">{{ history.date|date('d/m/Y à H:i') }}</small>
+                                    </div>
+                                    <span class="badge bg-secondary">{{ history.status|title }}</span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonne droite -->
+        <div class="col-lg-4">
+            <!-- Actions -->
+            <div class="card detail-card action-buttons">
+                <div class="card-header">
+                    <h6 class="mb-0">Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if application.status.value == 'SUBMITTED' %}
+                            <a href="{{ path('admin_loan_applications_review', {'id': application.id}) }}" 
+                               class="btn btn-warning">
+                                <i class="fas fa-eye me-2"></i>Examiner
+                            </a>
+                        {% endif %}
+                        
+                        {% if application.status.value in ['SUBMITTED', 'UNDER_REVIEW'] %}
+                            <a href="{{ path('admin_loan_applications_approve', {'id': application.id}) }}" 
+                               class="btn btn-success">
+                                <i class="fas fa-check me-2"></i>Approuver
+                            </a>
+                            <a href="{{ path('admin_loan_applications_reject', {'id': application.id}) }}" 
+                               class="btn btn-danger">
+                                <i class="fas fa-times me-2"></i>Rejeter
+                            </a>
+                        {% endif %}
+                        
+                        <hr>
+                        
+                        <button class="btn btn-outline-primary" onclick="window.print()">
+                            <i class="fas fa-print me-2"></i>Imprimer
+                        </button>
+                        
+                        <a href="{{ path('admin_loan_applications_index') }}" 
+                           class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Retour à la liste
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Évaluation des risques -->
+            <div class="card detail-card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-line text-primary me-2"></i>Évaluation des Risques
+                    </h6>
+                </div>
+                <div class="card-body text-center">
+                    <div class="risk-gauge">
+                        <svg>
+                            <circle cx="60" cy="60" r="50" fill="none" stroke="#e9ecef" stroke-width="8"></circle>
+                            <circle cx="60" cy="60" r="50" fill="none" stroke="{{ riskAssessment.color == 'success' ? '#28a745' : (riskAssessment.color == 'warning' ? '#ffc107' : '#dc3545') }}" 
+                                    stroke-width="8" stroke-dasharray="{{ (riskAssessment.score * 314 / 100)|round }} 314" 
+                                    stroke-linecap="round"></circle>
+                        </svg>
+                        <div class="risk-score text-{{ riskAssessment.color }}">
+                            {{ riskAssessment.score }}%
+                        </div>
+                    </div>
+                    
+                    <h6 class="mt-3 text-{{ riskAssessment.color }}">
+                        Risque {{ riskAssessment.level == 'low' ? 'Faible' : (riskAssessment.level == 'medium' ? 'Modéré' : 'Élevé') }}
+                    </h6>
+                    
+                    <div class="mt-3 text-start">
+                        <h6>Facteurs d'évaluation :</h6>
+                        {% for factor in riskAssessment.factors %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <small class="text-{{ factor.type == 'positive' ? 'success' : 'danger' }}">
+                                    <i class="fas fa-{{ factor.type == 'positive' ? 'plus' : 'minus' }}-circle me-1"></i>
+                                    {{ factor.description }}
+                                </small>
+                                <span class="badge bg-{{ factor.type == 'positive' ? 'success' : 'danger' }}">
+                                    {{ factor.points > 0 ? '+' : '' }}{{ factor.points }}
+                                </span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations financières -->
+            {% if application.user.monthlyIncome %}
+                <div class="card detail-card">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-euro-sign text-primary me-2"></i>Situation Financière
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td>Revenus mensuels :</td>
+                                <td class="text-end fw-bold">{{ application.user.monthlyIncome|number_format(0, ',', ' ') }}€</td>
+                            </tr>
+                            {% if application.monthlyPayment %}
+                                <tr>
+                                    <td>Mensualité prêt :</td>
+                                    <td class="text-end">{{ application.monthlyPayment|number_format(2, ',', ' ') }}€</td>
+                                </tr>
+                                <tr>
+                                    <td>Taux d'endettement :</td>
+                                    <td class="text-end">
+                                        {% set debtRatio = (application.monthlyPayment / application.user.monthlyIncome * 100) %}
+                                        <span class="badge bg-{{ debtRatio <= 33 ? 'success' : 'warning' }}">
+                                            {{ debtRatio|round(1) }}%
+                                        </span>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                            {% if application.user.employmentStatus %}
+                                <tr>
+                                    <td>Statut professionnel :</td>
+                                    <td class="text-end">{{ application.user.employmentStatus }}</td>
+                                </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        function verifyDocument(applicationId, documentId) {
+            if (confirm('Marquer ce document comme vérifié ?')) {
+                fetch(`{{ path('admin_loan_applications_index') }}/${applicationId}/verify-document/${documentId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Erreur lors de la vérification du document');
+                    }
+                })
+                .catch(error => {
+                    alert('Erreur de réseau');
+                    console.error(error);
+                });
+            }
+        }
+    </script>
+{% endblock %}

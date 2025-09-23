@@ -1,0 +1,443 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Rejeter la Demande #{{ application.id }} - Administration{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .rejection-card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .loan-summary {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+        .reason-option {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .reason-option:hover {
+            border-color: #dc3545;
+            background-color: #f8f9fa;
+        }
+        .reason-option.selected {
+            border-color: #dc3545;
+            background-color: #f8d7da;
+        }
+        .reason-option input[type="radio"] {
+            margin-right: 10px;
+        }
+        .custom-reason {
+            display: none;
+        }
+        .custom-reason.show {
+            display: block;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <!-- En-tête -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{{ path('admin_loan_applications_index') }}">Demandes de prêt</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{{ path('admin_loan_applications_detail', {'id': application.id}) }}">Demande #{{ application.id }}</a>
+                    </li>
+                    <li class="breadcrumb-item active">Rejet</li>
+                </ol>
+            </nav>
+            <h1 class="h3 mb-0">Rejeter la Demande #{{ application.id }}</h1>
+            <p class="text-muted mb-0">{{ application.loanType.name }} - {{ application.user.email }}</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Colonne principale -->
+        <div class="col-lg-8">
+            <!-- Formulaire de rejet -->
+            <div class="card rejection-card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-times-circle me-2"></i>Motif de Rejet
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="warning-box mb-4">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>Attention</h6>
+                        <p class="mb-0">
+                            Le rejet de cette demande sera définitif et une notification sera envoyée à l'emprunteur. 
+                            Assurez-vous de bien vérifier tous les éléments avant de valider.
+                        </p>
+                    </div>
+
+                    <form method="POST" id="rejection-form">
+                        <h6 class="mb-3">Sélectionnez le motif de rejet :</h6>
+                        
+                        <div class="reason-option" onclick="selectReason('insufficient_income')">
+                            <label class="w-100 cursor-pointer">
+                                <input type="radio" name="rejection_reason" value="insufficient_income" id="reason_insufficient_income">
+                                <strong>Revenus insuffisants</strong>
+                                <div class="text-muted mt-1">
+                                    Les revenus déclarés ne permettent pas de supporter les mensualités du prêt demandé.
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="reason-option" onclick="selectReason('high_debt_ratio')">
+                            <label class="w-100 cursor-pointer">
+                                <input type="radio" name="rejection_reason" value="high_debt_ratio" id="reason_high_debt_ratio">
+                                <strong>Taux d'endettement trop élevé</strong>
+                                <div class="text-muted mt-1">
+                                    Le taux d'endettement dépasse les limites acceptables (>33%).
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="reason-option" onclick="selectReason('incomplete_documents')">
+                            <label class="w-100 cursor-pointer">
+                                <input type="radio" name="rejection_reason" value="incomplete_documents" id="reason_incomplete_documents">
+                                <strong>Documents incomplets ou non valides</strong>
+                                <div class="text-muted mt-1">
+                                    Les justificatifs fournis sont incomplets, non conformes ou illisibles.
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="reason-option" onclick="selectReason('verification_failed')">
+                            <label class="w-100 cursor-pointer">
+                                <input type="radio" name="rejection_reason" value="verification_failed" id="reason_verification_failed">
+                                <strong>Échec de la vérification d'identité</strong>
+                                <div class="text-muted mt-1">
+                                    Impossible de vérifier l'identité ou les informations fournies par l'emprunteur.
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="reason-option" onclick="selectReason('credit_history')">
+                            <label class="w-100 cursor-pointer">
+                                <input type="radio" name="rejection_reason" value="credit_history" id="reason_credit_history">
+                                <strong>Historique de crédit défavorable</strong>
+                                <div class="text-muted mt-1">
+                                    L'historique de crédit révèle des incidents de paiement ou un surendettement.
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="reason-option" onclick="selectReason('policy_violation')">
+                            <label class="w-100 cursor-pointer">
+                                <input type="radio" name="rejection_reason" value="policy_violation" id="reason_policy_violation">
+                                <strong>Non-conformité aux politiques de prêt</strong>
+                                <div class="text-muted mt-1">
+                                    La demande ne respecte pas les critères internes d'attribution de crédit.
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="reason-option" onclick="selectReason('suspicious_activity')">
+                            <label class="w-100 cursor-pointer">
+                                <input type="radio" name="rejection_reason" value="suspicious_activity" id="reason_suspicious_activity">
+                                <strong>Activité suspecte détectée</strong>
+                                <div class="text-muted mt-1">
+                                    Des éléments suspects ont été identifiés lors de l'analyse du dossier.
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="reason-option" onclick="selectReason('other')">
+                            <label class="w-100 cursor-pointer">
+                                <input type="radio" name="rejection_reason" value="other" id="reason_other">
+                                <strong>Autre motif</strong>
+                                <div class="text-muted mt-1">
+                                    Précisez le motif dans la zone de texte ci-dessous.
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <!-- Zone de texte pour motif personnalisé -->
+                        <div class="custom-reason mt-3" id="custom-reason-text">
+                            <label class="form-label">Motif personnalisé :</label>
+                            <textarea name="custom_rejection_reason" class="form-control" rows="3" 
+                                      placeholder="Décrivez précisément le motif de rejet..."></textarea>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <!-- Commentaires détaillés -->
+                        <div class="mb-3">
+                            <label class="form-label">Commentaires détaillés (Obligatoire)</label>
+                            <textarea name="detailed_comments" class="form-control" rows="4" required
+                                      placeholder="Expliquez en détail les raisons du rejet et les améliorations possibles pour l'emprunteur..."></textarea>
+                            <div class="form-text">
+                                Ces commentaires seront inclus dans la notification envoyée à l'emprunteur.
+                            </div>
+                        </div>
+                        
+                        <!-- Options de notification -->
+                        <div class="mb-4">
+                            <h6>Options de notification :</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="send_email" name="send_email" checked>
+                                <label class="form-check-label" for="send_email">
+                                    Envoyer une notification par email à l'emprunteur
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="allow_reapplication" name="allow_reapplication" checked>
+                                <label class="form-check-label" for="allow_reapplication">
+                                    Permettre une nouvelle demande après amélioration du dossier
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Recommandations pour l'emprunteur -->
+                        <div class="mb-4">
+                            <label class="form-label">Recommandations pour l'emprunteur (Optionnel)</label>
+                            <textarea name="recommendations" class="form-control" rows="3"
+                                      placeholder="Conseils pour améliorer le dossier, documents supplémentaires à fournir, délai suggéré avant nouvelle demande..."></textarea>
+                            <div class="form-text">
+                                Ces recommandations aideront l'emprunteur à améliorer son dossier pour une future demande.
+                            </div>
+                        </div>
+
+                        <!-- Confirmation finale -->
+                        <div class="p-3 border border-danger rounded bg-light">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="final-confirmation" required>
+                                <label class="form-check-label" for="final-confirmation">
+                                    <strong class="text-danger">
+                                        Je confirme vouloir rejeter définitivement cette demande de prêt pour les motifs énoncés ci-dessus.
+                                    </strong>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ path('admin_loan_applications_detail', {'id': application.id}) }}" 
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Retour
+                            </a>
+                            
+                            <button type="submit" class="btn btn-danger btn-lg" id="reject-btn">
+                                <i class="fas fa-times-circle me-2"></i>Rejeter la Demande
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonne droite -->
+        <div class="col-lg-4">
+            <!-- Résumé de la demande -->
+            <div class="card loan-summary">
+                <div class="card-header border-0">
+                    <h6 class="mb-0 text-white">Résumé de la Demande</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-white-50 d-block">Emprunteur</small>
+                        {% if application.user.accountType.value == 'INDIVIDUAL' %}
+                            <strong>{{ application.user.firstName }} {{ application.user.lastName }}</strong>
+                        {% else %}
+                            <strong>{{ application.user.companyName }}</strong>
+                        {% endif %}
+                        <br>
+                        <small>{{ application.user.email }}</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-white-50 d-block">Type de prêt</small>
+                        <strong>{{ application.loanType.name }}</strong>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-white-50 d-block">Montant demandé</small>
+                        <strong>{{ application.requestedAmount|number_format(0, ',', ' ') }}€</strong>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-white-50 d-block">Durée</small>
+                        <strong>{{ application.duration }} mois</strong>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-white-50 d-block">Date de soumission</small>
+                        <strong>{{ application.submittedAt|date('d/m/Y H:i') }}</strong>
+                    </div>
+                    
+                    {% if application.monthlyPayment %}
+                        <div class="mb-3">
+                            <small class="text-white-50 d-block">Mensualité prévue</small>
+                            <strong>{{ application.monthlyPayment|number_format(2, ',', ' ') }}€</strong>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Statistiques de rejet -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Statistiques de Rejet</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="h4 text-danger">15%</div>
+                            <small class="text-muted">Taux de rejet mensuel</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="h4 text-info">45%</div>
+                            <small class="text-muted">Nouvelles demandes après rejet</small>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="small">
+                        <div class="mb-2">
+                            <span class="text-muted">Motifs fréquents :</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Revenus insuffisants</span>
+                            <span class="text-danger">35%</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Documents incomplets</span>
+                            <span class="text-danger">28%</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Taux d'endettement élevé</span>
+                            <span class="text-danger">22%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conseils de rejet -->
+            <div class="card mt-3 border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>Bonnes Pratiques
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0 small">
+                        <li>Soyez précis et constructif dans vos commentaires</li>
+                        <li>Proposez des solutions d'amélioration quand possible</li>
+                        <li>Vérifiez la conformité légale du motif de rejet</li>
+                        <li>Documentez soigneusement votre décision</li>
+                        <li>Respectez la confidentialité des informations</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Contacts utiles -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Contacts Utiles</h6>
+                </div>
+                <div class="card-body">
+                    <div class="small">
+                        <div class="mb-2">
+                            <strong>Support juridique :</strong><br>
+                            <a href="tel:+33123456789">01 23 45 67 89</a>
+                        </div>
+                        <div class="mb-2">
+                            <strong>Responsable crédit :</strong><br>
+                            <a href="mailto:credit@edgeloan.fr">credit@edgeloan.fr</a>
+                        </div>
+                        <div>
+                            <strong>En cas de doute :</strong><br>
+                            Consultez votre superviseur
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        function selectReason(reason) {
+            // Retirer la sélection de toutes les options
+            document.querySelectorAll('.reason-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Sélectionner l'option cliquée
+            event.currentTarget.classList.add('selected');
+            
+            // Cocher le radio button correspondant
+            document.getElementById('reason_' + reason).checked = true;
+            
+            // Afficher/masquer la zone de texte personnalisée
+            const customReasonDiv = document.getElementById('custom-reason-text');
+            if (reason === 'other') {
+                customReasonDiv.classList.add('show');
+                customReasonDiv.querySelector('textarea').required = true;
+            } else {
+                customReasonDiv.classList.remove('show');
+                customReasonDiv.querySelector('textarea').required = false;
+                customReasonDiv.querySelector('textarea').value = '';
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gestion du formulaire
+            document.getElementById('rejection-form').addEventListener('submit', function(e) {
+                // Vérifier qu'un motif est sélectionné
+                const selectedReason = document.querySelector('input[name="rejection_reason"]:checked');
+                if (!selectedReason) {
+                    e.preventDefault();
+                    alert('Veuillez sélectionner un motif de rejet.');
+                    return false;
+                }
+                
+                // Vérifier les commentaires détaillés
+                const detailedComments = document.querySelector('textarea[name="detailed_comments"]').value.trim();
+                if (detailedComments.length < 20) {
+                    e.preventDefault();
+                    alert('Veuillez fournir des commentaires détaillés (minimum 20 caractères).');
+                    return false;
+                }
+                
+                // Vérifier la confirmation finale
+                const finalConfirmation = document.getElementById('final-confirmation');
+                if (!finalConfirmation.checked) {
+                    e.preventDefault();
+                    alert('Veuillez confirmer le rejet de la demande.');
+                    return false;
+                }
+                
+                // Confirmation de sécurité
+                if (!confirm('Êtes-vous absolument certain de vouloir rejeter cette demande ? Cette action est irréversible.')) {
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Mise à jour du bouton
+                const rejectBtn = document.getElementById('reject-btn');
+                rejectBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Traitement en cours...';
+                rejectBtn.disabled = true;
+            });
+        });
+    </script>
+{% endblock %}

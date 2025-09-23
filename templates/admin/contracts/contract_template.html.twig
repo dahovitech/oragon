@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contrat de Prêt {{ contract.contractNumber }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 20px;
+        }
+        
+        .company-logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        
+        .contract-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 20px 0;
+            text-transform: uppercase;
+        }
+        
+        .contract-number {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .parties {
+            display: flex;
+            justify-content: space-between;
+            margin: 30px 0;
+        }
+        
+        .party {
+            width: 45%;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .party-title {
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 10px;
+            color: #007bff;
+            text-transform: uppercase;
+        }
+        
+        .loan-details {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+        
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        .detail-table th,
+        .detail-table td {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        
+        .detail-table th {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .detail-table tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        .payment-schedule {
+            margin: 30px 0;
+        }
+        
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+        }
+        
+        .schedule-table th,
+        .schedule-table td {
+            padding: 6px 8px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        
+        .schedule-table th {
+            background-color: #343a40;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .amount {
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .terms-section {
+            margin: 30px 0;
+            font-size: 10px;
+            line-height: 1.5;
+        }
+        
+        .terms-title {
+            font-size: 12px;
+            font-weight: bold;
+            margin: 20px 0 10px 0;
+            color: #007bff;
+        }
+        
+        .terms-list {
+            margin-left: 20px;
+        }
+        
+        .signature-section {
+            margin-top: 50px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .signature-box {
+            width: 40%;
+            text-align: center;
+            padding: 20px;
+            border: 1px solid #ddd;
+        }
+        
+        .signature-line {
+            border-top: 1px solid #333;
+            margin: 40px 0 10px 0;
+            padding-top: 10px;
+        }
+        
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 9px;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+        
+        .page-break {
+            page-break-before: always;
+        }
+        
+        @media print {
+            body {
+                margin: 0;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- En-tête du contrat -->
+    <div class="header">
+        <div class="company-logo">{{ companyInfo.name }}</div>
+        <div>{{ companyInfo.address }}</div>
+        <div>SIRET: {{ companyInfo.siret }} - Tél: {{ companyInfo.phone }}</div>
+        <div>Email: {{ companyInfo.email }}</div>
+        
+        <div class="contract-title">Contrat de Prêt</div>
+        <div class="contract-number">N° {{ contract.contractNumber }}</div>
+        <div>Généré le {{ generationDate|date('d/m/Y à H:i') }}</div>
+    </div>
+
+    <!-- Parties contractantes -->
+    <div class="parties">
+        <div class="party">
+            <div class="party-title">Le Prêteur</div>
+            <strong>{{ companyInfo.name }}</strong><br>
+            {{ companyInfo.address }}<br>
+            SIRET: {{ companyInfo.siret }}<br>
+            Téléphone: {{ companyInfo.phone }}<br>
+            Email: {{ companyInfo.email }}
+        </div>
+        
+        <div class="party">
+            <div class="party-title">L'Emprunteur</div>
+            <strong>
+                {% if user.accountType.value == 'INDIVIDUAL' %}
+                    {{ user.firstName }} {{ user.lastName }}
+                {% else %}
+                    {{ user.companyName }}
+                {% endif %}
+            </strong><br>
+            {{ user.address }}<br>
+            {{ user.postalCode }} {{ user.city }}<br>
+            Téléphone: {{ user.phoneNumber }}<br>
+            Email: {{ user.email }}<br>
+            {% if user.accountType.value == 'INDIVIDUAL' %}
+                Date de naissance: {{ user.dateOfBirth|date('d/m/Y') }}<br>
+                N° Identité: {{ user.nationalId }}
+            {% else %}
+                SIRET: {{ user.siretNumber }}<br>
+                Secteur: {{ user.businessSector }}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Détails du prêt -->
+    <div class="loan-details">
+        <h3 style="margin-top: 0; color: #007bff;">CARACTÉRISTIQUES DU PRÊT</h3>
+        
+        <table class="detail-table">
+            <tr>
+                <th>Type de prêt</th>
+                <td>{{ loanType.name }}</td>
+            </tr>
+            <tr>
+                <th>Montant du capital emprunté</th>
+                <td class="amount">{{ application.requestedAmount|number_format(2, ',', ' ') }} €</td>
+            </tr>
+            <tr>
+                <th>Taux d'intérêt nominal annuel</th>
+                <td>{{ application.interestRate }}%</td>
+            </tr>
+            <tr>
+                <th>Durée du prêt</th>
+                <td>{{ application.duration }} mois</td>
+            </tr>
+            <tr>
+                <th>Mensualité</th>
+                <td class="amount">{{ application.monthlyPayment|number_format(2, ',', ' ') }} €</td>
+            </tr>
+            <tr>
+                <th>Montant total dû</th>
+                <td class="amount">{{ application.totalAmount|number_format(2, ',', ' ') }} €</td>
+            </tr>
+            <tr>
+                <th>Coût total du crédit</th>
+                <td class="amount">{{ (application.totalAmount - application.requestedAmount)|number_format(2, ',', ' ') }} €</td>
+            </tr>
+            <tr>
+                <th>Date de début</th>
+                <td>{{ contract.startDate|date('d/m/Y') }}</td>
+            </tr>
+            <tr>
+                <th>Date de fin</th>
+                <td>{{ contract.endDate|date('d/m/Y') }}</td>
+            </tr>
+            <tr>
+                <th>Objet du prêt</th>
+                <td>{{ application.purpose }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Échéancier de paiement -->
+    <div class="payment-schedule">
+        <h3 style="color: #007bff;">ÉCHÉANCIER DE REMBOURSEMENT</h3>
+        
+        <table class="schedule-table">
+            <thead>
+                <tr>
+                    <th>N°</th>
+                    <th>Date d'échéance</th>
+                    <th>Mensualité</th>
+                    <th>Capital</th>
+                    <th>Intérêts</th>
+                    <th>Capital restant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in paymentSchedule %}
+                    <tr>
+                        <td>{{ payment.paymentNumber }}</td>
+                        <td>{{ payment.dueDate|date('d/m/Y') }}</td>
+                        <td>{{ payment.monthlyPayment|number_format(2, ',', ' ') }} €</td>
+                        <td>{{ payment.principalAmount|number_format(2, ',', ' ') }} €</td>
+                        <td>{{ payment.interestAmount|number_format(2, ',', ' ') }} €</td>
+                        <td>{{ payment.remainingBalance|number_format(2, ',', ' ') }} €</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Nouvelle page pour les conditions -->
+    <div class="page-break"></div>
+    
+    <!-- Conditions générales -->
+    <div class="terms-section">
+        <h2 style="color: #007bff; text-align: center;">CONDITIONS GÉNÉRALES</h2>
+        
+        <div class="terms-title">Article 1 - Objet du contrat</div>
+        <p>Le présent contrat a pour objet l'octroi par {{ companyInfo.name }} à l'emprunteur d'un prêt d'un montant de {{ application.requestedAmount|number_format(2, ',', ' ') }} euros, destiné à {{ application.purpose }}.</p>
+        
+        <div class="terms-title">Article 2 - Modalités de remboursement</div>
+        <ul class="terms-list">
+            <li>Le prêt sera remboursé selon l'échéancier établi ci-dessus.</li>
+            <li>Les mensualités sont payables le {{ contract.startDate|date('j') }} de chaque mois.</li>
+            <li>Le paiement s'effectue par prélèvement automatique sur le compte bancaire de l'emprunteur.</li>
+            <li>En cas de retard de paiement, des pénalités de 0,05% par jour de retard seront appliquées.</li>
+        </ul>
+        
+        <div class="terms-title">Article 3 - Remboursement anticipé</div>
+        <p>L'emprunteur peut à tout moment rembourser par anticipation tout ou partie du capital restant dû. Dans ce cas, les intérêts non échus seront réduits de 50%.</p>
+        
+        <div class="terms-title">Article 4 - Défaillance</div>
+        <ul class="terms-list">
+            <li>En cas de non-paiement de deux mensualités consécutives, le prêteur pourra exiger le remboursement immédiat du capital restant dû.</li>
+            <li>Tout retard de paiement sera signalé aux organismes de crédit.</li>
+        </ul>
+        
+        <div class="terms-title">Article 5 - Assurance</div>
+        <p>L'emprunteur s'engage à souscrire une assurance décès-invalidité couvrant le montant du prêt pour toute la durée du contrat.</p>
+        
+        <div class="terms-title">Article 6 - Garanties</div>
+        {% if application.guarantees %}
+            <p>Garanties proposées par l'emprunteur : {{ application.guarantees }}</p>
+        {% else %}
+            <p>Aucune garantie spécifique n'est requise pour ce prêt.</p>
+        {% endif %}
+        
+        <div class="terms-title">Article 7 - Droit de rétractation</div>
+        <p>L'emprunteur dispose d'un délai de 14 jours calendaires révolus pour renoncer au présent contrat sans avoir à justifier de motifs ni à payer de pénalités.</p>
+        
+        <div class="terms-title">Article 8 - Protection des données</div>
+        <p>Les données personnelles collectées sont traitées conformément au RGPD et à la politique de confidentialité de {{ companyInfo.name }}.</p>
+        
+        <div class="terms-title">Article 9 - Litiges</div>
+        <p>Tout litige relatif au présent contrat sera porté devant les tribunaux compétents de Paris.</p>
+        
+        <div class="terms-title">Article 10 - Entrée en vigueur</div>
+        <p>Le présent contrat entre en vigueur à la date de signature par les deux parties.</p>
+    </div>
+
+    <!-- Section signatures -->
+    <div class="signature-section">
+        <div class="signature-box">
+            <strong>Le Prêteur</strong><br>
+            {{ companyInfo.name }}<br><br>
+            <div class="signature-line">
+                Signature et cachet
+            </div>
+            <div>Date : ________________</div>
+        </div>
+        
+        <div class="signature-box">
+            <strong>L'Emprunteur</strong><br>
+            {% if user.accountType.value == 'INDIVIDUAL' %}
+                {{ user.firstName }} {{ user.lastName }}
+            {% else %}
+                {{ user.companyName }}
+            {% endif %}
+            <br><br>
+            <div class="signature-line">
+                Signature précédée de "Lu et approuvé"
+            </div>
+            <div>Date : ________________</div>
+        </div>
+    </div>
+
+    <!-- Pied de page -->
+    <div class="footer">
+        <div>{{ companyInfo.name }} - {{ companyInfo.address }}</div>
+        <div>SIRET: {{ companyInfo.siret }} - Capital social: 100 000 €</div>
+        <div>Établissement de crédit agréé par l'ACPR sous le numéro 12345</div>
+        <div>Contrat généré automatiquement le {{ generationDate|date('d/m/Y à H:i') }}</div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,403 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Approuver la Demande #{{ application.id }} - Administration{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .approval-card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .loan-summary {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+        .calculation-preview {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+        }
+        .risk-indicator {
+            position: relative;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .risk-bar {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        .risk-low { background: #28a745; }
+        .risk-medium { background: #ffc107; }
+        .risk-high { background: #dc3545; }
+        .conditions-form {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <!-- En-tête -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">
+                        <a href="{{ path('admin_loan_applications_index') }}">Demandes de prêt</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{{ path('admin_loan_applications_detail', {'id': application.id}) }}">Demande #{{ application.id }}</a>
+                    </li>
+                    <li class="breadcrumb-item active">Approbation</li>
+                </ol>
+            </nav>
+            <h1 class="h3 mb-0">Approuver la Demande #{{ application.id }}</h1>
+            <p class="text-muted mb-0">{{ application.loanType.name }} - {{ application.user.email }}</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Colonne principale -->
+        <div class="col-lg-8">
+            <!-- Formulaire d'approbation -->
+            <div class="card approval-card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-check-circle me-2"></i>Conditions d'Approbation
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="approval-form">
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle me-2"></i>Instructions</h6>
+                            <p class="mb-0">
+                                Vous pouvez modifier les conditions du prêt si nécessaire. 
+                                Les nouvelles conditions seront calculées automatiquement et un contrat sera généré.
+                            </p>
+                        </div>
+
+                        <div class="conditions-form">
+                            <h6 class="mb-3">Conditions du Prêt</h6>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Montant Approuvé (€) *</label>
+                                        <input type="number" name="approved_amount" class="form-control" 
+                                               value="{{ application.requestedAmount }}" 
+                                               min="{{ application.loanType.minAmount }}" 
+                                               max="{{ application.loanType.maxAmount }}"
+                                               step="100" required id="approved-amount">
+                                        <div class="form-text">
+                                            Limites : {{ application.loanType.minAmount|number_format(0, ',', ' ') }}€ - 
+                                            {{ application.loanType.maxAmount|number_format(0, ',', ' ') }}€
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Taux d'Intérêt (%) *</label>
+                                        <input type="number" name="approved_rate" class="form-control" 
+                                               value="{{ application.interestRate ?? application.loanType.baseInterestRate }}" 
+                                               min="0.1" max="25" step="0.1" required id="approved-rate">
+                                        <div class="form-text">
+                                            Taux de base : {{ application.loanType.baseInterestRate }}%
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Durée (mois) *</label>
+                                        <input type="number" name="approved_duration" class="form-control" 
+                                               value="{{ application.duration }}" 
+                                               min="{{ application.loanType.minDuration }}" 
+                                               max="{{ application.loanType.maxDuration }}" required id="approved-duration">
+                                        <div class="form-text">
+                                            Limites : {{ application.loanType.minDuration }} - {{ application.loanType.maxDuration }} mois
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Conditions Particulières</label>
+                                        <select name="special_conditions" class="form-select">
+                                            <option value="">Aucune condition particulière</option>
+                                            <option value="insurance_required">Assurance obligatoire</option>
+                                            <option value="guarantee_required">Garantie supplémentaire requise</option>
+                                            <option value="income_verification">Vérification de revenus annuelle</option>
+                                            <option value="reduced_rate">Taux préférentiel accordé</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Commentaires Internes</label>
+                                <textarea name="approval_comments" class="form-control" rows="3" 
+                                          placeholder="Commentaires sur l'approbation, conditions particulières..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Aperçu des calculs -->
+                        <div class="calculation-preview p-3 mt-4" id="calculation-preview">
+                            <h6 class="mb-3">Aperçu des Nouvelles Conditions</h6>
+                            <div class="row text-center">
+                                <div class="col-md-3">
+                                    <div class="mb-2">
+                                        <small class="text-muted d-block">Mensualité</small>
+                                        <strong class="h5 text-primary" id="preview-monthly">{{ application.monthlyPayment|number_format(2, ',', ' ') }}€</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-2">
+                                        <small class="text-muted d-block">Coût Total</small>
+                                        <strong class="h5 text-info" id="preview-total">{{ application.totalAmount|number_format(2, ',', ' ') }}€</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-2">
+                                        <small class="text-muted d-block">Intérêts</small>
+                                        <strong class="h5 text-warning" id="preview-interest">{{ (application.totalAmount - application.requestedAmount)|number_format(2, ',', ' ') }}€</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-2">
+                                        <small class="text-muted d-block">Taux Effectif</small>
+                                        <strong class="h5 text-secondary" id="preview-effective-rate">{{ application.interestRate ?? application.loanType.baseInterestRate }}%</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Vérification finale -->
+                        <div class="mt-4 p-3 border border-success rounded">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="final-verification" required>
+                                <label class="form-check-label" for="final-verification">
+                                    <strong>Je confirme avoir vérifié tous les éléments de ce dossier et approuve cette demande de prêt aux conditions spécifiées ci-dessus.</strong>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ path('admin_loan_applications_detail', {'id': application.id}) }}" 
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Retour
+                            </a>
+                            
+                            <button type="submit" class="btn btn-success btn-lg" id="approve-btn">
+                                <i class="fas fa-check-circle me-2"></i>Approuver le Prêt
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonne droite -->
+        <div class="col-lg-4">
+            <!-- Résumé de la demande -->
+            <div class="card loan-summary">
+                <div class="card-header border-0">
+                    <h6 class="mb-0 text-white">Résumé de la Demande</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-white-50 d-block">Emprunteur</small>
+                        {% if application.user.accountType.value == 'INDIVIDUAL' %}
+                            <strong>{{ application.user.firstName }} {{ application.user.lastName }}</strong>
+                        {% else %}
+                            <strong>{{ application.user.companyName }}</strong>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-white-50 d-block">Type de prêt</small>
+                        <strong>{{ application.loanType.name }}</strong>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-white-50 d-block">Montant initial</small>
+                        <strong>{{ application.requestedAmount|number_format(0, ',', ' ') }}€</strong>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-white-50 d-block">Durée initiale</small>
+                        <strong>{{ application.duration }} mois</strong>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-white-50 d-block">Date de soumission</small>
+                        <strong>{{ application.submittedAt|date('d/m/Y H:i') }}</strong>
+                    </div>
+                    
+                    {% if application.purpose %}
+                        <div>
+                            <small class="text-white-50 d-block">Objet</small>
+                            <small>{{ application.purpose }}</small>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Évaluation des risques -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">Évaluation des Risques</h6>
+                </div>
+                <div class="card-body">
+                    {% set riskLevel = 'high' %}
+                    {% set riskScore = 45 %}
+                    {% if application.user.isVerified %}
+                        {% set riskScore = riskScore + 25 %}
+                    {% endif %}
+                    {% if application.user.monthlyIncome and application.monthlyPayment %}
+                        {% set debtRatio = (application.monthlyPayment / application.user.monthlyIncome * 100) %}
+                        {% if debtRatio <= 25 %}
+                            {% set riskScore = riskScore + 20 %}
+                        {% elseif debtRatio <= 33 %}
+                            {% set riskScore = riskScore + 10 %}
+                        {% endif %}
+                    {% endif %}
+                    
+                    {% if riskScore >= 70 %}
+                        {% set riskLevel = 'low' %}
+                    {% elseif riskScore >= 50 %}
+                        {% set riskLevel = 'medium' %}
+                    {% endif %}
+                    
+                    <div class="text-center mb-3">
+                        <div class="h4 text-{{ riskLevel == 'low' ? 'success' : (riskLevel == 'medium' ? 'warning' : 'danger') }}">
+                            {{ riskScore }}%
+                        </div>
+                        <div class="risk-indicator">
+                            <div class="risk-bar risk-{{ riskLevel }}" style="width: {{ riskScore }}%"></div>
+                        </div>
+                        <small class="text-muted mt-1 d-block">
+                            Risque {{ riskLevel == 'low' ? 'Faible' : (riskLevel == 'medium' ? 'Modéré' : 'Élevé') }}
+                        </small>
+                    </div>
+                    
+                    <div class="small">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Compte vérifié :</span>
+                            <span class="text-{{ application.user.isVerified ? 'success' : 'warning' }}">
+                                {{ application.user.isVerified ? 'Oui' : 'Non' }}
+                            </span>
+                        </div>
+                        
+                        {% if application.user.monthlyIncome and application.monthlyPayment %}
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Taux d'endettement :</span>
+                                <span class="text-{{ debtRatio <= 33 ? 'success' : 'warning' }}">
+                                    {{ debtRatio|round(1) }}%
+                                </span>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Documents :</span>
+                            <span class="text-{{ application.documents|length >= 3 ? 'success' : 'warning' }}">
+                                {{ application.documents|length }} fichier(s)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Avertissements -->
+            <div class="card mt-3 border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h6 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Points d'Attention
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0 small">
+                        <li>Vérifiez la cohérence des revenus déclarés</li>
+                        <li>Contrôlez la validité des documents</li>
+                        <li>Évaluez la capacité de remboursement</li>
+                        <li>Validez l'identité de l'emprunteur</li>
+                        {% if application.requestedAmount > 50000 %}
+                            <li class="text-danger">Montant élevé : validation hiérarchique recommandée</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const amountInput = document.getElementById('approved-amount');
+            const rateInput = document.getElementById('approved-rate');
+            const durationInput = document.getElementById('approved-duration');
+            
+            function updateCalculations() {
+                const amount = parseFloat(amountInput.value) || 0;
+                const rate = parseFloat(rateInput.value) || 0;
+                const duration = parseInt(durationInput.value) || 0;
+                
+                if (amount > 0 && rate > 0 && duration > 0) {
+                    const monthlyRate = rate / 100 / 12;
+                    let monthlyPayment;
+                    
+                    if (monthlyRate > 0) {
+                        monthlyPayment = amount * (monthlyRate * Math.pow(1 + monthlyRate, duration)) / 
+                                        (Math.pow(1 + monthlyRate, duration) - 1);
+                    } else {
+                        monthlyPayment = amount / duration;
+                    }
+                    
+                    const totalAmount = monthlyPayment * duration;
+                    const totalInterest = totalAmount - amount;
+                    
+                    document.getElementById('preview-monthly').textContent = 
+                        monthlyPayment.toLocaleString('fr-FR', {minimumFractionDigits: 2}) + '€';
+                    document.getElementById('preview-total').textContent = 
+                        totalAmount.toLocaleString('fr-FR', {minimumFractionDigits: 2}) + '€';
+                    document.getElementById('preview-interest').textContent = 
+                        totalInterest.toLocaleString('fr-FR', {minimumFractionDigits: 2}) + '€';
+                    document.getElementById('preview-effective-rate').textContent = rate + '%';
+                }
+            }
+            
+            amountInput.addEventListener('input', updateCalculations);
+            rateInput.addEventListener('input', updateCalculations);
+            durationInput.addEventListener('input', updateCalculations);
+            
+            // Validation du formulaire
+            document.getElementById('approval-form').addEventListener('submit', function(e) {
+                const finalCheck = document.getElementById('final-verification');
+                if (!finalCheck.checked) {
+                    e.preventDefault();
+                    alert('Veuillez cocher la case de confirmation finale.');
+                    return false;
+                }
+                
+                const approveBtn = document.getElementById('approve-btn');
+                approveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Traitement en cours...';
+                approveBtn.disabled = true;
+            });
+            
+            // Calcul initial
+            updateCalculations();
+        });
+    </script>
+{% endblock %}

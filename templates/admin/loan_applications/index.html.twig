@@ -1,0 +1,486 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Gestion des Demandes de Prêt - Administration{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .stats-card {
+            transition: transform 0.2s ease;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stats-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.375rem 0.75rem;
+        }
+        .application-row {
+            cursor: pointer;
+        }
+        .application-row:hover {
+            background-color: #f8f9fa;
+        }
+        .priority-high {
+            border-left: 4px solid #dc3545;
+        }
+        .priority-medium {
+            border-left: 4px solid #ffc107;
+        }
+        .priority-low {
+            border-left: 4px solid #28a745;
+        }
+        .filter-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .bulk-actions {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .bulk-actions.show {
+            display: block;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <!-- En-tête de page -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">Gestion des Demandes de Prêt</h1>
+            <p class="text-muted mb-0">Traitement et suivi des demandes de financement</p>
+        </div>
+        <div>
+            <button class="btn btn-outline-primary" onclick="refreshData()">
+                <i class="fas fa-sync-alt me-2"></i>Actualiser
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card stats-card h-100 border-primary">
+                <div class="card-body text-center">
+                    <div class="text-primary mb-2">
+                        <i class="fas fa-file-alt fa-2x"></i>
+                    </div>
+                    <h4 class="text-primary">{{ stats.total }}</h4>
+                    <small class="text-muted">Total</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card stats-card h-100 border-info">
+                <div class="card-body text-center">
+                    <div class="text-info mb-2">
+                        <i class="fas fa-paper-plane fa-2x"></i>
+                    </div>
+                    <h4 class="text-info">{{ stats.submitted }}</h4>
+                    <small class="text-muted">Soumises</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card stats-card h-100 border-warning">
+                <div class="card-body text-center">
+                    <div class="text-warning mb-2">
+                        <i class="fas fa-eye fa-2x"></i>
+                    </div>
+                    <h4 class="text-warning">{{ stats.under_review }}</h4>
+                    <small class="text-muted">En examen</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card stats-card h-100 border-success">
+                <div class="card-body text-center">
+                    <div class="text-success mb-2">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                    <h4 class="text-success">{{ stats.approved }}</h4>
+                    <small class="text-muted">Approuvées</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card stats-card h-100 border-danger">
+                <div class="card-body text-center">
+                    <div class="text-danger mb-2">
+                        <i class="fas fa-times-circle fa-2x"></i>
+                    </div>
+                    <h4 class="text-danger">{{ stats.rejected }}</h4>
+                    <small class="text-muted">Rejetées</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+            <div class="card stats-card h-100 border-dark">
+                <div class="card-body text-center">
+                    <div class="text-dark mb-2">
+                        <i class="fas fa-money-check-alt fa-2x"></i>
+                    </div>
+                    <h4 class="text-dark">{{ stats.disbursed }}</h4>
+                    <small class="text-muted">Déboursées</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filter-section">
+        <form method="GET" class="row align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Statut</label>
+                <select name="status" class="form-select">
+                    <option value="all" {{ filters.status == 'all' ? 'selected' : '' }}>Tous les statuts</option>
+                    <option value="SUBMITTED" {{ filters.status == 'SUBMITTED' ? 'selected' : '' }}>Soumises</option>
+                    <option value="UNDER_REVIEW" {{ filters.status == 'UNDER_REVIEW' ? 'selected' : '' }}>En examen</option>
+                    <option value="APPROVED" {{ filters.status == 'APPROVED' ? 'selected' : '' }}>Approuvées</option>
+                    <option value="REJECTED" {{ filters.status == 'REJECTED' ? 'selected' : '' }}>Rejetées</option>
+                    <option value="DISBURSED" {{ filters.status == 'DISBURSED' ? 'selected' : '' }}>Déboursées</option>
+                </select>
+            </div>
+            
+            <div class="col-md-4">
+                <label class="form-label">Rechercher</label>
+                <input type="text" name="search" class="form-control" 
+                       placeholder="Email, nom, ID demande..." 
+                       value="{{ filters.search }}">
+            </div>
+            
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-2"></i>Filtrer
+                </button>
+                <a href="{{ path('admin_loan_applications_index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-2"></i>Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Actions groupées -->
+    <div class="bulk-actions" id="bulk-actions">
+        <div class="d-flex align-items-center">
+            <span class="me-3"><span id="selected-count">0</span> demande(s) sélectionnée(s)</span>
+            <button class="btn btn-warning btn-sm me-2" onclick="bulkAction('mark_under_review')">
+                <i class="fas fa-eye me-1"></i>Marquer en examen
+            </button>
+            <button class="btn btn-info btn-sm" onclick="bulkAction('send_reminder')">
+                <i class="fas fa-bell me-1"></i>Envoyer rappel
+            </button>
+        </div>
+    </div>
+
+    <!-- Liste des demandes -->
+    <div class="card">
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>Demandes de prêt
+                    <span class="badge bg-secondary">{{ applications|length }} résultat(s)</span>
+                </h5>
+                <div>
+                    <input type="checkbox" id="select-all" class="form-check-input me-2">
+                    <label for="select-all" class="form-check-label small">Tout sélectionner</label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-body p-0">
+            {% if applications is empty %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Aucune demande trouvée</h5>
+                    <p class="text-muted">Aucune demande ne correspond à vos critères de recherche.</p>
+                </div>
+            {% else %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="40">
+                                    <input type="checkbox" id="select-all-table" class="form-check-input">
+                                </th>
+                                <th>ID</th>
+                                <th>Emprunteur</th>
+                                <th>Type de prêt</th>
+                                <th>Montant</th>
+                                <th>Durée</th>
+                                <th>Statut</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for application in applications %}
+                                {% set priority = 'low' %}
+                                {% if application.requestedAmount > 50000 %}
+                                    {% set priority = 'high' %}
+                                {% elseif application.requestedAmount > 20000 %}
+                                    {% set priority = 'medium' %}
+                                {% endif %}
+                                
+                                <tr class="application-row priority-{{ priority }}" 
+                                    onclick="window.location='{{ path('admin_loan_applications_detail', {'id': application.id}) }}'">
+                                    <td onclick="event.stopPropagation()">
+                                        <input type="checkbox" class="form-check-input application-checkbox" 
+                                               value="{{ application.id }}">
+                                    </td>
+                                    <td>
+                                        <strong>#{{ application.id }}</strong>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <strong>
+                                                {% if application.user.accountType.value == 'INDIVIDUAL' %}
+                                                    {{ application.user.firstName }} {{ application.user.lastName }}
+                                                {% else %}
+                                                    {{ application.user.companyName }}
+                                                {% endif %}
+                                            </strong>
+                                            <br>
+                                            <small class="text-muted">{{ application.user.email }}</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold">{{ application.loanType.name }}</span>
+                                        {% if application.user.accountType.value == 'INDIVIDUAL' %}
+                                            <i class="fas fa-user text-info ms-1" title="Particulier"></i>
+                                        {% else %}
+                                            <i class="fas fa-building text-warning ms-1" title="Entreprise"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong class="text-primary">{{ application.requestedAmount|number_format(0, ',', ' ') }}€</strong>
+                                        {% if application.monthlyPayment %}
+                                            <br>
+                                            <small class="text-muted">{{ application.monthlyPayment|number_format(2, ',', ' ') }}€/mois</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold">{{ application.duration }}</span> mois
+                                        {% if application.interestRate %}
+                                            <br>
+                                            <small class="text-muted">{{ application.interestRate }}%</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set statusClass = 'secondary' %}
+                                        {% set statusIcon = 'fas fa-circle' %}
+                                        {% if application.status.value == 'SUBMITTED' %}
+                                            {% set statusClass = 'info' %}
+                                            {% set statusIcon = 'fas fa-paper-plane' %}
+                                        {% elseif application.status.value == 'UNDER_REVIEW' %}
+                                            {% set statusClass = 'warning' %}
+                                            {% set statusIcon = 'fas fa-eye' %}
+                                        {% elseif application.status.value == 'APPROVED' %}
+                                            {% set statusClass = 'success' %}
+                                            {% set statusIcon = 'fas fa-check-circle' %}
+                                        {% elseif application.status.value == 'REJECTED' %}
+                                            {% set statusClass = 'danger' %}
+                                            {% set statusIcon = 'fas fa-times-circle' %}
+                                        {% elseif application.status.value == 'DISBURSED' %}
+                                            {% set statusClass = 'dark' %}
+                                            {% set statusIcon = 'fas fa-money-check-alt' %}
+                                        {% endif %}
+                                        
+                                        <span class="badge bg-{{ statusClass }} status-badge">
+                                            <i class="{{ statusIcon }} me-1"></i>
+                                            {{ application.status.value|title }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if application.submittedAt %}
+                                            {{ application.submittedAt|date('d/m/Y') }}
+                                            <br>
+                                            <small class="text-muted">{{ application.submittedAt|date('H:i') }}</small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td onclick="event.stopPropagation()">
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ path('admin_loan_applications_detail', {'id': application.id}) }}" 
+                                               class="btn btn-sm btn-outline-primary" title="Voir détails">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            
+                                            {% if application.status.value == 'SUBMITTED' %}
+                                                <a href="{{ path('admin_loan_applications_review', {'id': application.id}) }}" 
+                                                   class="btn btn-sm btn-outline-warning" title="Examiner">
+                                                    <i class="fas fa-search"></i>
+                                                </a>
+                                            {% endif %}
+                                            
+                                            {% if application.status.value in ['SUBMITTED', 'UNDER_REVIEW'] %}
+                                                <a href="{{ path('admin_loan_applications_approve', {'id': application.id}) }}" 
+                                                   class="btn btn-sm btn-outline-success" title="Approuver">
+                                                    <i class="fas fa-check"></i>
+                                                </a>
+                                                <a href="{{ path('admin_loan_applications_reject', {'id': application.id}) }}" 
+                                                   class="btn btn-sm btn-outline-danger" title="Rejeter">
+                                                    <i class="fas fa-times"></i>
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if totalPages > 1 %}
+            <div class="card-footer">
+                <nav aria-label="Pagination des demandes">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if currentPage > 1 %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ path('admin_loan_applications_index', filters|merge({'page': currentPage - 1})) }}">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for page in 1..totalPages %}
+                            {% if page == currentPage %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ page }}</span>
+                                </li>
+                            {% elseif page in [1, 2, currentPage - 1, currentPage + 1, totalPages - 1, totalPages] %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ path('admin_loan_applications_index', filters|merge({'page': page})) }}">
+                                        {{ page }}
+                                    </a>
+                                </li>
+                            {% elseif page == 3 and currentPage > 4 %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% elseif page == totalPages - 2 and currentPage < totalPages - 3 %}
+                                <li class="page-item disabled">
+                                    <span class="page-link">...</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if currentPage < totalPages %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ path('admin_loan_applications_index', filters|merge({'page': currentPage + 1})) }}">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Gestion de la sélection multiple
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectAll = document.getElementById('select-all-table');
+            const checkboxes = document.querySelectorAll('.application-checkbox');
+            const bulkActions = document.getElementById('bulk-actions');
+            const selectedCount = document.getElementById('selected-count');
+
+            function updateBulkActions() {
+                const checked = document.querySelectorAll('.application-checkbox:checked');
+                selectedCount.textContent = checked.length;
+                
+                if (checked.length > 0) {
+                    bulkActions.classList.add('show');
+                } else {
+                    bulkActions.classList.remove('show');
+                }
+            }
+
+            selectAll.addEventListener('change', function() {
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+                updateBulkActions();
+            });
+
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    updateBulkActions();
+                    
+                    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+                    const someChecked = Array.from(checkboxes).some(cb => cb.checked);
+                    
+                    selectAll.checked = allChecked;
+                    selectAll.indeterminate = someChecked && !allChecked;
+                });
+            });
+        });
+
+        function refreshData() {
+            window.location.reload();
+        }
+
+        function bulkAction(action) {
+            const checked = document.querySelectorAll('.application-checkbox:checked');
+            const applicationIds = Array.from(checked).map(cb => cb.value);
+            
+            if (applicationIds.length === 0) {
+                alert('Veuillez sélectionner au moins une demande.');
+                return;
+            }
+
+            const actionNames = {
+                'mark_under_review': 'marquer en cours d\'examen',
+                'send_reminder': 'envoyer un rappel'
+            };
+
+            if (confirm(`Êtes-vous sûr de vouloir ${actionNames[action]} pour ${applicationIds.length} demande(s) ?`)) {
+                const formData = new FormData();
+                formData.append('action', action);
+                applicationIds.forEach(id => formData.append('application_ids[]', id));
+
+                fetch('{{ path("admin_loan_applications_bulk_action") }}', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        window.location.reload();
+                    } else {
+                        alert('Erreur: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    alert('Erreur de réseau');
+                    console.error(error);
+                });
+            }
+        }
+    </script>
+{% endblock %}
