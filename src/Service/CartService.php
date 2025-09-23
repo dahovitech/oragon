@@ -3,173 +3,143 @@
 namespace App\Service;
 
 use App\Entity\Product;
+use App\Entity\User;
 use App\Entity\Order;
 use App\Entity\OrderItem;
-use App\Entity\User;
+use App\Entity\ShippingMethod;
+use App\Entity\PaymentMethod;
+use App\Repository\ProductRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
-/**
- * Service for managing shopping cart and orders
- */
 class CartService
 {
     private const CART_SESSION_KEY = 'shopping_cart';
 
     public function __construct(
-        private EntityManagerInterface $entityManager,
-        private RequestStack $requestStack
+        private RequestStack $requestStack,
+        private ProductRepository $productRepository,
+        private EntityManagerInterface $entityManager
     ) {
     }
 
     /**
      * Add product to cart
      */
-    public function addToCart(Product $product, int $quantity = 1, array $attributes = []): void
+    public function addProduct(int $productId, int $quantity = 1, array $options = []): bool
     {
-        if (!$product->isActive() || !$product->isInStock()) {
-            throw new \InvalidArgumentException('Product is not available');
-        }
-
-        if ($product->isTrackStock() && $quantity > $product->getStockQuantity()) {
-            throw new \InvalidArgumentException('Not enough stock available');
+        $product = $this->productRepository->find($productId);
+        
+        if (!$product || !$product->isActive()) {
+            return false;
         }
 
         $cart = $this->getCart();
-        $productKey = $this->generateProductKey($product->getId(), $attributes);
+        $itemKey = $this->generateItemKey($productId, $options);
 
-        if (isset($cart['items'][$productKey])) {
-            $cart['items'][$productKey]['quantity'] += $quantity;
+        if (isset($cart['items'][$itemKey])) {
+            $cart['items'][$itemKey]['quantity'] += $quantity;
         } else {
-            $cart['items'][$productKey] = [
-                'product_id' => $product->getId(),
+            $cart['items'][$itemKey] = [
+                'product_id' => $productId,
                 'quantity' => $quantity,
-                'attributes' => $attributes,
+                'options' => $options,
                 'added_at' => time()
             ];
         }
 
         $this->saveCart($cart);
+        return true;
     }
 
     /**
-     * Update product quantity in cart
+     * Update item quantity in cart
      */
-    public function updateQuantity(string $productKey, int $quantity): void
+    public function updateQuantity(string $itemKey, int $quantity): bool
     {
+        $cart = $this->getCart();
+
+        if (!isset($cart['items'][$itemKey])) {
+            return false;
+        }
+
         if ($quantity <= 0) {
-            $this->removeFromCart($productKey);
-            return;
+            return $this->removeItem($itemKey);
         }
 
-        $cart = $this->getCart();
-        
-        if (isset($cart['items'][$productKey])) {
-            $productId = $cart['items'][$productKey]['product_id'];
-            $product = $this->entityManager->getRepository(Product::class)->find($productId);
-            
-            if ($product && $product->isTrackStock() && $quantity > $product->getStockQuantity()) {
-                throw new \InvalidArgumentException('Not enough stock available');
-            }
-
-            $cart['items'][$productKey]['quantity'] = $quantity;
-            $this->saveCart($cart);
-        }
+        $cart['items'][$itemKey]['quantity'] = $quantity;
+        $this->saveCart($cart);
+        return true;
     }
 
     /**
-     * Remove product from cart
+     * Remove item from cart
      */
-    public function removeFromCart(string $productKey): void
+    public function removeItem(string $itemKey): bool
     {
         $cart = $this->getCart();
-        
-        if (isset($cart['items'][$productKey])) {
-            unset($cart['items'][$productKey]);
-            $this->saveCart($cart);
+
+        if (!isset($cart['items'][$itemKey])) {
+            return false;
         }
+
+        unset($cart['items'][$itemKey]);
+        $this->saveCart($cart);
+        return true;
     }
 
     /**
      * Clear entire cart
      */
-    public function clearCart(): void
+    public function clear(): void
     {
-        $this->getSession()->remove(self::CART_SESSION_KEY);
+        $this->saveCart(['items' => []]);
     }
 
     /**
-     * Get cart contents
+     * Get cart with product details
      */
-    public function getCart(): array
-    {
-        $cart = $this->getSession()->get(self::CART_SESSION_KEY, ['items' => []]);
-        
-        // Ensure cart structure
-        if (!isset($cart['items'])) {
-            $cart['items'] = [];
-        }
-
-        return $cart;
-    }
-
-    /**
-     * Get cart items with product details
-     */
-    public function getCartItems(string $locale = 'fr'): array
+    public function getCartWithDetails(): array
     {
         $cart = $this->getCart();
-        $items = [];
+        $cartWithDetails = [
+            'items' => [],
+            'totals' => []
+        ];
 
-        foreach ($cart['items'] as $key => $item) {
-            $product = $this->entityManager->getRepository(Product::class)->find($item['product_id']);
+        foreach ($cart['items'] as $itemKey => $item) {
+            $product = $this->productRepository->find($item['product_id']);
             
-            if (!$product || !$product->isActive()) {
-                // Remove invalid items
-                $this->removeFromCart($key);
-                continue;
+            if ($product && $product->isActive()) {
+                $cartWithDetails['items'][$itemKey] = [
+                    'product' => $product,
+                    'quantity' => $item['quantity'],
+                    'options' => $item['options'],
+                    'unit_price' => $product->getPrice(),
+                    'total_price' => $product->getPrice() * $item['quantity'],
+                    'added_at' => $item['added_at']
+                ];
             }
-
-            $items[] = [
-                'key' => $key,
-                'product' => $product,
-                'quantity' => $item['quantity'],
-                'attributes' => $item['attributes'] ?? [],
-                'unit_price' => (float) $product->getPrice(),
-                'total_price' => (float) $product->getPrice() * $item['quantity'],
-                'name' => $product->getName($locale),
-                'image' => $product->getMainImage(),
-                'added_at' => $item['added_at'] ?? time()
-            ];
         }
 
-        return $items;
+        $cartWithDetails['totals'] = $this->calculateTotals($cartWithDetails['items']);
+        return $cartWithDetails;
     }
 
     /**
-     * Get cart summary
+     * Get cart items count
      */
-    public function getCartSummary(string $locale = 'fr'): array
+    public function getItemsCount(): int
     {
-        $items = $this->getCartItems($locale);
-        $subtotal = 0;
-        $totalItems = 0;
+        $cart = $this->getCart();
+        $count = 0;
 
-        foreach ($items as $item) {
-            $subtotal += $item['total_price'];
-            $totalItems += $item['quantity'];
+        foreach ($cart['items'] as $item) {
+            $count += $item['quantity'];
         }
 
-        return [
-            'items' => $items,
-            'subtotal' => $subtotal,
-            'total_items' => $totalItems,
-            'item_count' => count($items),
-            'shipping' => 0, // Will be calculated based on shipping method
-            'tax' => 0, // Will be calculated based on location
-            'total' => $subtotal // Will include shipping and tax
-        ];
+        return $count;
     }
 
     /**
@@ -182,139 +152,187 @@ class CartService
     }
 
     /**
-     * Get cart items count
+     * Calculate cart totals
      */
-    public function getItemsCount(): int
+    public function calculateTotals(array $cartItems): array
     {
-        $cart = $this->getCart();
-        $count = 0;
-        
-        foreach ($cart['items'] as $item) {
-            $count += $item['quantity'];
+        $subtotal = 0;
+        $totalWeight = 0;
+        $totalItems = 0;
+
+        foreach ($cartItems as $item) {
+            $subtotal += $item['total_price'];
+            $totalWeight += ($item['product']->getWeight() ?? 0) * $item['quantity'];
+            $totalItems += $item['quantity'];
         }
+
+        return [
+            'subtotal' => $subtotal,
+            'total_weight' => $totalWeight,
+            'total_items' => $totalItems,
+            'shipping' => 0, // Will be calculated when shipping method is selected
+            'tax' => 0, // Will be calculated based on location
+            'discount' => 0, // Will be calculated if coupon is applied
+            'total' => $subtotal
+        ];
+    }
+
+    /**
+     * Apply shipping method to cart
+     */
+    public function applyShipping(ShippingMethod $shippingMethod): array
+    {
+        $cart = $this->getCartWithDetails();
+        $totals = $cart['totals'];
         
-        return $count;
+        $shippingCost = $shippingMethod->calculateCost($totals['subtotal'], $totals['total_weight']);
+        
+        if ($shippingCost >= 0) {
+            $totals['shipping'] = $shippingCost;
+            $totals['total'] = $totals['subtotal'] + $totals['shipping'] + $totals['tax'] - $totals['discount'];
+        }
+
+        return $totals;
     }
 
     /**
      * Create order from cart
      */
-    public function createOrderFromCart(?User $user, array $shippingAddress, array $billingAddress, string $locale = 'fr'): Order
+    public function createOrder(?User $user = null, array $shippingAddress = [], array $billingAddress = []): Order
     {
-        if ($this->isEmpty()) {
+        $cart = $this->getCartWithDetails();
+        
+        if (empty($cart['items'])) {
             throw new \InvalidArgumentException('Cannot create order from empty cart');
         }
 
-        $items = $this->getCartItems($locale);
-        $summary = $this->getCartSummary($locale);
-
         $order = new Order();
-        $order->setUser($user);
+        
+        if ($user) {
+            $order->setUser($user);
+        }
+
         $order->setShippingAddress($shippingAddress);
         $order->setBillingAddress($billingAddress);
-        $order->setTotalAmount(number_format($summary['total'], 2, '.', ''));
 
-        // Create order items
-        foreach ($items as $item) {
+        // Add items to order
+        foreach ($cart['items'] as $item) {
             $orderItem = new OrderItem();
-            $orderItem->setOrder($order);
             $orderItem->setProduct($item['product']);
             $orderItem->setQuantity($item['quantity']);
-            $orderItem->setUnitPrice(number_format($item['unit_price'], 2, '.', ''));
-            $orderItem->setTotalPrice(number_format($item['total_price'], 2, '.', ''));
-            $orderItem->setProductName($item['name']);
-            $orderItem->setProductSku($item['product']->getSku());
+            $orderItem->setUnitPrice((string) $item['unit_price']);
+            $orderItem->setTotalPrice((string) $item['total_price']);
+            $orderItem->setProductName($item['product']->getName()); // Store name at time of order
             
-            if (!empty($item['attributes'])) {
-                $orderItem->setProductAttributes($item['attributes']);
-            }
-
-            if ($item['image']) {
-                $orderItem->setProductImageUrl($item['image']->getUrl());
-            }
-
             $order->addItem($orderItem);
         }
+
+        // Calculate totals
+        $totals = $cart['totals'];
+        $order->setTotalAmount((string) $totals['total']);
+        $order->setShippingAmount((string) $totals['shipping']);
+        $order->setTaxAmount((string) $totals['tax']);
+        $order->setDiscountAmount((string) $totals['discount']);
 
         $this->entityManager->persist($order);
         $this->entityManager->flush();
 
-        // Clear cart after successful order creation
-        $this->clearCart();
+        // Clear cart after order creation
+        $this->clear();
 
         return $order;
     }
 
     /**
-     * Apply coupon to cart
+     * Restore cart from order (for re-ordering)
      */
-    public function applyCoupon(string $couponCode): bool
+    public function restoreFromOrder(Order $order): void
     {
-        // TODO: Implement coupon logic
+        $this->clear();
+
+        foreach ($order->getItems() as $orderItem) {
+            if ($orderItem->getProduct() && $orderItem->getProduct()->isActive()) {
+                $this->addProduct(
+                    $orderItem->getProduct()->getId(),
+                    $orderItem->getQuantity()
+                );
+            }
+        }
+    }
+
+    /**
+     * Check if product is in cart
+     */
+    public function hasProduct(int $productId, array $options = []): bool
+    {
         $cart = $this->getCart();
-        $cart['coupon'] = $couponCode;
-        $this->saveCart($cart);
+        $itemKey = $this->generateItemKey($productId, $options);
         
-        return true;
+        return isset($cart['items'][$itemKey]);
     }
 
     /**
-     * Remove coupon from cart
+     * Get product quantity in cart
      */
-    public function removeCoupon(): void
+    public function getProductQuantity(int $productId, array $options = []): int
     {
         $cart = $this->getCart();
-        unset($cart['coupon']);
-        $this->saveCart($cart);
+        $itemKey = $this->generateItemKey($productId, $options);
+        
+        return $cart['items'][$itemKey]['quantity'] ?? 0;
     }
 
     /**
-     * Validate cart before checkout
+     * Validate cart (check product availability, prices, etc.)
      */
     public function validateCart(): array
     {
+        $cart = $this->getCart();
         $errors = [];
-        $items = $this->getCartItems();
+        $hasChanges = false;
 
-        foreach ($items as $item) {
-            $product = $item['product'];
+        foreach ($cart['items'] as $itemKey => $item) {
+            $product = $this->productRepository->find($item['product_id']);
             
+            if (!$product) {
+                $errors[] = "Product no longer exists and was removed from cart";
+                unset($cart['items'][$itemKey]);
+                $hasChanges = true;
+                continue;
+            }
+
             if (!$product->isActive()) {
-                $errors[] = sprintf('Product "%s" is no longer available', $item['name']);
+                $errors[] = "Product '{$product->getName()}' is no longer available and was removed from cart";
+                unset($cart['items'][$itemKey]);
+                $hasChanges = true;
                 continue;
             }
 
-            if (!$product->isInStock()) {
-                $errors[] = sprintf('Product "%s" is out of stock', $item['name']);
-                continue;
+            // Check stock if available
+            if (method_exists($product, 'getStockQuantity')) {
+                $stockQuantity = $product->getStockQuantity();
+                if ($stockQuantity !== null && $item['quantity'] > $stockQuantity) {
+                    $cart['items'][$itemKey]['quantity'] = $stockQuantity;
+                    $errors[] = "Quantity for '{$product->getName()}' was reduced to available stock ({$stockQuantity})";
+                    $hasChanges = true;
+                }
             }
+        }
 
-            if ($product->isTrackStock() && $item['quantity'] > $product->getStockQuantity()) {
-                $errors[] = sprintf(
-                    'Only %d items of "%s" are available (you have %d in cart)',
-                    $product->getStockQuantity(),
-                    $item['name'],
-                    $item['quantity']
-                );
-            }
+        if ($hasChanges) {
+            $this->saveCart($cart);
         }
 
         return $errors;
     }
 
     /**
-     * Generate unique key for product with attributes
+     * Get raw cart data from session
      */
-    private function generateProductKey(int $productId, array $attributes = []): string
+    private function getCart(): array
     {
-        $key = 'product_' . $productId;
-        
-        if (!empty($attributes)) {
-            ksort($attributes);
-            $key .= '_' . md5(serialize($attributes));
-        }
-        
-        return $key;
+        $session = $this->getSession();
+        return $session->get(self::CART_SESSION_KEY, ['items' => []]);
     }
 
     /**
@@ -322,7 +340,17 @@ class CartService
      */
     private function saveCart(array $cart): void
     {
-        $this->getSession()->set(self::CART_SESSION_KEY, $cart);
+        $session = $this->getSession();
+        $session->set(self::CART_SESSION_KEY, $cart);
+    }
+
+    /**
+     * Generate unique key for cart item
+     */
+    private function generateItemKey(int $productId, array $options = []): string
+    {
+        $optionsString = empty($options) ? '' : '_' . md5(json_encode($options));
+        return 'product_' . $productId . $optionsString;
     }
 
     /**
@@ -330,6 +358,12 @@ class CartService
      */
     private function getSession(): SessionInterface
     {
-        return $this->requestStack->getSession();
+        $request = $this->requestStack->getCurrentRequest();
+        
+        if (!$request || !$request->hasSession()) {
+            throw new \RuntimeException('No session available');
+        }
+
+        return $request->getSession();
     }
 }

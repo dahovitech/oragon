@@ -3,21 +3,23 @@
 namespace App\Controller\Admin;
 
 use App\Entity\Product;
+use App\Entity\ProductTranslation;
 use App\Entity\Language;
 use App\Repository\ProductRepository;
 use App\Repository\CategoryRepository;
 use App\Repository\BrandRepository;
 use App\Repository\LanguageRepository;
-use App\Service\EcommerceTranslationService;
+use App\Service\TranslationService;
+use App\Service\LocaleService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
-#[Route('/admin/product', name: 'admin_product_')]
+#[Route('/admin/products', name: 'admin_product_')]
 #[IsGranted('ROLE_ADMIN')]
 class ProductController extends AbstractController
 {
@@ -27,7 +29,8 @@ class ProductController extends AbstractController
         private CategoryRepository $categoryRepository,
         private BrandRepository $brandRepository,
         private LanguageRepository $languageRepository,
-        private EcommerceTranslationService $translationService
+        private TranslationService $translationService,
+        private LocaleService $localeService
     ) {
     }
 
@@ -38,37 +41,61 @@ class ProductController extends AbstractController
         $category = $request->query->get('category');
         $brand = $request->query->get('brand');
         $status = $request->query->get('status');
+        $page = max(1, $request->query->getInt('page', 1));
+        $limit = 20;
         
-        $filters = [];
+        $queryBuilder = $this->productRepository->createQueryBuilder('p')
+            ->leftJoin('p.category', 'c')
+            ->leftJoin('p.brand', 'b');
+
         if ($search) {
-            $filters['search'] = $search;
-        }
-        if ($category) {
-            $filters['category'] = $category;
-        }
-        if ($brand) {
-            $filters['brand'] = $brand;
-        }
-        if ($status !== null) {
-            $filters['status'] = (bool) $status;
+            $queryBuilder->leftJoin('p.translations', 't')
+                        ->andWhere('t.name LIKE :search OR p.sku LIKE :search')
+                        ->setParameter('search', '%' . $search . '%');
         }
 
-        $products = $this->productRepository->findWithFilters($filters);
-        $categories = $this->categoryRepository->findBy(['isActive' => true], ['sortOrder' => 'ASC']);
-        $brands = $this->brandRepository->findActive();
-        $languages = $this->languageRepository->findBy(['isActive' => true], ['sortOrder' => 'ASC']);
+        if ($category) {
+            $queryBuilder->andWhere('p.category = :category')
+                        ->setParameter('category', $category);
+        }
+
+        if ($brand) {
+            $queryBuilder->andWhere('p.brand = :brand')
+                        ->setParameter('brand', $brand);
+        }
+
+        if ($status !== null) {
+            $queryBuilder->andWhere('p.isActive = :status')
+                        ->setParameter('status', (bool) $status);
+        }
+
+        $totalQuery = clone $queryBuilder;
+        $totalCount = $totalQuery->select('COUNT(p.id)')->getQuery()->getSingleScalarResult();
+
+        $products = $queryBuilder->orderBy('p.createdAt', 'DESC')
+                                ->setFirstResult(($page - 1) * $limit)
+                                ->setMaxResults($limit)
+                                ->getQuery()
+                                ->getResult();
+
+        $categories = $this->categoryRepository->findBy([], ['sortOrder' => 'ASC']);
+        $brands = $this->brandRepository->findBy([], ['name' => 'ASC']);
 
         return $this->render('admin/product/index.html.twig', [
             'products' => $products,
             'categories' => $categories,
             'brands' => $brands,
-            'languages' => $languages,
             'filters' => [
                 'search' => $search,
                 'category' => $category,
                 'brand' => $brand,
-                'status' => $status
-            ]
+                'status' => $status,
+            ],
+            'pagination' => [
+                'current_page' => $page,
+                'total_pages' => ceil($totalCount / $limit),
+                'total_items' => $totalCount,
+            ],
         ]);
     }
 
@@ -76,76 +103,119 @@ class ProductController extends AbstractController
     public function new(Request $request): Response
     {
         $product = new Product();
-        $languages = $this->languageRepository->findBy(['isActive' => true], ['sortOrder' => 'ASC']);
-        $categories = $this->categoryRepository->findBy(['isActive' => true], ['sortOrder' => 'ASC']);
-        $brands = $this->brandRepository->findActive();
-
+        
         if ($request->isMethod('POST')) {
-            return $this->handleProductSubmission($request, $product, $languages);
+            return $this->handleProductForm($product, $request);
         }
 
-        return $this->render('admin/product/new.html.twig', [
+        $categories = $this->categoryRepository->findBy(['isActive' => true], ['sortOrder' => 'ASC']);
+        $brands = $this->brandRepository->findBy(['isActive' => true], ['name' => 'ASC']);
+        $languages = $this->localeService->getActiveLanguages();
+
+        return $this->render('admin/product/form.html.twig', [
             'product' => $product,
-            'languages' => $languages,
             'categories' => $categories,
-            'brands' => $brands
+            'brands' => $brands,
+            'languages' => $languages,
+            'is_edit' => false,
         ]);
     }
 
     #[Route('/{id}/edit', name: 'edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Product $product): Response
+    public function edit(int $id, Request $request): Response
     {
-        $languages = $this->languageRepository->findBy(['isActive' => true], ['sortOrder' => 'ASC']);
-        $categories = $this->categoryRepository->findBy(['isActive' => true], ['sortOrder' => 'ASC']);
-        $brands = $this->brandRepository->findActive();
-
-        if ($request->isMethod('POST')) {
-            return $this->handleProductSubmission($request, $product, $languages);
+        $product = $this->productRepository->find($id);
+        
+        if (!$product) {
+            throw $this->createNotFoundException('Product not found');
         }
 
-        return $this->render('admin/product/edit.html.twig', [
+        if ($request->isMethod('POST')) {
+            return $this->handleProductForm($product, $request);
+        }
+
+        $categories = $this->categoryRepository->findBy(['isActive' => true], ['sortOrder' => 'ASC']);
+        $brands = $this->brandRepository->findBy(['isActive' => true], ['name' => 'ASC']);
+        $languages = $this->localeService->getActiveLanguages();
+
+        // Get completion stats for translations
+        $translationStats = $this->translationService->getCompletionStats($product);
+
+        return $this->render('admin/product/form.html.twig', [
             'product' => $product,
-            'languages' => $languages,
             'categories' => $categories,
-            'brands' => $brands
+            'brands' => $brands,
+            'languages' => $languages,
+            'translation_stats' => $translationStats,
+            'is_edit' => true,
         ]);
     }
 
     #[Route('/{id}', name: 'show', methods: ['GET'])]
-    public function show(Product $product): Response
+    public function show(int $id): Response
     {
-        $languages = $this->languageRepository->findBy(['isActive' => true], ['sortOrder' => 'ASC']);
+        $product = $this->productRepository->find($id);
+        
+        if (!$product) {
+            throw $this->createNotFoundException('Product not found');
+        }
+
+        $translationStats = $this->translationService->getCompletionStats($product);
+        $missingTranslations = $this->translationService->getMissingTranslations($product);
 
         return $this->render('admin/product/show.html.twig', [
             'product' => $product,
-            'languages' => $languages
+            'translation_stats' => $translationStats,
+            'missing_translations' => $missingTranslations,
         ]);
     }
 
-    #[Route('/{id}/delete', name: 'delete', methods: ['POST', 'DELETE'])]
-    public function delete(Request $request, Product $product): Response
+    #[Route('/{id}/delete', name: 'delete', methods: ['POST'])]
+    public function delete(int $id, Request $request): Response
     {
+        $product = $this->productRepository->find($id);
+        
+        if (!$product) {
+            throw $this->createNotFoundException('Product not found');
+        }
+
         if ($this->isCsrfTokenValid('delete' . $product->getId(), $request->request->get('_token'))) {
             $this->entityManager->remove($product);
             $this->entityManager->flush();
-
+            
             $this->addFlash('success', 'Product deleted successfully');
-        } else {
-            $this->addFlash('error', 'Invalid token');
         }
 
         return $this->redirectToRoute('admin_product_index');
     }
 
+    #[Route('/{id}/toggle', name: 'toggle', methods: ['POST'])]
+    public function toggle(int $id): JsonResponse
+    {
+        $product = $this->productRepository->find($id);
+        
+        if (!$product) {
+            return new JsonResponse(['success' => false, 'message' => 'Product not found'], 404);
+        }
+
+        $product->setIsActive(!$product->isActive());
+        $this->entityManager->flush();
+
+        return new JsonResponse([
+            'success' => true,
+            'isActive' => $product->isActive(),
+            'message' => $product->isActive() ? 'Product activated' : 'Product deactivated'
+        ]);
+    }
+
     #[Route('/bulk-action', name: 'bulk_action', methods: ['POST'])]
-    public function bulkAction(Request $request): Response
+    public function bulkAction(Request $request): JsonResponse
     {
         $action = $request->request->get('action');
-        $productIds = $request->request->get('products', []);
+        $productIds = $request->request->all('product_ids');
 
         if (empty($productIds)) {
-            $this->addFlash('warning', 'No products selected');
-            return $this->redirectToRoute('admin_product_index');
+            return new JsonResponse(['success' => false, 'message' => 'No products selected'], 400);
         }
 
         $products = $this->productRepository->findBy(['id' => $productIds]);
@@ -157,7 +227,7 @@ class ProductController extends AbstractController
                     $product->setIsActive(true);
                     $count++;
                 }
-                $this->addFlash('success', sprintf('%d products activated', $count));
+                $message = "$count products activated";
                 break;
 
             case 'deactivate':
@@ -165,23 +235,7 @@ class ProductController extends AbstractController
                     $product->setIsActive(false);
                     $count++;
                 }
-                $this->addFlash('success', sprintf('%d products deactivated', $count));
-                break;
-
-            case 'feature':
-                foreach ($products as $product) {
-                    $product->setIsFeatured(true);
-                    $count++;
-                }
-                $this->addFlash('success', sprintf('%d products marked as featured', $count));
-                break;
-
-            case 'unfeature':
-                foreach ($products as $product) {
-                    $product->setIsFeatured(false);
-                    $count++;
-                }
-                $this->addFlash('success', sprintf('%d products removed from featured', $count));
+                $message = "$count products deactivated";
                 break;
 
             case 'delete':
@@ -189,168 +243,72 @@ class ProductController extends AbstractController
                     $this->entityManager->remove($product);
                     $count++;
                 }
-                $this->addFlash('success', sprintf('%d products deleted', $count));
+                $message = "$count products deleted";
                 break;
 
             default:
-                $this->addFlash('error', 'Unknown action');
-                return $this->redirectToRoute('admin_product_index');
+                return new JsonResponse(['success' => false, 'message' => 'Invalid action'], 400);
         }
 
         $this->entityManager->flush();
-        return $this->redirectToRoute('admin_product_index');
+
+        return new JsonResponse(['success' => true, 'message' => $message]);
     }
 
-    #[Route('/{id}/duplicate-translation', name: 'duplicate_translation', methods: ['POST'])]
-    public function duplicateTranslation(Request $request, Product $product): JsonResponse
+    private function handleProductForm(Product $product, Request $request): Response
     {
-        $sourceLanguage = $request->request->get('source_language');
-        $targetLanguage = $request->request->get('target_language');
+        $isNew = $product->getId() === null;
+        
+        // Handle basic product data
+        $product->setSku($request->request->get('sku'));
+        $product->setPrice((float) $request->request->get('price'));
+        $product->setComparePrice($request->request->get('compare_price') ? (float) $request->request->get('compare_price') : null);
+        $product->setCostPrice($request->request->get('cost_price') ? (float) $request->request->get('cost_price') : null);
+        $product->setWeight($request->request->get('weight') ? (float) $request->request->get('weight') : null);
+        $product->setStockQuantity($request->request->get('stock_quantity') ? (int) $request->request->get('stock_quantity') : null);
+        $product->setIsActive((bool) $request->request->get('is_active'));
+        $product->setIsFeatured((bool) $request->request->get('is_featured'));
+        $product->setIsDigital((bool) $request->request->get('is_digital'));
 
-        if (!$sourceLanguage || !$targetLanguage) {
-            return new JsonResponse(['success' => false, 'message' => 'Missing parameters']);
-        }
-
-        $success = $this->translationService->duplicateTranslation(
-            Product::class,
-            $product->getId(),
-            $sourceLanguage,
-            $targetLanguage
-        );
-
-        if ($success) {
-            return new JsonResponse(['success' => true, 'message' => 'Translation duplicated successfully']);
-        } else {
-            return new JsonResponse(['success' => false, 'message' => 'Failed to duplicate translation']);
-        }
-    }
-
-    #[Route('/translation-stats', name: 'translation_stats', methods: ['GET'])]
-    public function translationStats(): Response
-    {
-        $stats = $this->translationService->getTranslationStatistics();
-
-        return $this->render('admin/product/translation_stats.html.twig', [
-            'stats' => $stats
-        ]);
-    }
-
-    private function handleProductSubmission(Request $request, Product $product, array $languages): Response
-    {
-        $data = $request->request->all();
-
-        // Validate required fields
-        $errors = $this->validateProductData($data);
-        if (!empty($errors)) {
-            foreach ($errors as $error) {
-                $this->addFlash('error', $error);
-            }
-            return $this->redirectToRoute('admin_product_edit', ['id' => $product->getId()]);
-        }
-
-        // Set basic product data
-        $product->setSku($data['sku']);
-        $product->setPrice($data['price']);
-        $product->setComparePrice($data['compare_price'] ?? null);
-        $product->setCostPrice($data['cost_price'] ?? null);
-        $product->setWeight($data['weight'] ?? null);
-        $product->setStockQuantity((int) ($data['stock_quantity'] ?? 0));
-        $product->setIsActive(isset($data['is_active']));
-        $product->setIsFeatured(isset($data['is_featured']));
-        $product->setIsDigital(isset($data['is_digital']));
-        $product->setTrackStock(isset($data['track_stock']));
-
-        // Set relations
-        if (!empty($data['category_id'])) {
-            $category = $this->categoryRepository->find($data['category_id']);
+        // Handle relationships
+        if ($categoryId = $request->request->get('category_id')) {
+            $category = $this->categoryRepository->find($categoryId);
             $product->setCategory($category);
         }
 
-        if (!empty($data['brand_id'])) {
-            $brand = $this->brandRepository->find($data['brand_id']);
+        if ($brandId = $request->request->get('brand_id')) {
+            $brand = $this->brandRepository->find($brandId);
             $product->setBrand($brand);
         }
 
         // Handle dimensions
-        if (!empty($data['dimensions'])) {
-            $dimensions = [
-                'length' => $data['dimensions']['length'] ?? null,
-                'width' => $data['dimensions']['width'] ?? null,
-                'height' => $data['dimensions']['height'] ?? null,
-                'unit' => $data['dimensions']['unit'] ?? 'cm'
-            ];
+        $dimensions = [
+            'length' => $request->request->get('length'),
+            'width' => $request->request->get('width'),
+            'height' => $request->request->get('height'),
+        ];
+        if (array_filter($dimensions)) {
             $product->setDimensions($dimensions);
         }
 
-        // Handle translations
-        $translationsData = [];
-        foreach ($languages as $language) {
-            $langCode = $language->getCode();
-            if (isset($data['translations'][$langCode])) {
-                $translationsData[$langCode] = $data['translations'][$langCode];
-            }
+        if ($isNew) {
+            $this->entityManager->persist($product);
         }
 
-        // Save product with translations
-        $this->translationService->createOrUpdateProduct($product, $translationsData);
-
-        $this->entityManager->persist($product);
         $this->entityManager->flush();
 
-        $this->addFlash('success', 'Product saved successfully');
-
-        return $this->redirectToRoute('admin_product_edit', ['id' => $product->getId()]);
-    }
-
-    private function validateProductData(array $data): array
-    {
-        $errors = [];
-
-        if (empty($data['sku'])) {
-            $errors[] = 'SKU is required';
-        }
-
-        if (empty($data['price']) || !is_numeric($data['price']) || (float) $data['price'] < 0) {
-            $errors[] = 'Valid price is required';
-        }
-
-        if (isset($data['compare_price']) && !empty($data['compare_price'])) {
-            if (!is_numeric($data['compare_price']) || (float) $data['compare_price'] < 0) {
-                $errors[] = 'Compare price must be a valid positive number';
-            }
-        }
-
-        if (isset($data['cost_price']) && !empty($data['cost_price'])) {
-            if (!is_numeric($data['cost_price']) || (float) $data['cost_price'] < 0) {
-                $errors[] = 'Cost price must be a valid positive number';
-            }
-        }
-
-        if (isset($data['weight']) && !empty($data['weight'])) {
-            if (!is_numeric($data['weight']) || (float) $data['weight'] < 0) {
-                $errors[] = 'Weight must be a valid positive number';
-            }
-        }
-
-        if (isset($data['stock_quantity']) && (!is_numeric($data['stock_quantity']) || (int) $data['stock_quantity'] < 0)) {
-            $errors[] = 'Stock quantity must be a valid positive integer';
-        }
-
-        // Validate at least one translation
-        $hasTranslation = false;
-        if (isset($data['translations'])) {
-            foreach ($data['translations'] as $translation) {
-                if (!empty($translation['name'])) {
-                    $hasTranslation = true;
-                    break;
+        // Handle translations
+        $translations = $request->request->all('translations');
+        if ($translations) {
+            foreach ($translations as $languageCode => $translationData) {
+                if (!empty(array_filter($translationData))) {
+                    $this->translationService->setTranslation($product, $languageCode, $translationData);
                 }
             }
         }
 
-        if (!$hasTranslation) {
-            $errors[] = 'At least one translation name is required';
-        }
+        $this->addFlash('success', $isNew ? 'Product created successfully' : 'Product updated successfully');
 
-        return $errors;
+        return $this->redirectToRoute('admin_product_show', ['id' => $product->getId()]);
     }
 }

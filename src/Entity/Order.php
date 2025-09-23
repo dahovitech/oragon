@@ -71,8 +71,9 @@ class Order
     #[ORM\Column(type: 'json')]
     private array $billingAddress = [];
 
-    #[ORM\Column(type: 'string', length: 50, nullable: true)]
-    private ?string $paymentMethod = null;
+    #[ORM\ManyToOne(targetEntity: PaymentMethod::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?PaymentMethod $paymentMethod = null;
 
     #[ORM\Column(type: 'string', length: 20)]
     #[Assert\Choice(choices: [
@@ -86,8 +87,9 @@ class Order
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $paymentTransactionId = null;
 
-    #[ORM\Column(type: 'string', length: 50, nullable: true)]
-    private ?string $shippingMethod = null;
+    #[ORM\ManyToOne(targetEntity: ShippingMethod::class)]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?ShippingMethod $shippingMethod = null;
 
     #[ORM\Column(type: 'string', length: 100, nullable: true)]
     private ?string $trackingNumber = null;
@@ -239,12 +241,12 @@ class Order
         return $this;
     }
 
-    public function getPaymentMethod(): ?string
+    public function getPaymentMethod(): ?PaymentMethod
     {
         return $this->paymentMethod;
     }
 
-    public function setPaymentMethod(?string $paymentMethod): static
+    public function setPaymentMethod(?PaymentMethod $paymentMethod): static
     {
         $this->paymentMethod = $paymentMethod;
         return $this;
@@ -272,12 +274,12 @@ class Order
         return $this;
     }
 
-    public function getShippingMethod(): ?string
+    public function getShippingMethod(): ?ShippingMethod
     {
         return $this->shippingMethod;
     }
 
-    public function setShippingMethod(?string $shippingMethod): static
+    public function setShippingMethod(?ShippingMethod $shippingMethod): static
     {
         $this->shippingMethod = $shippingMethod;
         return $this;
