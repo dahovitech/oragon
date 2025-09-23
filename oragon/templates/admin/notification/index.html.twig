@@ -1,0 +1,441 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Gestion des Notifications{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header">
+                <h1 class="page-title">
+                    <i class="fe fe-bell"></i>
+                    Gestion des Notifications
+                </h1>
+                <div class="page-options d-flex">
+                    <a href="{{ path('admin_notifications_send') }}" class="btn btn-primary">
+                        <i class="fe fe-send"></i>
+                        Envoyer une notification
+                    </a>
+                    <a href="{{ path('admin_notification_templates') }}" class="btn btn-outline-primary ml-2">
+                        <i class="fe fe-file-text"></i>
+                        Templates
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-sm-6 col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="subheader">Total</div>
+                    </div>
+                    <div class="h1 mb-3">{{ statistics.total|number_format }}</div>
+                    <div class="d-flex mb-2">
+                        <div>Notifications totales</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="subheader">Envoyées</div>
+                    </div>
+                    <div class="h1 mb-3 text-success">{{ statistics.sent|number_format }}</div>
+                    <div class="d-flex mb-2">
+                        <div>Notifications envoyées</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="subheader">En attente</div>
+                    </div>
+                    <div class="h1 mb-3 text-warning">{{ statistics.pending|number_format }}</div>
+                    <div class="d-flex mb-2">
+                        <div>En cours de traitement</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="subheader">Échecs</div>
+                    </div>
+                    <div class="h1 mb-3 text-danger">{{ statistics.failed|number_format }}</div>
+                    <div class="d-flex mb-2">
+                        <div>Notifications échouées</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Actions rapides</h3>
+                </div>
+                <div class="card-body">
+                    <div class="btn-list">
+                        <button class="btn btn-info" onclick="processPendingNotifications()">
+                            <i class="fe fe-play"></i>
+                            Traiter les notifications en attente
+                        </button>
+                        <button class="btn btn-warning" onclick="showTestEmailModal()">
+                            <i class="fe fe-mail"></i>
+                            Tester la configuration email
+                        </button>
+                        <button class="btn btn-danger" onclick="showCleanupModal()">
+                            <i class="fe fe-trash-2"></i>
+                            Nettoyer les anciennes notifications
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row">
+                        <div class="col-md-4">
+                            <label class="form-label">Type</label>
+                            <select name="type" class="form-select">
+                                <option value="">Tous les types</option>
+                                <option value="welcome" {{ filters.type == 'welcome' ? 'selected' : '' }}>Bienvenue</option>
+                                <option value="password_reset" {{ filters.type == 'password_reset' ? 'selected' : '' }}>Mot de passe</option>
+                                <option value="order_confirmation" {{ filters.type == 'order_confirmation' ? 'selected' : '' }}>Commande</option>
+                                <option value="system_alert" {{ filters.type == 'system_alert' ? 'selected' : '' }}>Alerte système</option>
+                                <option value="newsletter" {{ filters.type == 'newsletter' ? 'selected' : '' }}>Newsletter</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Statut</label>
+                            <select name="status" class="form-select">
+                                <option value="">Tous les statuts</option>
+                                <option value="pending" {{ filters.status == 'pending' ? 'selected' : '' }}>En attente</option>
+                                <option value="sent" {{ filters.status == 'sent' ? 'selected' : '' }}>Envoyé</option>
+                                <option value="failed" {{ filters.status == 'failed' ? 'selected' : '' }}>Échec</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">&nbsp;</label>
+                            <div>
+                                <button type="submit" class="btn btn-primary">Filtrer</button>
+                                <a href="{{ path('admin_notifications_index') }}" class="btn btn-secondary">Réinitialiser</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste des notifications -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Notifications récentes</h3>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Type</th>
+                                <th>Titre</th>
+                                <th>Destinataire</th>
+                                <th>Statut</th>
+                                <th>Priorité</th>
+                                <th>Canaux</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for notification in notifications %}
+                            <tr>
+                                <td>{{ notification.id }}</td>
+                                <td>
+                                    <span class="badge bg-blue">{{ notification.type }}</span>
+                                </td>
+                                <td>
+                                    <div class="text-truncate" style="max-width: 200px;">
+                                        {{ notification.title }}
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if notification.user %}
+                                        <div class="d-flex align-items-center">
+                                            <div>
+                                                <div>{{ notification.user.firstName ?? notification.user.email }}</div>
+                                                <div class="text-muted">{{ notification.user.email }}</div>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <div class="text-muted">{{ notification.userEmail }}</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if notification.status == 'sent' %}
+                                        <span class="badge bg-success">Envoyé</span>
+                                    {% elseif notification.status == 'pending' %}
+                                        <span class="badge bg-warning">En attente</span>
+                                    {% elseif notification.status == 'failed' %}
+                                        <span class="badge bg-danger">Échec</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if notification.priority == 'high' %}
+                                        <span class="badge bg-red">Haute</span>
+                                    {% elseif notification.priority == 'low' %}
+                                        <span class="badge bg-secondary">Basse</span>
+                                    {% else %}
+                                        <span class="badge bg-blue">Normale</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% for channel in notification.channels %}
+                                        <span class="badge bg-azure me-1">{{ channel }}</span>
+                                    {% endfor %}
+                                </td>
+                                <td>
+                                    <div>{{ notification.createdAt|date('d/m/Y') }}</div>
+                                    <div class="text-muted">{{ notification.createdAt|date('H:i') }}</div>
+                                </td>
+                                <td>
+                                    <div class="btn-list flex-nowrap">
+                                        <a href="{{ path('admin_notifications_show', {id: notification.id}) }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fe fe-eye"></i>
+                                        </a>
+                                        {% if notification.status == 'failed' %}
+                                            <button class="btn btn-sm btn-outline-warning" onclick="retryNotification({{ notification.id }})">
+                                                <i class="fe fe-refresh-cw"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">
+                                    Aucune notification trouvée
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if total_pages > 1 %}
+                <div class="card-footer d-flex align-items-center">
+                    <p class="m-0 text-muted">
+                        Page {{ current_page }} sur {{ total_pages }}
+                    </p>
+                    <ul class="pagination m-0 ms-auto">
+                        {% if current_page > 1 %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ current_page - 1 }}{% if filters.type %}&type={{ filters.type }}{% endif %}{% if filters.status %}&status={{ filters.status }}{% endif %}">
+                                    <i class="fe fe-chevron-left"></i> Précédent
+                                </a>
+                            </li>
+                        {% endif %}
+                        {% if current_page < total_pages %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ current_page + 1 }}{% if filters.type %}&type={{ filters.type }}{% endif %}{% if filters.status %}&status={{ filters.status }}{% endif %}">
+                                    Suivant <i class="fe fe-chevron-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Test Email -->
+<div class="modal fade" id="testEmailModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Test Email</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="testEmailForm">
+                    <div class="mb-3">
+                        <label class="form-label">Adresse email</label>
+                        <input type="email" class="form-control" name="email" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" onclick="sendTestEmail()">Envoyer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Cleanup -->
+<div class="modal fade" id="cleanupModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Nettoyage</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="cleanupForm">
+                    <div class="mb-3">
+                        <label class="form-label">Supprimer les notifications de plus de (jours)</label>
+                        <input type="number" class="form-control" name="days_old" value="90" min="1">
+                    </div>
+                    <div class="alert alert-warning">
+                        Cette action est irréversible !
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" onclick="cleanupNotifications()">Supprimer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+function processPendingNotifications() {
+    fetch('{{ path('admin_notifications_process_pending') }}', {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showAlert('danger', data.error);
+        } else {
+            showAlert('success', data.message);
+            setTimeout(() => location.reload(), 2000);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', 'Erreur lors du traitement');
+    });
+}
+
+function retryNotification(id) {
+    fetch(`/admin/notifications/${id}/retry`, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showAlert('danger', data.error);
+        } else {
+            showAlert('success', data.message);
+            setTimeout(() => location.reload(), 1000);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', 'Erreur lors du relancement');
+    });
+}
+
+function showTestEmailModal() {
+    new bootstrap.Modal(document.getElementById('testEmailModal')).show();
+}
+
+function sendTestEmail() {
+    const form = document.getElementById('testEmailForm');
+    const formData = new FormData(form);
+    
+    fetch('{{ path('admin_notifications_test_email') }}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showAlert('danger', data.error);
+        } else {
+            showAlert('success', data.message);
+            bootstrap.Modal.getInstance(document.getElementById('testEmailModal')).hide();
+        }
+    })
+    .catch(error => {
+        showAlert('danger', 'Erreur lors de l\'envoi du test');
+    });
+}
+
+function showCleanupModal() {
+    new bootstrap.Modal(document.getElementById('cleanupModal')).show();
+}
+
+function cleanupNotifications() {
+    const form = document.getElementById('cleanupForm');
+    const formData = new FormData(form);
+    
+    fetch('{{ path('admin_notifications_cleanup') }}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            showAlert('danger', data.error);
+        } else {
+            showAlert('success', data.message);
+            bootstrap.Modal.getInstance(document.getElementById('cleanupModal')).hide();
+            setTimeout(() => location.reload(), 2000);
+        }
+    })
+    .catch(error => {
+        showAlert('danger', 'Erreur lors du nettoyage');
+    });
+}
+
+function showAlert(type, message) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    document.querySelector('.container-fluid').insertAdjacentHTML('afterbegin', alertHtml);
+}
+</script>
+{% endblock %}

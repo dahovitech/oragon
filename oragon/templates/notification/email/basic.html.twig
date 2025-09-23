@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f6f6f6;
+            margin: 0;
+            padding: 0;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .email-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .email-header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 300;
+        }
+        .email-body {
+            padding: 40px 30px;
+        }
+        .notification-content {
+            margin-bottom: 30px;
+        }
+        .notification-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+        .notification-message {
+            font-size: 16px;
+            color: #4a5568;
+            line-height: 1.8;
+            margin-bottom: 25px;
+        }
+        .action-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 20px 0;
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+        .action-button:hover {
+            transform: translateY(-2px);
+            color: white;
+        }
+        .email-footer {
+            background-color: #f7fafc;
+            padding: 30px;
+            text-align: center;
+            color: #718096;
+            font-size: 14px;
+            border-top: 1px solid #e2e8f0;
+        }
+        .email-footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .divider {
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            margin: 30px 0;
+        }
+        .meta-info {
+            background-color: #f7fafc;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+        .meta-info h3 {
+            margin: 0 0 10px 0;
+            color: #2d3748;
+            font-size: 16px;
+        }
+        .meta-info p {
+            margin: 5px 0;
+            color: #4a5568;
+            font-size: 14px;
+        }
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                border-radius: 0;
+                margin: 0;
+            }
+            .email-header, .email-body, .email-footer {
+                padding: 20px;
+            }
+            .notification-title {
+                font-size: 20px;
+            }
+            .action-button {
+                display: block;
+                width: 100%;
+                box-sizing: border-box;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <h1>{{ site_name|default('Notre Plateforme') }}</h1>
+        </div>
+        
+        <div class="email-body">
+            <div class="notification-content">
+                <h2 class="notification-title">{{ notification.title }}</h2>
+                <div class="notification-message">
+                    {{ notification.message|nl2br }}
+                </div>
+                
+                {% if notification.actionUrl and notification.actionText %}
+                    <div style="text-align: center;">
+                        <a href="{{ notification.actionUrl }}" class="action-button">
+                            {{ notification.actionText }}
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <hr class="divider">
+            
+            <div class="meta-info">
+                <h3>Informations sur la notification</h3>
+                <p><strong>Type:</strong> {{ notification.type }}</p>
+                <p><strong>Date:</strong> {{ notification.createdAt|date('d/m/Y à H:i') }}</p>
+                {% if user_name %}
+                    <p><strong>Destinataire:</strong> {{ user_name }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="email-footer">
+            <p>
+                Cet email a été envoyé automatiquement par {{ site_name|default('Notre Plateforme') }}.
+                <br>
+                Si vous ne souhaitez plus recevoir ces notifications, 
+                <a href="{{ site_url|default('#') }}/notifications/preferences">gérez vos préférences</a>.
+            </p>
+            <p style="margin-top: 20px;">
+                © {{ "now"|date("Y") }} {{ site_name|default('Notre Plateforme') }}. Tous droits réservés.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

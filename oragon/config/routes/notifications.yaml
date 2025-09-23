@@ -1,0 +1,11 @@
+# Notification routes for users
+notifications:
+    resource: ../../src/Controller/NotificationController.php
+    type: attribute
+    prefix: /notifications
+
+# Admin notification routes
+admin_notifications:
+    resource: ../../src/Controller/Admin/NotificationController.php
+    type: attribute
+    prefix: /admin/notifications
