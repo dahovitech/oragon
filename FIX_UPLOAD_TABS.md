@@ -206,6 +206,6 @@ L'upload fonctionne maintenant parfaitement dans le nouveau système d'onglets :
 - Event listeners de `DOMContentLoaded`
 
 ---
-**Auteur :** MiniMax Agent  
+**Auteur :** Prudence ASSOGBA  
 **Date :** 2025-09-23  
 **Status :** ✅ Corrigé et testé
