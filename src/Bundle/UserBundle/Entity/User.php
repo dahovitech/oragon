@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Entity;
+namespace App\Bundle\UserBundle\Entity;
 
-use App\Repository\UserRepository;
+use App\Bundle\UserBundle\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -232,5 +232,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function eraseCredentials(): void
     {
         // @deprecated, to be removed when upgrading to Symfony 8
+    }
+
+    public function __toString(): string
+    {
+        return $this->getFullName() ?: $this->email ?: 'User #' . $this->id;
     }
 }

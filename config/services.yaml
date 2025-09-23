@@ -20,5 +20,33 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
+    # Bundle Services Configuration
+    
+    # Core Bundle Services
+    App\Bundle\CoreBundle\Service\SettingManager:
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
+            $settingRepository: '@App\Bundle\CoreBundle\Repository\SettingRepository'
+
+    # Media Bundle Services
+    App\Bundle\MediaBundle\Service\MediaUploader:
+        arguments:
+            $entityManager: '@doctrine.orm.entity_manager'
+            $slugger: '@slugger'
+            $uploadDirectory: '%kernel.project_dir%/public/upload/media'
+
+    # Repository Services (auto-registration)
+    App\Bundle\UserBundle\Repository\UserRepository:
+        tags: ['doctrine.repository_service']
+
+    App\Bundle\MediaBundle\Repository\MediaRepository:
+        tags: ['doctrine.repository_service']
+
+    App\Bundle\CoreBundle\Repository\PageRepository:
+        tags: ['doctrine.repository_service']
+
+    App\Bundle\CoreBundle\Repository\CategoryRepository:
+        tags: ['doctrine.repository_service']
+
+    App\Bundle\CoreBundle\Repository\SettingRepository:
+        tags: ['doctrine.repository_service']

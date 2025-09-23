@@ -16,4 +16,11 @@ return [
     Doctrine\Bundle\FixturesBundle\DoctrineFixturesBundle::class => ['dev' => true, 'test' => true],
     Symfony\UX\StimulusBundle\StimulusBundle::class => ['all' => true],
     Symfony\UX\Turbo\TurboBundle::class => ['all' => true],
+    App\Bundle\CoreBundle\CoreBundle::class => ['all' => true],
+    App\Bundle\UserBundle\UserBundle::class => ['all' => true],
+    App\Bundle\MediaBundle\MediaBundle::class => ['all' => true],
+    App\Bundle\BlogBundle\BlogBundle::class => ['all' => true],
+    App\Bundle\EcommerceBundle\EcommerceBundle::class => ['all' => true],
+    App\Bundle\ThemeBundle\ThemeBundle::class => ['all' => true],
+    App\Bundle\ApiBundle\ApiBundle::class => ['all' => true],
 ];

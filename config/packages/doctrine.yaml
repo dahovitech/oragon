@@ -24,6 +24,28 @@ doctrine:
                 dir: '%kernel.project_dir%/src/Entity'
                 prefix: 'App\Entity'
                 alias: App
+            
+            # Bundle Mappings
+            CoreBundle:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Bundle/CoreBundle/Entity'
+                prefix: 'App\Bundle\CoreBundle\Entity'
+                alias: CoreBundle
+            
+            UserBundle:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Bundle/UserBundle/Entity'
+                prefix: 'App\Bundle\UserBundle\Entity'
+                alias: UserBundle
+            
+            MediaBundle:
+                type: attribute
+                is_bundle: false
+                dir: '%kernel.project_dir%/src/Bundle/MediaBundle/Entity'
+                prefix: 'App\Bundle\MediaBundle\Entity'
+                alias: MediaBundle
         controller_resolver:
             auto_mapping: false
 
