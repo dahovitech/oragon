@@ -1,0 +1,109 @@
+<footer class="main-footer">
+    <div class="main-footer__bg" style="background-image: url({{ asset('assets/images/backgrounds/footer-bg.jpg') }});"></div>
+    
+    <div class="main-footer__top">
+        <div class="container">
+            <div class="row">
+                <div class="col-xl-4 col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".1s">
+                    <div class="footer-widget__column footer-widget__about">
+                        <div class="footer-widget__logo">
+                            <a href="{{ path('app_frontend_home') }}">
+                                <img src="{{ asset('assets/images/resources/footer-logo.png') }}" alt="EdgeLoan">
+                            </a>
+                        </div>
+                        <p class="footer-widget__about-text">
+                            EdgeLoan est votre partenaire de confiance pour tous vos besoins de financement. 
+                            Nous proposons des solutions de prêt adaptées à vos projets personnels et professionnels.
+                        </p>
+                        <div class="footer-widget__social">
+                            <a href="#"><span class="fab fa-facebook-f"></span></a>
+                            <a href="#"><span class="fab fa-twitter"></span></a>
+                            <a href="#"><span class="fab fa-instagram"></span></a>
+                            <a href="#"><span class="fab fa-linkedin-in"></span></a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-xl-2 col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".2s">
+                    <div class="footer-widget__column footer-widget__links">
+                        <div class="footer-widget__title">
+                            <h3>Liens utiles</h3>
+                        </div>
+                        <ul class="footer-widget__links-list list-unstyled">
+                            <li><a href="{{ path('app_frontend_home') }}">Accueil</a></li>
+                            <li><a href="{{ path('app_frontend_about') }}">À propos</a></li>
+                            <li><a href="{{ path('app_frontend_loans') }}">Nos prêts</a></li>
+                            <li><a href="{{ path('app_frontend_simulator') }}">Simulateur</a></li>
+                            <li><a href="{{ path('app_frontend_contact') }}">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".3s">
+                    <div class="footer-widget__column footer-widget__services">
+                        <div class="footer-widget__title">
+                            <h3>Nos services</h3>
+                        </div>
+                        <ul class="footer-widget__services-list list-unstyled">
+                            <li><a href="{{ path('app_frontend_loan_detail', {slug: 'pret-personnel'}) }}">Prêt Personnel</a></li>
+                            <li><a href="{{ path('app_frontend_loan_detail', {slug: 'pret-immobilier'}) }}">Prêt Immobilier</a></li>
+                            <li><a href="{{ path('app_frontend_loan_detail', {slug: 'pret-auto'}) }}">Prêt Auto</a></li>
+                            <li><a href="{{ path('app_frontend_loan_detail', {slug: 'pret-professionnel'}) }}">Prêt Professionnel</a></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="col-xl-3 col-lg-6 col-md-6 wow fadeInUp" data-wow-delay=".4s">
+                    <div class="footer-widget__column footer-widget__contact">
+                        <div class="footer-widget__title">
+                            <h3>Contact</h3>
+                        </div>
+                        <ul class="footer-widget__contact-list list-unstyled">
+                            <li>
+                                <div class="icon">
+                                    <span class="fas fa-map-marker-alt"></span>
+                                </div>
+                                <div class="text">
+                                    <p>123 Rue de la Finance<br>75001 Paris, France</p>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="icon">
+                                    <span class="fas fa-phone"></span>
+                                </div>
+                                <div class="text">
+                                    <p><a href="tel:+33123456789">+33 1 23 45 67 89</a></p>
+                                </div>
+                            </li>
+                            <li>
+                                <div class="icon">
+                                    <span class="fas fa-envelope"></span>
+                                </div>
+                                <div class="text">
+                                    <p><a href="mailto:contact@edgeloan.com">contact@edgeloan.com</a></p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="main-footer__bottom">
+        <div class="container">
+            <div class="main-footer__bottom-inner">
+                <p class="main-footer__bottom-text">
+                    © {{ 'now'|date('Y') }} EdgeLoan. Tous droits réservés.
+                </p>
+                <div class="main-footer__bottom-menu">
+                    <ul class="list-unstyled">
+                        <li><a href="#">Mentions légales</a></li>
+                        <li><a href="#">Politique de confidentialité</a></li>
+                        <li><a href="#">CGU</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>

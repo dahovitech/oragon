@@ -16,18 +16,23 @@ class LanguageRepository extends ServiceEntityRepository
         parent::__construct($registry, Language::class);
     }
 
-    public function findActiveLanguages(): array
+    /**
+     * Find active languages ordered by sort order
+     */
+    public function findActiveOrdered(): array
     {
         return $this->createQueryBuilder('l')
             ->where('l.isActive = :active')
             ->setParameter('active', true)
             ->orderBy('l.sortOrder', 'ASC')
-            ->addOrderBy('l.name', 'ASC')
             ->getQuery()
             ->getResult();
     }
 
-    public function findDefaultLanguage(): ?Language
+    /**
+     * Find default language
+     */
+    public function findDefault(): ?Language
     {
         return $this->createQueryBuilder('l')
             ->where('l.isDefault = :default')
@@ -38,16 +43,10 @@ class LanguageRepository extends ServiceEntityRepository
             ->getOneOrNullResult();
     }
 
+    /**
+     * Find language by code
+     */
     public function findByCode(string $code): ?Language
-    {
-        return $this->createQueryBuilder('l')
-            ->where('l.code = :code')
-            ->setParameter('code', $code)
-            ->getQuery()
-            ->getOneOrNullResult();
-    }
-
-    public function findActiveByCode(string $code): ?Language
     {
         return $this->createQueryBuilder('l')
             ->where('l.code = :code')
@@ -56,42 +55,5 @@ class LanguageRepository extends ServiceEntityRepository
             ->setParameter('active', true)
             ->getQuery()
             ->getOneOrNullResult();
-    }
-
-    public function setAsDefault(Language $language): void
-    {
-        // First, remove default from all languages
-        $this->createQueryBuilder('l')
-            ->update()
-            ->set('l.isDefault', ':false')
-            ->setParameter('false', false)
-            ->getQuery()
-            ->execute();
-
-        // Then set the new default
-        $language->setIsDefault(true);
-        $this->getEntityManager()->flush();
-    }
-
-    public function getAllOrderedBySortOrder(): array
-    {
-        return $this->createQueryBuilder('l')
-            ->orderBy('l.sortOrder', 'ASC')
-            ->addOrderBy('l.name', 'ASC')
-            ->getQuery()
-            ->getResult();
-    }
-
-    public function findActiveLanguageCodes(): array
-    {
-        $languages = $this->createQueryBuilder('l')
-            ->select('l.code')
-            ->where('l.isActive = :active')
-            ->setParameter('active', true)
-            ->orderBy('l.sortOrder', 'ASC')
-            ->getQuery()
-            ->getScalarResult();
-
-        return array_column($languages, 'code');
     }
 }

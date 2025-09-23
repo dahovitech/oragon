@@ -1,0 +1,115 @@
+<header class="main-header main-header--one">
+    <div class="main-header--one__wrapper">
+        <div class="main-header--one__inner">
+            <nav class="main-header--one__navigation main-menu">
+                <div class="main-header--one__logo">
+                    <a href="{{ path('app_frontend_home') }}">
+                        <img src="{{ asset('assets/images/resources/logo-1.png') }}" alt="EdgeLoan" width="143" height="37">
+                    </a>
+                </div>
+                <ul class="main-menu__list">
+                    <li class="dropdown">
+                        <a href="{{ path('app_frontend_home') }}">Accueil</a>
+                    </li>
+                    <li class="dropdown">
+                        <a href="#">Prêts</a>
+                        <ul>
+                            <li><a href="{{ path('app_frontend_loans') }}">Tous les prêts</a></li>
+                            <li><a href="{{ path('app_frontend_loan_detail', {slug: 'pret-personnel'}) }}">Prêt Personnel</a></li>
+                            <li><a href="{{ path('app_frontend_loan_detail', {slug: 'pret-immobilier'}) }}">Prêt Immobilier</a></li>
+                            <li><a href="{{ path('app_frontend_loan_detail', {slug: 'pret-auto'}) }}">Prêt Auto</a></li>
+                            <li><a href="{{ path('app_frontend_loan_detail', {slug: 'pret-professionnel'}) }}">Prêt Professionnel</a></li>
+                        </ul>
+                    </li>
+                    <li>
+                        <a href="{{ path('app_frontend_simulator') }}">Simulateur</a>
+                    </li>
+                    <li>
+                        <a href="{{ path('app_frontend_about') }}">À propos</a>
+                    </li>
+                    <li>
+                        <a href="{{ path('app_frontend_contact') }}">Contact</a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="main-header--one__right">
+                <div class="main-header--one__right-contact">
+                    <div class="main-header--one__right-contact-icon">
+                        <span class="icon-telephone"></span>
+                    </div>
+                    <div class="main-header--one__right-contact-content">
+                        <span>Appelez-nous</span>
+                        <p><a href="tel:+33123456789">+33 1 23 45 67 89</a></p>
+                    </div>
+                </div>
+                
+                {% if app.user %}
+                    <div class="main-header--one__right-btn">
+                        <div class="dropdown">
+                            <a class="btn thm-btn" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="fas fa-user"></span> {{ app.user.firstName }}
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ path('app_user_dashboard') }}">Mon espace</a></li>
+                                <li><a class="dropdown-item" href="{{ path('app_user_applications') }}">Mes demandes</a></li>
+                                <li><a class="dropdown-item" href="{{ path('app_user_contracts') }}">Mes contrats</a></li>
+                                <li><a class="dropdown-item" href="{{ path('app_user_profile') }}">Mon profil</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ path('app_logout') }}">Déconnexion</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="main-header--one__right-btn">
+                        <a href="{{ path('app_login') }}" class="btn thm-btn">
+                            <span class="fas fa-sign-in-alt"></span> Connexion
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="mobile-nav__toggler">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Mobile Nav -->
+<div class="mobile-nav__wrapper">
+    <div class="mobile-nav__overlay mobile-nav__toggler"></div>
+    <div class="mobile-nav__content">
+        <span class="mobile-nav__close mobile-nav__toggler">
+            <i class="fa fa-times"></i>
+        </span>
+        
+        <div class="logo-box">
+            <a href="{{ path('app_frontend_home') }}" aria-label="logo image">
+                <img src="{{ asset('assets/images/resources/logo-1.png') }}" alt="EdgeLoan" width="143" height="37">
+            </a>
+        </div>
+        
+        <div class="mobile-nav__container"></div>
+        
+        <ul class="mobile-nav__contact list-unstyled">
+            <li>
+                <i class="fa fa-envelope"></i>
+                <a href="mailto:contact@edgeloan.com">contact@edgeloan.com</a>
+            </li>
+            <li>
+                <i class="fa fa-phone-alt"></i>
+                <a href="tel:+33123456789">+33 1 23 45 67 89</a>
+            </li>
+        </ul>
+        
+        <div class="mobile-nav__social">
+            <a href="#" class="fab fa-facebook-square"></a>
+            <a href="#" class="fab fa-twitter"></a>
+            <a href="#" class="fab fa-instagram"></a>
+            <a href="#" class="fab fa-linkedin"></a>
+        </div>
+    </div>
+</div>

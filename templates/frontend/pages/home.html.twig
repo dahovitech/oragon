@@ -1,0 +1,221 @@
+{% extends 'frontend/base.html.twig' %}
+
+{% block title %}Accueil - EdgeLoan{% endblock %}
+
+{% block main %}
+    <!-- Main Slider -->
+    <section class="main-slider main-slider--one">
+        <div class="main-slider__carousel owl-carousel owl-theme thm-owl__carousel" 
+             data-owl-options='{
+                 "loop": true,
+                 "animateOut": "slideOutDown",
+                 "animateIn": "fadeIn",
+                 "items": 1,
+                 "autoplay": true,
+                 "autoplayTimeout": 7000,
+                 "smartSpeed": 1000,
+                 "nav": false,
+                 "dots": true,
+                 "margin": 0
+             }'>
+            
+            <div class="item main-slider__slide-1">
+                <div class="main-slider__bg" style="background-image: url({{ asset('assets/images/backgrounds/main-slider-1-1.jpg') }});"></div>
+                <div class="container">
+                    <div class="main-slider__content">
+                        <p class="main-slider__sub-title">Votre partenaire financier de confiance</p>
+                        <h2 class="main-slider__title">
+                            Obtenez votre prêt <br>
+                            <span>rapidement</span>
+                        </h2>
+                        <p class="main-slider__text">
+                            Nous vous aidons à réaliser vos projets avec des solutions de financement 
+                            adaptées à vos besoins et des taux avantageux.
+                        </p>
+                        <div class=\"main-slider__btn\">
+                            <a href=\"{{ path('app_frontend_loans') }}\" class=\"thm-btn main-slider__btn-1\">
+                                Découvrir nos prêts
+                            </a>
+                            <a href=\"{{ path('app_frontend_simulator') }}\" class=\"thm-btn main-slider__btn-2\">
+                                Simuler mon prêt
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class=\"item main-slider__slide-2\">
+                <div class=\"main-slider__bg\" style=\"background-image: url({{ asset('assets/images/backgrounds/main-slider-1-2.jpg') }});\"></div>
+                <div class=\"container\">
+                    <div class=\"main-slider__content\">
+                        <p class=\"main-slider__sub-title\">Financement pour particuliers et entreprises</p>
+                        <h2 class=\"main-slider__title\">
+                            Des solutions <br>
+                            <span>sur mesure</span>
+                        </h2>
+                        <p class=\"main-slider__text\">
+                            Que vous soyez particulier ou professionnel, nous avons la solution 
+                            de financement qui correspond à votre situation.
+                        </p>
+                        <div class=\"main-slider__btn\">
+                            <a href=\"{{ path('app_frontend_loans') }}\" class=\"thm-btn main-slider__btn-1\">
+                                Nos solutions
+                            </a>
+                            <a href=\"{{ path('app_frontend_contact') }}\" class=\"thm-btn main-slider__btn-2\">
+                                Nous contacter
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class=\"service-one\">
+        <div class=\"container\">
+            <div class=\"section-title text-center\">
+                <div class=\"section-title__tagline-box\">
+                    <span class=\"section-title__tagline\">Nos Solutions</span>
+                </div>
+                <h2 class=\"section-title__title\">Types de Prêts Disponibles</h2>
+            </div>
+            
+            <div class=\"row\">
+                {% for loanType in loanTypes %}
+                <div class=\"col-xl-3 col-lg-6 col-md-6 wow fadeInUp\" data-wow-delay=\".{{ loop.index }}s\">
+                    <div class=\"service-one__item\">
+                        <div class=\"service-one__item__icon\">
+                            {% if loanType.image %}
+                                <img src=\"{{ asset(loanType.image.webPath) }}\" alt=\"{{ loanType.getTitle(app.request.locale) }}\">
+                            {% else %}
+                                <span class=\"icon-business-and-finance\"></span>
+                            {% endif %}
+                        </div>
+                        <div class=\"service-one__item__content\">
+                            <h3 class=\"service-one__item__title\">
+                                <a href=\"{{ path('app_frontend_loan_detail', {slug: loanType.slug}) }}\">
+                                    {{ loanType.getTitle(app.request.locale) }}
+                                </a>
+                            </h3>
+                            <p class=\"service-one__item__text\">
+                                {{ loanType.getDescription(app.request.locale)|striptags|slice(0, 120) }}...
+                            </p>
+                            <div class=\"service-one__item__arrow\">
+                                <a href=\"{{ path('app_frontend_loan_detail', {slug: loanType.slug}) }}\">
+                                    <span class=\"icon-right-arrow\"></span>
+                                </a>
+                            </div>
+                        </div>
+                        <div class=\"service-one__item__bottom\">
+                            <p class=\"service-one__item__rate\">À partir de {{ loanType.baseInterestRate }}%</p>
+                            <p class=\"service-one__item__amount\">{{ loanType.getAmountRange() }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class=\"about-one\">
+        <div class=\"container\">
+            <div class=\"row\">
+                <div class=\"col-xl-6\">
+                    <div class=\"about-one__left\">
+                        <div class=\"about-one__img-box wow slideInLeft\" data-wow-delay=\"100ms\" data-wow-duration=\"2500ms\">
+                            <div class=\"about-one__img\">
+                                <img src=\"{{ asset('assets/images/resources/about-one-img-1.jpg') }}\" alt=\"À propos EdgeLoan\">
+                            </div>
+                            <div class=\"about-one__small-img\">
+                                <img src=\"{{ asset('assets/images/resources/about-one-img-2.jpg') }}\" alt=\"Équipe EdgeLoan\">
+                            </div>
+                            <div class=\"about-one__experience-box\">
+                                <div class=\"about-one__experience-icon\">
+                                    <span class=\"icon-business-and-finance\"></span>
+                                </div>
+                                <div class=\"about-one__experience-content\">
+                                    <div class=\"about-one__experience-count count-box\">
+                                        <h3 class=\"count-text\" data-stop=\"15\" data-speed=\"1500\">00</h3>
+                                        <span>+</span>
+                                    </div>
+                                    <p class=\"about-one__experience-text\">Années<br> d'expérience</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class=\"col-xl-6\">
+                    <div class=\"about-one__right\">
+                        <div class=\"section-title text-left\">
+                            <div class=\"section-title__tagline-box\">
+                                <span class=\"section-title__tagline\">À propos de nous</span>
+                            </div>
+                            <h2 class=\"section-title__title\">Votre partenaire financier de confiance</h2>
+                        </div>
+                        <p class=\"about-one__text-1\">
+                            EdgeLoan est une plateforme de prêt en ligne innovante qui simplifie l'accès au crédit. 
+                            Nous mettons à votre disposition une gamme complète de solutions de financement adaptées 
+                            à vos besoins personnels et professionnels.
+                        </p>
+                        <p class=\"about-one__text-2\">
+                            Grâce à notre technologie avancée et notre expertise financière, nous vous offrons 
+                            des taux compétitifs, des démarches simplifiées et un accompagnement personnalisé 
+                            tout au long de votre projet.
+                        </p>
+                        <ul class=\"about-one__points list-unstyled\">
+                            <li>
+                                <div class=\"icon\">
+                                    <span class=\"fa fa-check\"></span>
+                                </div>
+                                <div class=\"text\">
+                                    <p>Processus 100% en ligne et sécurisé</p>
+                                </div>
+                            </li>
+                            <li>
+                                <div class=\"icon\">
+                                    <span class=\"fa fa-check\"></span>
+                                </div>
+                                <div class=\"text\">
+                                    <p>Réponse rapide sous 24h</p>
+                                </div>
+                            </li>
+                            <li>
+                                <div class=\"icon\">
+                                    <span class=\"fa fa-check\"></span>
+                                </div>
+                                <div class=\"text\">
+                                    <p>Taux avantageux et transparents</p>
+                                </div>
+                            </li>
+                        </ul>
+                        <div class=\"about-one__btn-box\">
+                            <a href=\"{{ path('app_frontend_about') }}\" class=\"thm-btn about-one__btn\">En savoir plus</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class=\"cta-one\">
+        <div class=\"cta-one__bg\" style=\"background-image: url({{ asset('assets/images/backgrounds/cta-one-bg.jpg') }});\"></div>
+        <div class=\"container\">
+            <div class=\"cta-one__inner\">
+                <div class=\"cta-one__left\">
+                    <h3 class=\"cta-one__title\">Prêt à démarrer votre projet ?</h3>
+                    <p class=\"cta-one__text\">Simulez votre prêt en quelques clics et obtenez une réponse immédiate</p>
+                </div>
+                <div class=\"cta-one__right\">
+                    <div class=\"cta-one__btn-box\">
+                        <a href=\"{{ path('app_frontend_simulator') }}\" class=\"thm-btn cta-one__btn\">
+                            Simuler mon prêt
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

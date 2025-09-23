@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\LanguageRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -18,16 +20,17 @@ class Language
     #[ORM\Column(type: 'string', length: 10, unique: true)]
     #[Assert\NotBlank]
     #[Assert\Length(min: 2, max: 10)]
-    private string $code;
+    private ?string $code = null;
 
     #[ORM\Column(type: 'string', length: 100)]
     #[Assert\NotBlank]
-    #[Assert\Length(min: 2, max: 100)]
-    private string $name;
+    #[Assert\Length(max: 100)]
+    private ?string $name = null;
 
     #[ORM\Column(type: 'string', length: 100)]
     #[Assert\NotBlank]
-    private string $nativeName;
+    #[Assert\Length(max: 100)]
+    private ?string $nativeName = null;
 
     #[ORM\Column(type: 'boolean')]
     private bool $isActive = true;
@@ -38,8 +41,16 @@ class Language
     #[ORM\Column(type: 'integer')]
     private int $sortOrder = 0;
 
+    #[ORM\OneToMany(mappedBy: 'language', targetEntity: LoanTypeTranslation::class)]
+    private Collection $loanTypeTranslations;
+
+    #[ORM\OneToMany(mappedBy: 'language', targetEntity: ServiceTranslation::class)]
+    private Collection $serviceTranslations;
+
     public function __construct()
     {
+        $this->loanTypeTranslations = new ArrayCollection();
+        $this->serviceTranslations = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -47,7 +58,7 @@ class Language
         return $this->id;
     }
 
-    public function getCode(): string
+    public function getCode(): ?string
     {
         return $this->code;
     }
@@ -58,7 +69,7 @@ class Language
         return $this;
     }
 
-    public function getName(): string
+    public function getName(): ?string
     {
         return $this->name;
     }
@@ -69,7 +80,7 @@ class Language
         return $this;
     }
 
-    public function getNativeName(): string
+    public function getNativeName(): ?string
     {
         return $this->nativeName;
     }
@@ -113,8 +124,66 @@ class Language
         return $this;
     }
 
+    /**
+     * @return Collection<int, LoanTypeTranslation>
+     */
+    public function getLoanTypeTranslations(): Collection
+    {
+        return $this->loanTypeTranslations;
+    }
+
+    public function addLoanTypeTranslation(LoanTypeTranslation $loanTypeTranslation): static
+    {
+        if (!$this->loanTypeTranslations->contains($loanTypeTranslation)) {
+            $this->loanTypeTranslations->add($loanTypeTranslation);
+            $loanTypeTranslation->setLanguage($this);
+        }
+
+        return $this;
+    }
+
+    public function removeLoanTypeTranslation(LoanTypeTranslation $loanTypeTranslation): static
+    {
+        if ($this->loanTypeTranslations->removeElement($loanTypeTranslation)) {
+            if ($loanTypeTranslation->getLanguage() === $this) {
+                $loanTypeTranslation->setLanguage(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ServiceTranslation>
+     */
+    public function getServiceTranslations(): Collection
+    {
+        return $this->serviceTranslations;
+    }
+
+    public function addServiceTranslation(ServiceTranslation $serviceTranslation): static
+    {
+        if (!$this->serviceTranslations->contains($serviceTranslation)) {
+            $this->serviceTranslations->add($serviceTranslation);
+            $serviceTranslation->setLanguage($this);
+        }
+
+        return $this;
+    }
+
+    public function removeServiceTranslation(ServiceTranslation $serviceTranslation): static
+    {
+        if ($this->serviceTranslations->removeElement($serviceTranslation)) {
+            if ($serviceTranslation->getLanguage() === $this) {
+                $serviceTranslation->setLanguage(null);
+            }
+        }
+
+        return $this;
+    }
+
     public function __toString(): string
     {
-        return $this->name;
+        return $this->name ?: $this->code ?: 'Language';
     }
 }
