@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demande de vérification reçue - EdgeLoan</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .content {
+            background: #ffffff;
+            padding: 30px;
+            border: 1px solid #e0e0e0;
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            border-radius: 0 0 10px 10px;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            font-size: 14px;
+            color: #666;
+        }
+        .btn {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .info-box {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="icon">🛡️</div>
+        <h1>Demande de vérification reçue</h1>
+        <p>Votre demande est en cours de traitement</p>
+    </div>
+    
+    <div class="content">
+        <h2>Bonjour {{ user.firstName }},</h2>
+        
+        <p>Nous avons bien reçu votre demande de vérification pour votre compte EdgeLoan.</p>
+        
+        <div class="info-box">
+            <strong>Détails de votre demande :</strong><br>
+            📋 <strong>Type :</strong> 
+            {% set type_label = {
+                'ID_CARD': 'Pièce d\'identité',
+                'PROOF_INCOME': 'Justificatif de revenus',
+                'BANK_STATEMENT': 'Relevé bancaire',
+                'BUSINESS_REGISTRATION': 'Extrait Kbis',
+                'PROOF_ADDRESS': 'Justificatif de domicile',
+                'TAX_RETURN': 'Avis d\'imposition',
+                'PAYSLIP': 'Bulletin de salaire',
+                'OTHER': 'Autre document'
+            } %}
+            {{ type_label[verification.verificationType.value] ?? verification.verificationType.value }}<br>
+            📅 <strong>Date de soumission :</strong> {{ verification.submittedAt|date('d/m/Y à H:i') }}<br>
+            📎 <strong>Documents :</strong> {{ verification.documents|length }} fichier(s)
+        </div>
+        
+        <h3>Prochaines étapes</h3>
+        <p>Notre équipe va examiner vos documents sous 24-48 heures. Vous recevrez une notification par email dès que la vérification sera terminée.</p>
+        
+        <p>En attendant, vous pouvez :</p>
+        <ul>
+            <li>Suivre le statut de votre demande dans votre espace personnel</li>
+            <li>Compléter votre profil si ce n'est pas déjà fait</li>
+            <li>Explorer nos offres de prêt</li>
+        </ul>
+        
+        <center>
+            <a href="{{ url('app_verification_index') }}" class="btn">Voir mes vérifications</a>
+        </center>
+        
+        <h3>Besoin d'aide ?</h3>
+        <p>Si vous avez des questions, n'hésitez pas à nous contacter :</p>
+        <ul>
+            <li>📧 Email : support@edgeloan.com</li>
+            <li>📞 Téléphone : 01 23 45 67 89</li>
+            <li>💬 Chat en ligne sur notre site web</li>
+        </ul>
+    </div>
+    
+    <div class="footer">
+        <p>
+            <strong>EdgeLoan</strong><br>
+            Votre partenaire de confiance pour tous vos projets de financement<br>
+            <a href="#">Se désabonner</a> | <a href="#">Politique de confidentialité</a>
+        </p>
+    </div>
+</body>
+</html>

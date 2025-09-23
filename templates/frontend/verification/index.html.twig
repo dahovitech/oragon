@@ -1,0 +1,173 @@
+{% extends 'frontend/base.html.twig' %}
+
+{% block title %}Vérification de compte - EdgeLoan{% endblock %}
+
+{% block body %}
+<div class="page-content">
+    <!-- Header Section -->
+    <section class="page-header page-header-modern page-header-md">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12 align-self-center p-static order-2 text-center">
+                    <h1 class="text-dark font-weight-bold text-8">Vérification de compte</h1>
+                    <span class="sub-title text-dark">Gérez vos documents et suivez le statut de vos vérifications</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container py-5">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-lg-3 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-shield-alt me-2"></i>
+                            Statut de vérification
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% set verified_count = 0 %}
+                        {% set pending_count = 0 %}
+                        {% set rejected_count = 0 %}
+                        
+                        {% for verification in verifications %}
+                            {% if verification.status.value == 'VERIFIED' %}
+                                {% set verified_count = verified_count + 1 %}
+                            {% elseif verification.status.value == 'PENDING' %}
+                                {% set pending_count = pending_count + 1 %}
+                            {% else %}
+                                {% set rejected_count = rejected_count + 1 %}
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% set total_count = verifications|length %}
+                        {% set progress = total_count > 0 ? (verified_count / total_count * 100) : 0 %}
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Progression</span>
+                                <span>{{ progress|round }}%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ progress }}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="verification-stats">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-check-circle text-success"></i> Vérifiées</span>
+                                <span class="badge bg-success">{{ verified_count }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span><i class="fas fa-clock text-warning"></i> En attente</span>
+                                <span class="badge bg-warning">{{ pending_count }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span><i class="fas fa-times-circle text-danger"></i> Rejetées</span>
+                                <span class="badge bg-danger">{{ rejected_count }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-lg-9">
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2>Mes vérifications</h2>
+                    <a href="{{ path('app_verification_new') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        Nouvelle vérification
+                    </a>
+                </div>
+
+                <!-- Verification Cards -->
+                {% if verifications is empty %}
+                    <div class="card">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-shield-alt fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">Aucune vérification</h4>
+                            <p class="text-muted mb-4">Vous n'avez encore soumis aucun document pour vérification.</p>
+                            <a href="{{ path('app_verification_new') }}" class="btn btn-primary">
+                                Commencer la vérification
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="row">
+                        {% for verification in verifications %}
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">
+                                            {% set type_label = {
+                                                'ID_CARD': 'Pièce d\'identité',
+                                                'PROOF_INCOME': 'Justificatif de revenus',
+                                                'BANK_STATEMENT': 'Relevé bancaire',
+                                                'BUSINESS_REGISTRATION': 'Extrait Kbis',
+                                                'PROOF_ADDRESS': 'Justificatif de domicile',
+                                                'TAX_RETURN': 'Avis d\'imposition',
+                                                'PAYSLIP': 'Bulletin de salaire',
+                                                'OTHER': 'Autre document'
+                                            } %}
+                                            {{ type_label[verification.verificationType.value] ?? verification.verificationType.value }}
+                                        </h6>
+                                        
+                                        {% if verification.status.value == 'VERIFIED' %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>Vérifié
+                                            </span>
+                                        {% elseif verification.status.value == 'PENDING' %}
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-clock me-1"></i>En attente
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times me-1"></i>Rejeté
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted mb-2">
+                                            <i class="fas fa-calendar me-2"></i>
+                                            Soumis le {{ verification.submittedAt|date('d/m/Y à H:i') }}
+                                        </p>
+                                        
+                                        {% if verification.verifiedAt %}
+                                            <p class="text-muted mb-2">
+                                                <i class="fas fa-check-circle me-2"></i>
+                                                Traité le {{ verification.verifiedAt|date('d/m/Y à H:i') }}
+                                            </p>
+                                        {% endif %}
+                                        
+                                        <p class="text-muted mb-3">
+                                            <i class="fas fa-file me-2"></i>
+                                            {{ verification.documents|length }} document(s)
+                                        </p>
+                                        
+                                        {% if verification.comments %}
+                                            <div class="alert alert-info">
+                                                <strong>Commentaires:</strong><br>
+                                                {{ verification.comments }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="card-footer">
+                                        <a href="{{ path('app_verification_detail', {'id': verification.id}) }}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye me-1"></i>Voir détails
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

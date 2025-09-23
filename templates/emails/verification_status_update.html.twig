@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mise à jour de votre vérification - EdgeLoan</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            {% if verification.status.value == 'VERIFIED' %}
+                background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            {% else %}
+                background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+            {% endif %}
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .content {
+            background: #ffffff;
+            padding: 30px;
+            border: 1px solid #e0e0e0;
+        }
+        .footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            border-radius: 0 0 10px 10px;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            font-size: 14px;
+            color: #666;
+        }
+        .btn {
+            display: inline-block;
+            {% if verification.status.value == 'VERIFIED' %}
+                background: #28a745;
+            {% else %}
+                background: #007bff;
+            {% endif %}
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .status-box {
+            {% if verification.status.value == 'VERIFIED' %}
+                background: #d4edda;
+                border: 1px solid #28a745;
+            {% else %}
+                background: #f8d7da;
+                border: 1px solid #dc3545;
+            {% endif %}
+            border-radius: 5px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        .details-box {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        {% if verification.status.value == 'VERIFIED' %}
+            <div class="icon">✅</div>
+            <h1>Vérification approuvée</h1>
+            <p>Félicitations ! Votre document a été vérifié avec succès</p>
+        {% else %}
+            <div class="icon">❌</div>
+            <h1>Vérification non approuvée</h1>
+            <p>Votre document nécessite une nouvelle soumission</p>
+        {% endif %}
+    </div>
+    
+    <div class="content">
+        <h2>Bonjour {{ user.firstName }},</h2>
+        
+        {% if verification.status.value == 'VERIFIED' %}
+            <p>Excellente nouvelle ! Votre demande de vérification a été <strong>approuvée</strong> par notre équipe.</p>
+            
+            <div class="status-box">
+                <h3 style="color: #28a745; margin: 0;">🎉 Vérification réussie</h3>
+                <p style="margin: 10px 0 0 0;">Votre document a été validé et votre compte gagne en crédibilité</p>
+            </div>
+            
+            <h3>Ce que cela signifie pour vous :</h3>
+            <ul>
+                <li>✅ Accès à plus d'offres de prêt</li>
+                <li>✅ Traitement plus rapide de vos demandes</li>
+                <li>✅ Taux préférentiels disponibles</li>
+                <li>✅ Limites d'emprunt augmentées</li>
+            </ul>
+            
+            <h3>Prochaines étapes</h3>
+            <p>Vous pouvez maintenant :</p>
+            <ul>
+                <li>Faire une demande de prêt en ligne</li>
+                <li>Accéder à notre calculateur de prêt avancé</li>
+                <li>Contacter nos conseillers pour un accompagnement personnalisé</li>
+            </ul>
+            
+            <center>
+                <a href="{{ url('app_loan_catalog') }}" class="btn">Découvrir nos offres</a>
+            </center>
+            
+        {% else %}
+            <p>Malheureusement, votre demande de vérification n'a pas pu être approuvée en l'état.</p>
+            
+            <div class="status-box">
+                <h3 style="color: #dc3545; margin: 0;">⚠️ Vérification non approuvée</h3>
+                <p style="margin: 10px 0 0 0;">Des ajustements sont nécessaires sur vos documents</p>
+            </div>
+            
+            {% if verification.comments %}
+                <h3>Commentaires de notre équipe :</h3>
+                <div class="details-box">
+                    {{ verification.comments|nl2br }}
+                </div>
+            {% endif %}
+            
+            <h3>Comment procéder ?</h3>
+            <p>Pas d'inquiétude ! Voici ce que vous pouvez faire :</p>
+            <ul>
+                <li>📋 Vérifiez que vos documents sont lisibles et complets</li>
+                <li>📅 Assurez-vous que vos documents sont récents (moins de 3 mois)</li>
+                <li>📎 Utilisez des formats PDF ou images haute qualité</li>
+                <li>📞 Contactez notre support pour des conseils personnalisés</li>
+            </ul>
+            
+            <center>
+                <a href="{{ url('app_verification_new') }}" class="btn">Soumettre de nouveaux documents</a>
+            </center>
+        {% endif %}
+        
+        <div class="details-box">
+            <strong>Détails de la vérification :</strong><br>
+            📋 <strong>Type :</strong> 
+            {% set type_label = {
+                'ID_CARD': 'Pièce d\'identité',
+                'PROOF_INCOME': 'Justificatif de revenus',
+                'BANK_STATEMENT': 'Relevé bancaire',
+                'BUSINESS_REGISTRATION': 'Extrait Kbis',
+                'PROOF_ADDRESS': 'Justificatif de domicile',
+                'TAX_RETURN': 'Avis d\'imposition',
+                'PAYSLIP': 'Bulletin de salaire',
+                'OTHER': 'Autre document'
+            } %}
+            {{ type_label[verification.verificationType.value] ?? verification.verificationType.value }}<br>
+            📅 <strong>Date de traitement :</strong> {{ verification.verifiedAt|date('d/m/Y à H:i') }}<br>
+            {% if verification.verifiedBy %}
+                👤 <strong>Traité par :</strong> {{ verification.verifiedBy.firstName }} {{ verification.verifiedBy.lastName }}
+            {% endif %}
+        </div>
+        
+        <h3>Besoin d'aide ?</h3>
+        <p>Notre équipe support est là pour vous accompagner :</p>
+        <ul>
+            <li>📧 Email : support@edgeloan.com</li>
+            <li>📞 Téléphone : 01 23 45 67 89</li>
+            <li>💬 Chat en ligne disponible 24h/7j</li>
+        </ul>
+    </div>
+    
+    <div class="footer">
+        <p>
+            <strong>EdgeLoan</strong><br>
+            Votre partenaire de confiance pour tous vos projets de financement<br>
+            <a href="#">Se désabonner</a> | <a href="#">Politique de confidentialité</a>
+        </p>
+    </div>
+</body>
+</html>

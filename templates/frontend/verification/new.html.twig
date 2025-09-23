@@ -1,0 +1,318 @@
+{% extends 'frontend/base.html.twig' %}
+
+{% block title %}Nouvelle vérification - EdgeLoan{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .upload-zone {
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .upload-zone:hover {
+            border-color: #007bff;
+            background-color: #f8f9fa;
+        }
+        .upload-zone.dragover {
+            border-color: #007bff;
+            background-color: #e3f2fd;
+        }
+        .file-preview {
+            display: none;
+        }
+        .file-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 5px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="page-content">
+    <!-- Header Section -->
+    <section class="page-header page-header-modern page-header-md">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12 align-self-center p-static order-2 text-center">
+                    <h1 class="text-dark font-weight-bold text-8">Nouvelle vérification</h1>
+                    <span class="sub-title text-dark">Soumettez vos documents pour vérification</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Breadcrumb -->
+                <nav aria-label="breadcrumb" class="mb-4">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{{ path('app_verification_index') }}">Vérifications</a>
+                        </li>
+                        <li class="breadcrumb-item active">Nouvelle vérification</li>
+                    </ol>
+                </nav>
+
+                <!-- Info Card -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h5 class="mb-2">
+                                    <i class="fas fa-info-circle text-info me-2"></i>
+                                    Documents acceptés
+                                </h5>
+                                <p class="text-muted mb-0">
+                                    Formats acceptés: PDF, JPG, PNG • Taille max: 10MB par fichier
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <i class="fas fa-shield-alt fa-3x text-primary opacity-25"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form -->
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-upload me-2"></i>
+                            Soumettre des documents
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {{ form_start(form, {'attr': {'enctype': 'multipart/form-data', 'id': 'verification-form'}}) }}
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                {{ form_label(form.verificationType, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                                {{ form_widget(form.verificationType) }}
+                                {{ form_errors(form.verificationType) }}
+                                
+                                <div class="form-text">
+                                    Sélectionnez le type de document que vous souhaitez soumettre.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            {{ form_label(form.documents, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                            
+                            <div class="upload-zone" id="upload-zone">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">Glissez-déposez vos fichiers ici</h5>
+                                <p class="text-muted mb-3">ou cliquez pour sélectionner</p>
+                                {{ form_widget(form.documents, {'attr': {'style': 'display: none;', 'id': 'file-input'}}) }}
+                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('file-input').click()">
+                                    <i class="fas fa-folder-open me-2"></i>Choisir des fichiers
+                                </button>
+                            </div>
+                            
+                            <div class="file-preview mt-3" id="file-preview">
+                                <h6>Fichiers sélectionnés:</h6>
+                                <div id="file-list"></div>
+                            </div>
+                            
+                            {{ form_errors(form.documents) }}
+                        </div>
+
+                        <div class="mb-4">
+                            {{ form_label(form.comments, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                            {{ form_widget(form.comments) }}
+                            {{ form_errors(form.comments) }}
+                            
+                            <div class="form-text">
+                                Ajoutez des informations complémentaires si nécessaire.
+                            </div>
+                        </div>
+
+                        <!-- Required Documents Info -->
+                        <div class="alert alert-info" id="required-docs-info" style="display: none;">
+                            <h6><i class="fas fa-list me-2"></i>Documents requis pour ce type:</h6>
+                            <div id="required-docs-list"></div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ path('app_verification_index') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Retour
+                            </a>
+                            
+                            {{ form_widget(form.submit) }}
+                        </div>
+
+                        {{ form_end(form) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadZone = document.getElementById('upload-zone');
+            const fileInput = document.getElementById('file-input');
+            const filePreview = document.getElementById('file-preview');
+            const fileList = document.getElementById('file-list');
+            const verificationTypeSelect = document.querySelector('#account_verification_form_verificationType');
+            const requiredDocsInfo = document.getElementById('required-docs-info');
+            const requiredDocsList = document.getElementById('required-docs-list');
+
+            // Informations sur les documents requis par type
+            const requiredDocs = {
+                'ID_CARD': [
+                    'Carte d\'identité recto/verso',
+                    'Passeport (pages principales)',
+                    'Permis de conduire recto/verso'
+                ],
+                'PROOF_INCOME': [
+                    '3 derniers bulletins de salaire',
+                    'Avis d\'imposition',
+                    'Contrat de travail'
+                ],
+                'BANK_STATEMENT': [
+                    'Relevés bancaires des 3 derniers mois',
+                    'RIB du compte principal'
+                ],
+                'BUSINESS_REGISTRATION': [
+                    'Extrait Kbis de moins de 3 mois',
+                    'Statuts de l\'entreprise',
+                    'Derniers bilans comptables'
+                ],
+                'PROOF_ADDRESS': [
+                    'Facture d\'électricité, gaz ou eau',
+                    'Quittance de loyer',
+                    'Attestation d\'hébergement'
+                ],
+                'TAX_RETURN': [
+                    'Avis d\'imposition complet',
+                    'Déclaration de revenus'
+                ],
+                'PAYSLIP': [
+                    '3 derniers bulletins de salaire',
+                    'Certificat de travail'
+                ]
+            };
+
+            // Gérer le changement de type de vérification
+            verificationTypeSelect.addEventListener('change', function() {
+                const selectedType = this.value;
+                if (selectedType && requiredDocs[selectedType]) {
+                    requiredDocsList.innerHTML = requiredDocs[selectedType]
+                        .map(doc => `<li>${doc}</li>`)
+                        .join('');
+                    requiredDocsInfo.style.display = 'block';
+                } else {
+                    requiredDocsInfo.style.display = 'none';
+                }
+            });
+
+            // Drag and drop
+            uploadZone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+
+            uploadZone.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+            });
+
+            uploadZone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                fileInput.files = files;
+                displayFiles(files);
+            });
+
+            // Click sur la zone
+            uploadZone.addEventListener('click', function() {
+                fileInput.click();
+            });
+
+            // Changement de fichiers
+            fileInput.addEventListener('change', function() {
+                displayFiles(this.files);
+            });
+
+            function displayFiles(files) {
+                if (files.length > 0) {
+                    filePreview.style.display = 'block';
+                    fileList.innerHTML = '';
+                    
+                    Array.from(files).forEach((file, index) => {
+                        const fileItem = document.createElement('div');
+                        fileItem.className = 'file-item';
+                        fileItem.innerHTML = `
+                            <div>
+                                <i class="fas fa-file-${getFileIcon(file.type)} me-2"></i>
+                                <strong>${file.name}</strong>
+                                <span class="text-muted ms-2">(${formatFileSize(file.size)})</span>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile(${index})">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        `;
+                        fileList.appendChild(fileItem);
+                    });
+                } else {
+                    filePreview.style.display = 'none';
+                }
+            }
+
+            function getFileIcon(mimeType) {
+                if (mimeType.includes('pdf')) return 'pdf';
+                if (mimeType.includes('image')) return 'image';
+                return 'alt';
+            }
+
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            // Fonction globale pour supprimer un fichier
+            window.removeFile = function(index) {
+                const dt = new DataTransfer();
+                const files = fileInput.files;
+                
+                for (let i = 0; i < files.length; i++) {
+                    if (i !== index) {
+                        dt.items.add(files[i]);
+                    }
+                }
+                
+                fileInput.files = dt.files;
+                displayFiles(fileInput.files);
+            };
+
+            // Validation du formulaire
+            document.getElementById('verification-form').addEventListener('submit', function(e) {
+                if (fileInput.files.length === 0) {
+                    e.preventDefault();
+                    alert('Veuillez sélectionner au moins un fichier.');
+                    return false;
+                }
+            });
+        });
+    </script>
+{% endblock %}

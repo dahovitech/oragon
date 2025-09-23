@@ -1,0 +1,341 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Gestion des vérifications - Admin{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Gestion des vérifications</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="fas fa-download me-1"></i>Export
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#">Export Excel</a></li>
+                    <li><a class="dropdown-item" href="#">Export PDF</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <div class="fs-2 fw-bold">{{ stats.pending }}</div>
+                            <div>En attente</div>
+                        </div>
+                        <div class="ms-auto">
+                            <i class="fas fa-clock fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <div class="fs-2 fw-bold">{{ stats.verified }}</div>
+                            <div>Vérifiées</div>
+                        </div>
+                        <div class="ms-auto">
+                            <i class="fas fa-check-circle fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <div class="fs-2 fw-bold">{{ stats.rejected }}</div>
+                            <div>Rejetées</div>
+                        </div>
+                        <div class="ms-auto">
+                            <i class="fas fa-times-circle fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div>
+                            <div class="fs-2 fw-bold">{{ stats.pending + stats.verified + stats.rejected }}</div>
+                            <div>Total</div>
+                        </div>
+                        <div class="ms-auto">
+                            <i class="fas fa-shield-alt fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <ul class="nav nav-pills">
+                        <li class="nav-item">
+                            <a class="nav-link {% if currentStatus == 'all' %}active{% endif %}" 
+                               href="{{ path('admin_verification_index') }}">
+                                Toutes
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if currentStatus == 'pending' %}active{% endif %}" 
+                               href="{{ path('admin_verification_index', {'status': 'pending'}) }}">
+                                En attente <span class="badge bg-warning ms-1">{{ stats.pending }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if currentStatus == 'verified' %}active{% endif %}" 
+                               href="{{ path('admin_verification_index', {'status': 'verified'}) }}">
+                                Vérifiées <span class="badge bg-success ms-1">{{ stats.verified }}</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if currentStatus == 'rejected' %}active{% endif %}" 
+                               href="{{ path('admin_verification_index', {'status': 'rejected'}) }}">
+                                Rejetées <span class="badge bg-danger ms-1">{{ stats.rejected }}</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Rechercher..." id="search-input">
+                        <button class="btn btn-outline-secondary" type="button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verifications Table -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Liste des vérifications</h5>
+            {% if currentStatus == 'pending' %}
+                <div class="dropdown">
+                    <button class="btn btn-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        Actions en lot
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="#" onclick="bulkAction('approve')">
+                                <i class="fas fa-check me-2"></i>Approuver sélectionnées
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#" onclick="bulkAction('reject')">
+                                <i class="fas fa-times me-2"></i>Rejeter sélectionnées
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+        <div class="card-body p-0">
+            {% if verifications is empty %}
+                <div class="text-center py-5">
+                    <i class="fas fa-shield-alt fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Aucune vérification trouvée</h5>
+                    <p class="text-muted">Aucune vérification ne correspond aux critères sélectionnés.</p>
+                </div>
+            {% else %}
+                <form id="bulk-action-form" method="post" action="{{ path('admin_verification_bulk_action') }}">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    {% if currentStatus == 'pending' %}
+                                        <th width="30">
+                                            <input type="checkbox" class="form-check-input" id="select-all">
+                                        </th>
+                                    {% endif %}
+                                    <th>Utilisateur</th>
+                                    <th>Type</th>
+                                    <th>Documents</th>
+                                    <th>Statut</th>
+                                    <th>Date soumission</th>
+                                    <th>Date traitement</th>
+                                    <th width="150">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for verification in verifications %}
+                                    <tr>
+                                        {% if currentStatus == 'pending' %}
+                                            <td>
+                                                <input type="checkbox" class="form-check-input verification-checkbox" 
+                                                       name="verification_ids[]" value="{{ verification.id }}">
+                                            </td>
+                                        {% endif %}
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar me-2">
+                                                    <div class="avatar-initial bg-primary rounded-circle">
+                                                        {{ verification.user.firstName|first }}{{ verification.user.lastName|first }}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <strong>{{ verification.user.firstName }} {{ verification.user.lastName }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ verification.user.email }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% set type_label = {
+                                                'ID_CARD': 'Pièce d\'identité',
+                                                'PROOF_INCOME': 'Justificatif de revenus',
+                                                'BANK_STATEMENT': 'Relevé bancaire',
+                                                'BUSINESS_REGISTRATION': 'Extrait Kbis',
+                                                'PROOF_ADDRESS': 'Justificatif de domicile',
+                                                'TAX_RETURN': 'Avis d\'imposition',
+                                                'PAYSLIP': 'Bulletin de salaire',
+                                                'OTHER': 'Autre document'
+                                            } %}
+                                            <span class="badge bg-light text-dark">
+                                                {{ type_label[verification.verificationType.value] ?? verification.verificationType.value }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-info">{{ verification.documents|length }} fichier(s)</span>
+                                        </td>
+                                        <td>
+                                            {% if verification.status.value == 'VERIFIED' %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check me-1"></i>Vérifié
+                                                </span>
+                                            {% elseif verification.status.value == 'PENDING' %}
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-clock me-1"></i>En attente
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-times me-1"></i>Rejeté
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <small>{{ verification.submittedAt|date('d/m/Y H:i') }}</small>
+                                        </td>
+                                        <td>
+                                            {% if verification.verifiedAt %}
+                                                <small>{{ verification.verifiedAt|date('d/m/Y H:i') }}</small>
+                                            {% else %}
+                                                <small class="text-muted">-</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{{ path('admin_verification_detail', {'id': verification.id}) }}" 
+                                                   class="btn btn-outline-primary" 
+                                                   data-bs-toggle="tooltip" title="Voir détails">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% if verification.status.value == 'PENDING' %}
+                                                    <a href="{{ path('admin_verification_review', {'id': verification.id}) }}" 
+                                                       class="btn btn-outline-success" 
+                                                       data-bs-toggle="tooltip" title="Traiter">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar {
+    width: 40px;
+    height: 40px;
+}
+
+.avatar-initial {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: white;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Select all checkbox
+    const selectAll = document.getElementById('select-all');
+    const checkboxes = document.querySelectorAll('.verification-checkbox');
+    
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+        });
+    }
+    
+    // Search functionality
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const tableRows = document.querySelectorAll('tbody tr');
+            
+            tableRows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(searchTerm) ? '' : 'none';
+            });
+        });
+    }
+});
+
+function bulkAction(action) {
+    const checkboxes = document.querySelectorAll('.verification-checkbox:checked');
+    
+    if (checkboxes.length === 0) {
+        alert('Veuillez sélectionner au moins une vérification.');
+        return;
+    }
+    
+    const actionText = action === 'approve' ? 'approuver' : 'rejeter';
+    if (confirm(`Êtes-vous sûr de vouloir ${actionText} ${checkboxes.length} vérification(s) ?`)) {
+        const form = document.getElementById('bulk-action-form');
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = action;
+        form.appendChild(actionInput);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}

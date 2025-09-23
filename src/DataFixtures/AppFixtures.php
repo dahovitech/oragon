@@ -249,6 +249,76 @@ class AppFixtures extends Fixture
             }
         }
 
+        // Create sample account verifications
+        $this->createVerificationFixtures($manager, [$admin, $userIndividual, $userBusiness]);
+
         $manager->flush();
+    }
+
+    private function createVerificationFixtures(ObjectManager $manager, array $users): void
+    {
+        $verificationTypes = [
+            \App\Enum\DocumentType::ID_CARD,
+            \App\Enum\DocumentType::PROOF_INCOME,
+            \App\Enum\DocumentType::BANK_STATEMENT,
+            \App\Enum\DocumentType::PROOF_ADDRESS,
+        ];
+
+        foreach ($users as $user) {
+            // Skip admin
+            if (in_array('ROLE_ADMIN', $user->getRoles())) {
+                continue;
+            }
+
+            // Create 2-3 verifications per user
+            $numberOfVerifications = rand(2, 3);
+            
+            for ($i = 0; $i < $numberOfVerifications; $i++) {
+                $verification = new \App\Entity\AccountVerification();
+                $verification->setUser($user);
+                $verification->setVerificationType($verificationTypes[$i]);
+                
+                // Vary submission dates
+                $submittedAt = new \DateTimeImmutable('-' . rand(1, 30) . ' days');
+                $verification->setSubmittedAt($submittedAt);
+
+                // Random status
+                $statusChance = rand(1, 100);
+                if ($statusChance <= 60) {
+                    $verification->setStatus(\App\Enum\VerificationStatus::VERIFIED);
+                    $verification->setVerifiedAt(new \DateTimeImmutable('-' . rand(0, 10) . ' days'));
+                    $verification->setVerifiedBy($user); // For simplicity, will be admin in real scenario
+                    $verification->setComments('Vérification effectuée avec succès. Documents conformes.');
+                } elseif ($statusChance <= 80) {
+                    $verification->setStatus(\App\Enum\VerificationStatus::PENDING);
+                    $verification->setComments('En cours de traitement par notre équipe.');
+                } else {
+                    $verification->setStatus(\App\Enum\VerificationStatus::REJECTED);
+                    $verification->setVerifiedAt(new \DateTimeImmutable('-' . rand(0, 5) . ' days'));
+                    $verification->setVerifiedBy($user); // For simplicity
+                    $verification->setComments('Document illisible ou incomplet. Veuillez soumettre un nouveau document.');
+                    $verification->setRejectionReason('Document non conforme aux exigences.');
+                }
+
+                // Create mock documents
+                $numberOfDocs = rand(1, 2);
+                for ($j = 0; $j < $numberOfDocs; $j++) {
+                    $document = new \App\Entity\VerificationDocument();
+                    $document->setDocumentType($verification->getVerificationType());
+                    $document->setFileName('sample-doc-' . uniqid() . '.pdf');
+                    $document->setOriginalName('Document_' . ($j + 1) . '.pdf');
+                    $document->setFilePath('uploads/verification/sample-doc-' . uniqid() . '.pdf');
+                    $document->setFileSize(rand(50000, 500000)); // Taille entre 50KB et 500KB
+                    $document->setMimeType('application/pdf');
+                    $document->setUploadedAt($submittedAt);
+                    $document->setIsVerified($verification->getStatus() === \App\Enum\VerificationStatus::VERIFIED);
+
+                    $verification->addDocument($document);
+                    $manager->persist($document);
+                }
+
+                $manager->persist($verification);
+            }
+        }
     }
 }

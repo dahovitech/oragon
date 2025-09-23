@@ -1,0 +1,353 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Détails vérification - Admin{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Détails de la vérification</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+                {% if verification.status.value == 'PENDING' %}
+                    <a href="{{ path('admin_verification_review', {'id': verification.id}) }}" class="btn btn-primary">
+                        <i class="fas fa-edit me-1"></i>Traiter
+                    </a>
+                {% endif %}
+                <a href="{{ path('admin_verification_index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Retour
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- User Information -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user me-2"></i>Informations utilisateur
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <div class="avatar-lg mx-auto mb-3">
+                            <div class="avatar-initial bg-primary rounded-circle">
+                                {{ verification.user.firstName|first }}{{ verification.user.lastName|first }}
+                            </div>
+                        </div>
+                        <h5>{{ verification.user.firstName }} {{ verification.user.lastName }}</h5>
+                        <p class="text-muted">{{ verification.user.email }}</p>
+                        
+                        {% if verification.user.isVerified %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-shield-alt me-1"></i>Compte vérifié
+                            </span>
+                        {% else %}
+                            <span class="badge bg-warning">
+                                <i class="fas fa-exclamation-triangle me-1"></i>Non vérifié
+                            </span>
+                        {% endif %}
+                    </div>
+                    
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>Type de compte:</strong></td>
+                            <td>
+                                {% if verification.user.accountType.value == 'INDIVIDUAL' %}
+                                    <span class="badge bg-info">Particulier</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Entreprise</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Téléphone:</strong></td>
+                            <td>{{ verification.user.phoneNumber ?? 'Non renseigné' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Date d'inscription:</strong></td>
+                            <td>{{ verification.user.createdAt|date('d/m/Y') }}</td>
+                        </tr>
+                        {% if verification.user.accountType.value == 'INDIVIDUAL' %}
+                            <tr>
+                                <td><strong>Date de naissance:</strong></td>
+                                <td>{{ verification.user.dateOfBirth ? verification.user.dateOfBirth|date('d/m/Y') : 'Non renseignée' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Revenus mensuels:</strong></td>
+                                <td>{{ verification.user.monthlyIncome ? verification.user.monthlyIncome|number_format(2, ',', ' ') ~ ' €' : 'Non renseigné' }}</td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td><strong>Entreprise:</strong></td>
+                                <td>{{ verification.user.companyName ?? 'Non renseigné' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SIRET:</strong></td>
+                                <td>{{ verification.user.siretNumber ?? 'Non renseigné' }}</td>
+                            </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Statistiques utilisateur</h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <i class="fas fa-clock text-muted me-2"></i>
+                        Membre depuis {{ verification.user.createdAt|date('d/m/Y') }}
+                    </p>
+                    <!-- Ajoutez ici d'autres statistiques comme le nombre de demandes de prêt, etc. -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Verification Details -->
+        <div class="col-md-8">
+            <!-- Status Card -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h4 class="mb-2">
+                                {% set type_label = {
+                                    'ID_CARD': 'Pièce d\'identité',
+                                    'PROOF_INCOME': 'Justificatif de revenus',
+                                    'BANK_STATEMENT': 'Relevé bancaire',
+                                    'BUSINESS_REGISTRATION': 'Extrait Kbis',
+                                    'PROOF_ADDRESS': 'Justificatif de domicile',
+                                    'TAX_RETURN': 'Avis d\'imposition',
+                                    'PAYSLIP': 'Bulletin de salaire',
+                                    'OTHER': 'Autre document'
+                                } %}
+                                {{ type_label[verification.verificationType.value] ?? verification.verificationType.value }}
+                            </h4>
+                            
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-calendar me-2"></i>
+                                Soumis le {{ verification.submittedAt|date('d/m/Y à H:i') }}
+                            </p>
+                            
+                            {% if verification.verifiedAt %}
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-user-check me-2"></i>
+                                    Traité le {{ verification.verifiedAt|date('d/m/Y à H:i') }}
+                                    {% if verification.verifiedBy %}
+                                        par {{ verification.verifiedBy.firstName }} {{ verification.verifiedBy.lastName }}
+                                    {% endif %}
+                                </p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 text-end">
+                            {% if verification.status.value == 'VERIFIED' %}
+                                <span class="badge bg-success fs-6 px-3 py-2">
+                                    <i class="fas fa-check-circle me-2"></i>Vérifié
+                                </span>
+                            {% elseif verification.status.value == 'PENDING' %}
+                                <span class="badge bg-warning fs-6 px-3 py-2">
+                                    <i class="fas fa-clock me-2"></i>En attente
+                                </span>
+                            {% else %}
+                                <span class="badge bg-danger fs-6 px-3 py-2">
+                                    <i class="fas fa-times-circle me-2"></i>Rejeté
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-alt me-2"></i>
+                        Documents soumis ({{ verification.documents|length }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if verification.documents is empty %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Aucun document attaché</p>
+                        </div>
+                    {% else %}
+                        <div class="row">
+                            {% for document in verification.documents %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    {% if document.fileName|slice(-3) == 'pdf' %}
+                                                        <i class="fas fa-file-pdf fa-3x text-danger"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-file-image fa-3x text-primary"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <h6 class="mb-1">{{ document.originalName }}</h6>
+                                                    <p class="text-muted mb-1">
+                                                        <small>
+                                                            <i class="fas fa-calendar me-1"></i>
+                                                            {{ document.uploadedAt|date('d/m/Y H:i') }}
+                                                        </small>
+                                                    </p>
+                                                    {% if document.isVerified %}
+                                                        <span class="badge bg-success">
+                                                            <i class="fas fa-check me-1"></i>Vérifié
+                                                        </span>
+                                                    {% else %}
+                                                        <span class="badge bg-secondary">
+                                                            <i class="fas fa-clock me-1"></i>En attente
+                                                        </span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer">
+                                            <div class="d-flex justify-content-between">
+                                                <a href="/uploads/verification/{{ document.fileName }}" 
+                                                   target="_blank" 
+                                                   class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-eye me-1"></i>Voir
+                                                </a>
+                                                <a href="/uploads/verification/{{ document.fileName }}" 
+                                                   download 
+                                                   class="btn btn-outline-secondary btn-sm">
+                                                    <i class="fas fa-download me-1"></i>Télécharger
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Comments -->
+            {% if verification.comments %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-comment-alt me-2"></i>
+                            Commentaires
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            {{ verification.comments|nl2br }}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Timeline -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        Historique
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">Demande soumise</h6>
+                                <p class="text-muted mb-0">
+                                    {{ verification.submittedAt|date('d/m/Y à H:i') }}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        {% if verification.verifiedAt %}
+                            <div class="timeline-item">
+                                <div class="timeline-marker {% if verification.status.value == 'VERIFIED' %}bg-success{% else %}bg-danger{% endif %}"></div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">
+                                        {% if verification.status.value == 'VERIFIED' %}
+                                            Vérification approuvée
+                                        {% else %}
+                                            Vérification rejetée
+                                        {% endif %}
+                                    </h6>
+                                    <p class="text-muted mb-0">
+                                        {{ verification.verifiedAt|date('d/m/Y à H:i') }}
+                                        {% if verification.verifiedBy %}
+                                            par {{ verification.verifiedBy.firstName }} {{ verification.verifiedBy.lastName }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-lg {
+    width: 80px;
+    height: 80px;
+}
+
+.avatar-initial {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.timeline {
+    position: relative;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 50px;
+    padding-bottom: 30px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 7px;
+    top: 5px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px #dee2e6;
+}
+
+.timeline-content h6 {
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+</style>
+{% endblock %}

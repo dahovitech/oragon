@@ -1,0 +1,283 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Traiter vérification - Admin{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Traiter la vérification</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="{{ path('admin_verification_index') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Retour
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- User Info -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user me-2"></i>Informations utilisateur
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <div class="avatar-lg mx-auto">
+                            <div class="avatar-initial bg-primary rounded-circle">
+                                {{ verification.user.firstName|first }}{{ verification.user.lastName|first }}
+                            </div>
+                        </div>
+                        <h5 class="mt-2">{{ verification.user.firstName }} {{ verification.user.lastName }}</h5>
+                        <p class="text-muted">{{ verification.user.email }}</p>
+                    </div>
+                    
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>Type de compte:</strong></td>
+                            <td>
+                                {% if verification.user.accountType.value == 'INDIVIDUAL' %}
+                                    <span class="badge bg-info">Particulier</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Entreprise</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Téléphone:</strong></td>
+                            <td>{{ verification.user.phoneNumber ?? 'Non renseigné' }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Adresse:</strong></td>
+                            <td>
+                                {% if verification.user.address %}
+                                    {{ verification.user.address }}<br>
+                                    {{ verification.user.postalCode }} {{ verification.user.city }}
+                                {% else %}
+                                    Non renseignée
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Statut vérification:</strong></td>
+                            <td>
+                                {% if verification.user.isVerified %}
+                                    <span class="badge bg-success">Vérifié</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Non vérifié</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Previous Verifications -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Historique des vérifications</h6>
+                </div>
+                <div class="card-body">
+                    <!-- Vous pouvez ajouter ici l'historique des vérifications précédentes -->
+                    <p class="text-muted">Fonctionnalité à implémenter</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verification Details -->
+        <div class="col-md-8">
+            <!-- Verification Info -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-shield-alt me-2"></i>Détails de la vérification
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Type:</strong></td>
+                                    <td>
+                                        {% set type_label = {
+                                            'ID_CARD': 'Pièce d\'identité',
+                                            'PROOF_INCOME': 'Justificatif de revenus',
+                                            'BANK_STATEMENT': 'Relevé bancaire',
+                                            'BUSINESS_REGISTRATION': 'Extrait Kbis',
+                                            'PROOF_ADDRESS': 'Justificatif de domicile',
+                                            'TAX_RETURN': 'Avis d\'imposition',
+                                            'PAYSLIP': 'Bulletin de salaire',
+                                            'OTHER': 'Autre document'
+                                        } %}
+                                        {{ type_label[verification.verificationType.value] ?? verification.verificationType.value }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Date soumission:</strong></td>
+                                    <td>{{ verification.submittedAt|date('d/m/Y à H:i') }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Statut actuel:</strong></td>
+                                    <td>
+                                        {% if verification.status.value == 'VERIFIED' %}
+                                            <span class="badge bg-success">Vérifié</span>
+                                        {% elseif verification.status.value == 'PENDING' %}
+                                            <span class="badge bg-warning">En attente</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Rejeté</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            {% if verification.comments %}
+                                <h6>Commentaires de l'utilisateur:</h6>
+                                <div class="alert alert-info">
+                                    {{ verification.comments|nl2br }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-alt me-2"></i>Documents soumis ({{ verification.documents|length }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if verification.documents is empty %}
+                        <p class="text-muted text-center py-3">Aucun document attaché</p>
+                    {% else %}
+                        <div class="row">
+                            {% for document in verification.documents %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    {% if document.fileName|slice(-3) == 'pdf' %}
+                                                        <i class="fas fa-file-pdf fa-2x text-danger"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-file-image fa-2x text-primary"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <h6 class="mb-1">{{ document.originalName }}</h6>
+                                                    <p class="text-muted mb-1">
+                                                        <small>{{ document.uploadedAt|date('d/m/Y H:i') }}</small>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer">
+                                            <div class="d-flex justify-content-between">
+                                                <a href="/uploads/verification/{{ document.fileName }}" 
+                                                   target="_blank" 
+                                                   class="btn btn-outline-primary btn-sm">
+                                                    <i class="fas fa-eye me-1"></i>Voir
+                                                </a>
+                                                <a href="/uploads/verification/{{ document.fileName }}" 
+                                                   download 
+                                                   class="btn btn-outline-secondary btn-sm">
+                                                    <i class="fas fa-download me-1"></i>Télécharger
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Review Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-gavel me-2"></i>Prendre une décision
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {{ form_start(form) }}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form_label(form.status, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                            {{ form_widget(form.status, {'attr': {'class': 'form-select form-select-lg'}}) }}
+                            {{ form_errors(form.status) }}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        {{ form_label(form.comments, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.comments, {'attr': {'rows': 4}}) }}
+                        {{ form_errors(form.comments) }}
+                        <div class="form-text">
+                            Ajoutez des commentaires expliquant votre décision, surtout en cas de rejet.
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ path('admin_verification_index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Annuler
+                        </a>
+                        
+                        {{ form_widget(form.submit, {'attr': {'class': 'btn btn-primary btn-lg'}}) }}
+                    </div>
+
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-lg {
+    width: 80px;
+    height: 80px;
+}
+
+.avatar-initial {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: white;
+    font-size: 1.5rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-resize textarea
+    const textarea = document.querySelector('textarea');
+    if (textarea) {
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+    }
+    
+    // Preview documents in modal
+    const previewButtons = document.querySelectorAll('[data-bs-toggle="modal"]');
+    previewButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const url = this.getAttribute('href');
+            // Implémentation du modal de prévisualisation
+        });
+    });
+});
+</script>
+{% endblock %}

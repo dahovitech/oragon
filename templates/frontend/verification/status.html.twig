@@ -1,0 +1,211 @@
+{% extends 'frontend/base.html.twig' %}
+
+{% block title %}Statut de vérification - EdgeLoan{% endblock %}
+
+{% block body %}
+<div class="page-content">
+    <!-- Header Section -->
+    <section class="page-header page-header-modern page-header-md">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12 align-self-center p-static order-2 text-center">
+                    <h1 class="text-dark font-weight-bold text-8">Statut de vérification</h1>
+                    <span class="sub-title text-dark">Suivez l'avancement de votre vérification de compte</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Progress Card -->
+                <div class="card mb-4">
+                    <div class="card-body text-center py-5">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h3 class="mb-3">Progression de la vérification</h3>
+                                <div class="progress mb-3" style="height: 20px;">
+                                    <div class="progress-bar bg-success" 
+                                         role="progressbar" 
+                                         style="width: {{ verificationProgress }}%">
+                                        {{ verificationProgress }}%
+                                    </div>
+                                </div>
+                                <p class="text-muted">
+                                    {{ verifiedCount }} sur {{ totalVerifications }} vérifications terminées
+                                </p>
+                            </div>
+                            <div class="col-md-4">
+                                {% if verificationProgress == 100 %}
+                                    <i class="fas fa-shield-check fa-4x text-success"></i>
+                                    <p class="text-success mt-2 mb-0"><strong>Compte vérifié</strong></p>
+                                {% elseif verificationProgress > 50 %}
+                                    <i class="fas fa-shield-alt fa-4x text-warning"></i>
+                                    <p class="text-warning mt-2 mb-0"><strong>En cours</strong></p>
+                                {% else %}
+                                    <i class="fas fa-shield fa-4x text-muted"></i>
+                                    <p class="text-muted mt-2 mb-0"><strong>À commencer</strong></p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Status -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user-shield me-2"></i>
+                            Statut de votre compte
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Informations personnelles</h6>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2">
+                                        <i class="fas fa-user me-2 text-muted"></i>
+                                        {{ user.firstName }} {{ user.lastName }}
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-envelope me-2 text-muted"></i>
+                                        {{ user.email }}
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-phone me-2 text-muted"></i>
+                                        {{ user.phoneNumber ?? 'Non renseigné' }}
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Type de compte</h6>
+                                <p>
+                                    {% if user.accountType.value == 'INDIVIDUAL' %}
+                                        <span class="badge bg-info fs-6">
+                                            <i class="fas fa-user me-1"></i>Particulier
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning fs-6">
+                                            <i class="fas fa-building me-1"></i>Entreprise
+                                        </span>
+                                    {% endif %}
+                                </p>
+                                
+                                <h6 class="mt-3">Statut de vérification</h6>
+                                <p>
+                                    {% if user.isVerified %}
+                                        <span class="badge bg-success fs-6">
+                                            <i class="fas fa-check-circle me-1"></i>Vérifié
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning fs-6">
+                                            <i class="fas fa-clock me-1"></i>En attente
+                                        </span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Benefits of Verification -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-star me-2"></i>
+                            Avantages d'un compte vérifié
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li class="mb-2">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        Accès à tous les types de prêts
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        Traitement prioritaire des demandes
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        Taux préférentiels
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <ul class="list-unstyled">
+                                    <li class="mb-2">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        Montants d'emprunt plus élevés
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        Support client dédié
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-check text-success me-2"></i>
+                                        Sécurité renforcée
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Next Steps -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-tasks me-2"></i>
+                            Prochaines étapes
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if verificationProgress < 100 %}
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-info-circle me-2"></i>Pour compléter votre vérification :</h6>
+                                <ol class="mb-0">
+                                    <li>Soumettez tous les documents requis</li>
+                                    <li>Attendez la validation de notre équipe (24-48h)</li>
+                                    <li>Consultez vos notifications pour le statut</li>
+                                </ol>
+                            </div>
+                            
+                            <div class="text-center">
+                                <a href="{{ path('app_verification_new') }}" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-upload me-2"></i>
+                                    Ajouter des documents
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-success">
+                                <h6><i class="fas fa-check-circle me-2"></i>Félicitations !</h6>
+                                <p class="mb-0">Votre compte est entièrement vérifié. Vous pouvez maintenant profiter de tous nos services.</p>
+                            </div>
+                            
+                            <div class="text-center">
+                                <a href="{{ path('app_loan_catalog') }}" class="btn btn-success btn-lg">
+                                    <i class="fas fa-search me-2"></i>
+                                    Explorer nos offres de prêt
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Back to Dashboard -->
+                <div class="text-center mt-4">
+                    <a href="{{ path('app_verification_index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Retour aux vérifications
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
