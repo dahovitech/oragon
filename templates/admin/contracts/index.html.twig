@@ -1,0 +1,387 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Gestion des Contrats - Admin EdgeLoan{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .contract-card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+        .contract-card:hover {
+            transform: translateY(-2px);
+        }
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+        }
+        .status-active { background-color: #28a745; color: white; }
+        .status-completed { background-color: #6c757d; color: white; }
+        .status-suspended { background-color: #dc3545; color: white; }
+        .status-cancelled { background-color: #ffc107; color: #212529; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="fas fa-file-contract me-2"></i>
+        Gestion des Contrats
+    </h1>
+    <div class="d-flex gap-2">
+        <a href="{{ path('admin_contracts_overdue_report') }}" class="btn btn-warning">
+            <i class="fas fa-exclamation-triangle me-1"></i>
+            Rapport Impayés
+        </a>
+        <a href="{{ path('admin_contracts_export') }}" class="btn btn-success">
+            <i class="fas fa-download me-1"></i>
+            Exporter
+        </a>
+    </div>
+</div>
+
+<!-- Statistiques -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-widget border-0">
+            <div class="card-body text-center">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="card-title text-muted mb-1">Total Contrats</h5>
+                        <h2 class="text-primary mb-0">{{ stats.total|number_format(0, ',', ' ') }}</h2>
+                    </div>
+                    <div class="stats-icon">
+                        <i class="fas fa-file-contract fa-2x text-primary opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-widget border-0">
+            <div class="card-body text-center">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="card-title text-muted mb-1">Actifs</h5>
+                        <h2 class="text-success mb-0">{{ stats.active|number_format(0, ',', ' ') }}</h2>
+                    </div>
+                    <div class="stats-icon">
+                        <i class="fas fa-check-circle fa-2x text-success opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-widget border-0">
+            <div class="card-body text-center">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="card-title text-muted mb-1">Terminés</h5>
+                        <h2 class="text-secondary mb-0">{{ stats.completed|number_format(0, ',', ' ') }}</h2>
+                    </div>
+                    <div class="stats-icon">
+                        <i class="fas fa-flag-checkered fa-2x text-secondary opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-widget border-0">
+            <div class="card-body text-center">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="card-title text-muted mb-1">Montant Total</h5>
+                        <h2 class="text-info mb-0">{{ stats.total_amount|number_format(0, ',', ' ') }}€</h2>
+                    </div>
+                    <div class="stats-icon">
+                        <i class="fas fa-euro-sign fa-2x text-info opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtres et recherche -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label for="search" class="form-label">Recherche</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       value="{{ currentSearch }}" 
+                       placeholder="Nom, email, numéro de contrat...">
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label">Statut</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">Tous les statuts</option>
+                    <option value="ACTIVE" {{ currentStatus == 'ACTIVE' ? 'selected' : '' }}>Actif</option>
+                    <option value="COMPLETED" {{ currentStatus == 'COMPLETED' ? 'selected' : '' }}>Terminé</option>
+                    <option value="SUSPENDED" {{ currentStatus == 'SUSPENDED' ? 'selected' : '' }}>Suspendu</option>
+                    <option value="CANCELLED" {{ currentStatus == 'CANCELLED' ? 'selected' : '' }}>Annulé</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="sort" class="form-label">Trier par</label>
+                <select class="form-select" id="sort" name="sort">
+                    <option value="signedAt" {{ sortBy == 'signedAt' ? 'selected' : '' }}>Date de signature</option>
+                    <option value="originalAmount" {{ sortBy == 'originalAmount' ? 'selected' : '' }}>Montant</option>
+                    <option value="contractNumber" {{ sortBy == 'contractNumber' ? 'selected' : '' }}>Numéro</option>
+                    <option value="maturityDate" {{ sortBy == 'maturityDate' ? 'selected' : '' }}>Échéance</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="fas fa-search me-1"></i>
+                    Filtrer
+                </button>
+                <a href="{{ path('admin_contracts_index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-1"></i>
+                    Reset
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Liste des contrats -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>
+            Liste des Contrats ({{ contracts|length }})
+        </h5>
+    </div>
+    <div class="card-body p-0">
+        {% if contracts|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>
+                                <a href="{{ path('admin_contracts_index', {
+                                    sort: 'contractNumber', 
+                                    order: sortBy == 'contractNumber' and sortOrder == 'asc' ? 'desc' : 'asc',
+                                    search: currentSearch,
+                                    status: currentStatus
+                                }) }}" class="text-decoration-none">
+                                    Numéro de contrat
+                                    {% if sortBy == 'contractNumber' %}
+                                        <i class="fas fa-sort-{{ sortOrder == 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>Client</th>
+                            <th>
+                                <a href="{{ path('admin_contracts_index', {
+                                    sort: 'originalAmount', 
+                                    order: sortBy == 'originalAmount' and sortOrder == 'asc' ? 'desc' : 'asc',
+                                    search: currentSearch,
+                                    status: currentStatus
+                                }) }}" class="text-decoration-none">
+                                    Montant
+                                    {% if sortBy == 'originalAmount' %}
+                                        <i class="fas fa-sort-{{ sortOrder == 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>Durée</th>
+                            <th>
+                                <a href="{{ path('admin_contracts_index', {
+                                    sort: 'signedAt', 
+                                    order: sortBy == 'signedAt' and sortOrder == 'asc' ? 'desc' : 'asc',
+                                    search: currentSearch,
+                                    status: currentStatus
+                                }) }}" class="text-decoration-none">
+                                    Date signature
+                                    {% if sortBy == 'signedAt' %}
+                                        <i class="fas fa-sort-{{ sortOrder == 'asc' ? 'up' : 'down' }} ms-1"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for contract in contracts %}
+                            {% set user = contract.loanApplication.user %}
+                            <tr>
+                                <td>
+                                    <strong>{{ contract.contractNumber }}</strong>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div>
+                                            <div class="fw-bold">{{ user.firstName }} {{ user.lastName }}</div>
+                                            <small class="text-muted">{{ user.email }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ contract.originalAmount|number_format(0, ',', ' ') }}€</strong>
+                                        <small class="text-muted d-block">
+                                            Reste: {{ contract.remainingAmount|number_format(0, ',', ' ') }}€
+                                        </small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-light text-dark">{{ contract.durationInMonths }} mois</span>
+                                    <small class="text-muted d-block">{{ contract.interestRate }}% taux</small>
+                                </td>
+                                <td>
+                                    {% if contract.signedAt %}
+                                        {{ contract.signedAt|date('d/m/Y') }}
+                                        <small class="text-muted d-block">
+                                            {{ contract.signedAt|date('H:i') }}
+                                        </small>
+                                    {% else %}
+                                        <span class="text-muted">Non signé</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="status-badge status-{{ contract.status|lower }}">
+                                        {% if contract.status == 'ACTIVE' %}
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            Actif
+                                        {% elseif contract.status == 'COMPLETED' %}
+                                            <i class="fas fa-flag-checkered me-1"></i>
+                                            Terminé
+                                        {% elseif contract.status == 'SUSPENDED' %}
+                                            <i class="fas fa-pause-circle me-1"></i>
+                                            Suspendu
+                                        {% else %}
+                                            <i class="fas fa-times-circle me-1"></i>
+                                            {{ contract.status }}
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ path('admin_contracts_show', {id: contract.id}) }}" 
+                                           class="btn btn-sm btn-outline-primary" title="Voir détails">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ path('admin_contracts_payments', {id: contract.id}) }}" 
+                                           class="btn btn-sm btn-outline-info" title="Paiements">
+                                            <i class="fas fa-credit-card"></i>
+                                        </a>
+                                        {% if contract.status == 'ACTIVE' %}
+                                            <button type="button" class="btn btn-sm btn-outline-warning" 
+                                                    onclick="suspendContract({{ contract.id }})" title="Suspendre">
+                                                <i class="fas fa-pause"></i>
+                                            </button>
+                                        {% elseif contract.status == 'SUSPENDED' %}
+                                            <button type="button" class="btn btn-sm btn-outline-success" 
+                                                    onclick="reactivateContract({{ contract.id }})" title="Réactiver">
+                                                <i class="fas fa-play"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-file-contract fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">Aucun contrat trouvé</h5>
+                <p class="text-muted">
+                    {% if currentSearch or currentStatus %}
+                        Aucun contrat ne correspond à vos critères de recherche.
+                    {% else %}
+                        Il n'y a aucun contrat dans le système pour le moment.
+                    {% endif %}
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modals pour actions -->
+{% include 'admin/contracts/_modals.html.twig' %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        function suspendContract(contractId) {
+            const reason = prompt('Raison de la suspension:');
+            if (reason === null) return;
+
+            fetch(`/admin/contracts/${contractId}/suspend`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: `reason=${encodeURIComponent(reason)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', data.message);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('danger', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('danger', 'Une erreur est survenue');
+            });
+        }
+
+        function reactivateContract(contractId) {
+            if (!confirm('Êtes-vous sûr de vouloir réactiver ce contrat ?')) return;
+
+            fetch(`/admin/contracts/${contractId}/reactivate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', data.message);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('danger', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('danger', 'Une erreur est survenue');
+            });
+        }
+
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 5000);
+        }
+    </script>
+{% endblock %}

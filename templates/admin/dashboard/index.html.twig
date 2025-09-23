@@ -1,0 +1,473 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Dashboard Admin - EdgeLoan{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .dashboard-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+        }
+        .stats-card {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+        }
+        .stats-card.primary {
+            --gradient-start: #667eea;
+            --gradient-end: #764ba2;
+        }
+        .stats-card.success {
+            --gradient-start: #4facfe;
+            --gradient-end: #00f2fe;
+        }
+        .stats-card.warning {
+            --gradient-start: #f093fb;
+            --gradient-end: #f5576c;
+        }
+        .stats-card.info {
+            --gradient-start: #ffecd2;
+            --gradient-end: #fcb69f;
+            color: #333;
+        }
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            line-height: 1;
+        }
+        .stats-label {
+            opacity: 0.9;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        .stats-change {
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+        .stats-change.positive {
+            color: #d4edda;
+        }
+        .stats-change.negative {
+            color: #f8d7da;
+        }
+        .activity-item {
+            border-left: 3px solid;
+            padding-left: 1rem;
+            margin-bottom: 1rem;
+        }
+        .activity-item.primary { border-color: #007bff; }
+        .activity-item.success { border-color: #28a745; }
+        .activity-item.warning { border-color: #ffc107; }
+        .activity-item.danger { border-color: #dc3545; }
+        .activity-time {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        .quick-action-card {
+            text-align: center;
+            padding: 2rem 1rem;
+            border: 2px dashed #dee2e6;
+            border-radius: 15px;
+            transition: all 0.2s ease;
+        }
+        .quick-action-card:hover {
+            border-color: #007bff;
+            background: #f8f9ff;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        .priority-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+        .priority-high { background: #dc3545; }
+        .priority-medium { background: #ffc107; }
+        .priority-low { background: #28a745; }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <!-- En-tête du dashboard -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2>Dashboard Administrateur</h2>
+                    <p class="text-muted mb-0">Vue d'ensemble de l'activité EdgeLoan</p>
+                </div>
+                <div>
+                    <button class="btn btn-outline-primary me-2" onclick="refreshDashboard()">
+                        <i class="fas fa-sync-alt me-2"></i>Actualiser
+                    </button>
+                    <span class="text-muted small">Dernière mise à jour : {{ "now"|date('H:i') }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cartes de statistiques principales -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card primary">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stats-number">{{ stats.applications.pending }}</div>
+                        <div class="stats-label">Demandes en attente</div>
+                        <div class="stats-change positive">
+                            <i class="fas fa-arrow-up me-1"></i>+{{ stats.applications.monthly }} ce mois
+                        </div>
+                    </div>
+                    <div class="fs-2 opacity-75">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card success">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stats-number">{{ stats.contracts.active }}</div>
+                        <div class="stats-label">Contrats actifs</div>
+                        <div class="stats-change positive">
+                            <i class="fas fa-arrow-up me-1"></i>{{ stats.contracts.monthly_disbursed|number_format(0, ',', ' ') }}€ ce mois
+                        </div>
+                    </div>
+                    <div class="fs-2 opacity-75">
+                        <i class="fas fa-file-contract"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card warning">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stats-number">{{ stats.contracts.total_amount|number_format(0, ',', ' ') }}€</div>
+                        <div class="stats-label">Encours total</div>
+                        <div class="stats-change positive">
+                            <i class="fas fa-arrow-up me-1"></i>Moy. {{ stats.contracts.average_amount|number_format(0, ',', ' ') }}€
+                        </div>
+                    </div>
+                    <div class="fs-2 opacity-75">
+                        <i class="fas fa-euro-sign"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stats-card info">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stats-number">{{ stats.payments.collection_rate }}%</div>
+                        <div class="stats-label">Taux de recouvrement</div>
+                        <div class="stats-change {{ stats.payments.overdue > 0 ? 'negative' : 'positive' }}">
+                            {% if stats.payments.overdue > 0 %}
+                                <i class="fas fa-exclamation-triangle me-1"></i>{{ stats.payments.overdue }} en retard
+                            {% else %}
+                                <i class="fas fa-check me-1"></i>Aucun retard
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="fs-2 opacity-75">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Activité récente -->
+        <div class="col-lg-4 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Activité récente</h5>
+                    <a href="{{ path('admin_activity_log') }}" class="btn btn-sm btn-outline-primary">Voir tout</a>
+                </div>
+                <div class="card-body">
+                    {% for activity in recentActivity %}
+                        <div class="activity-item {{ activity.color }}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <i class="fas {{ activity.icon }} me-2 text-{{ activity.color }}"></i>
+                                        {{ activity.title }}
+                                    </h6>
+                                    <p class="mb-1 small">{{ activity.description }}</p>
+                                    <span class="activity-time">{{ activity.time|date('d/m H:i') }}</span>
+                                </div>
+                                {% if activity.link %}
+                                    <a href="{{ activity.link }}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center py-3">Aucune activité récente</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Demandes en attente d'action -->
+        <div class="col-lg-4 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>À traiter en priorité</h5>
+                    <a href="{{ path('admin_loan_applications_index', {'status': 'SUBMITTED'}) }}" 
+                       class="btn btn-sm btn-outline-warning">Voir tout</a>
+                </div>
+                <div class="card-body">
+                    {% for application in pendingApplications %}
+                        {% set priority = application.createdAt|date_modify('+1 day') < 'now'|date ? 'high' : 'medium' %}
+                        <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded">
+                            <div>
+                                <span class="priority-indicator priority-{{ priority }}"></span>
+                                <strong>#{{ application.id }}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    {{ application.user.firstName }} {{ application.user.lastName }}
+                                    • {{ application.requestedAmount|number_format(0, ',', ' ') }}€
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-{{ application.status.color }} mb-1">
+                                    {{ application.status.label }}
+                                </span>
+                                <br>
+                                <small class="text-muted">{{ application.createdAt|date('d/m') }}</small>
+                            </div>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center py-3">Aucune demande en attente</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Paiements en retard -->
+        <div class="col-lg-4 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Paiements en retard</h5>
+                    <a href="{{ path('admin_payments_index', {'status': 'overdue'}) }}" 
+                       class="btn btn-sm btn-outline-danger">Voir tout</a>
+                </div>
+                <div class="card-body">
+                    {% for payment in overduePayments %}
+                        {% set daysLate = (payment.dueDate.diff('now'|date).days) %}
+                        <div class="d-flex justify-content-between align-items-center mb-3 p-2 {{ daysLate > 30 ? 'bg-danger' : (daysLate > 7 ? 'bg-warning' : 'bg-light') }} bg-opacity-10 rounded">
+                            <div>
+                                <strong>{{ payment.amount|number_format(2, ',', ' ') }}€</strong>
+                                <br>
+                                <small class="text-muted">
+                                    {{ payment.loanContract.loanApplication.user.firstName }} 
+                                    {{ payment.loanContract.loanApplication.user.lastName }}
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-danger">{{ daysLate }} jour(s)</span>
+                                <br>
+                                <small class="text-muted">Échu le {{ payment.dueDate|date('d/m') }}</small>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-check-circle fa-3x text-success mb-2"></i>
+                            <p class="text-muted mb-0">Aucun paiement en retard</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Graphiques -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Évolution des demandes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="applicationsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Répartition des statuts</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions rapides -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Actions rapides</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <a href="{{ path('admin_loan_applications_index', {'status': 'SUBMITTED'}) }}" 
+                               class="quick-action-card text-decoration-none">
+                                <i class="fas fa-file-alt fa-2x text-primary mb-2"></i>
+                                <h6>Nouvelles demandes</h6>
+                                <span class="badge bg-primary">{{ stats.applications.pending }}</span>
+                            </a>
+                        </div>
+                        
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <a href="{{ path('admin_contracts_index') }}" 
+                               class="quick-action-card text-decoration-none">
+                                <i class="fas fa-file-contract fa-2x text-success mb-2"></i>
+                                <h6>Générer contrats</h6>
+                                <span class="badge bg-success">Actions</span>
+                            </a>
+                        </div>
+                        
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <a href="{{ path('admin_payments_index') }}" 
+                               class="quick-action-card text-decoration-none">
+                                <i class="fas fa-credit-card fa-2x text-info mb-2"></i>
+                                <h6>Gestion paiements</h6>
+                                <span class="badge bg-info">Suivi</span>
+                            </a>
+                        </div>
+                        
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <a href="{{ path('admin_users_index') }}" 
+                               class="quick-action-card text-decoration-none">
+                                <i class="fas fa-users fa-2x text-warning mb-2"></i>
+                                <h6>Gestion clients</h6>
+                                <span class="badge bg-warning">{{ stats.users.total }}</span>
+                            </a>
+                        </div>
+                        
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <a href="{{ path('admin_reports_index') }}" 
+                               class="quick-action-card text-decoration-none">
+                                <i class="fas fa-chart-bar fa-2x text-secondary mb-2"></i>
+                                <h6>Rapports</h6>
+                                <span class="badge bg-secondary">Export</span>
+                            </a>
+                        </div>
+                        
+                        <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                            <a href="{{ path('admin_settings_index') }}" 
+                               class="quick-action-card text-decoration-none">
+                                <i class="fas fa-cogs fa-2x text-dark mb-2"></i>
+                                <h6>Paramètres</h6>
+                                <span class="badge bg-dark">Config</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Configuration des graphiques
+const chartData = {{ chartData|json_encode|raw }};
+
+// Graphique d'évolution des demandes
+const applicationsCtx = document.getElementById('applicationsChart').getContext('2d');
+const applicationsChart = new Chart(applicationsCtx, {
+    type: 'line',
+    data: {
+        labels: chartData.monthly.map(item => `${item.month}/${item.year}`),
+        datasets: [{
+            label: 'Demandes de prêt',
+            data: chartData.monthly.map(item => item.applications),
+            borderColor: '#007bff',
+            backgroundColor: 'rgba(0, 123, 255, 0.1)',
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+
+// Graphique de répartition des statuts
+const statusCtx = document.getElementById('statusChart').getContext('2d');
+const statusChart = new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: chartData.status_distribution.map(item => item.status),
+        datasets: [{
+            data: chartData.status_distribution.map(item => item.count),
+            backgroundColor: [
+                '#007bff', '#28a745', '#ffc107', '#dc3545', '#17a2b8', '#6c757d'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Fonction d'actualisation
+function refreshDashboard() {
+    location.reload();
+}
+
+// Actualisation automatique toutes les 5 minutes
+setInterval(refreshDashboard, 300000);
+</script>
+{% endblock %}

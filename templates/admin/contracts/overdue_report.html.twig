@@ -1,0 +1,427 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Rapport des Impayés - Admin EdgeLoan{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .overdue-card {
+            border-left: 4px solid #dc3545;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .severity-high { border-left-color: #dc3545; }
+        .severity-medium { border-left-color: #fd7e14; }
+        .severity-low { border-left-color: #ffc107; }
+        .stats-highlight {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="fas fa-exclamation-triangle me-2 text-danger"></i>
+        Rapport des Impayés
+    </h1>
+    <div>
+        <button class="btn btn-warning" onclick="exportOverdueReport()">
+            <i class="fas fa-download me-1"></i>
+            Exporter le rapport
+        </button>
+        <a href="{{ path('admin_contracts_index') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-1"></i>
+            Retour aux contrats
+        </a>
+    </div>
+</div>
+
+<!-- Résumé global -->
+<div class="stats-highlight mb-4">
+    <div class="row text-center">
+        <div class="col-md-3">
+            <h2 class="mb-1">{{ totalContracts }}</h2>
+            <p class="mb-0 opacity-75">Contrats en retard</p>
+        </div>
+        <div class="col-md-3">
+            <h2 class="mb-1">{{ totalPayments }}</h2>
+            <p class="mb-0 opacity-75">Paiements en retard</p>
+        </div>
+        <div class="col-md-3">
+            <h2 class="mb-1">{{ totalOverdue|number_format(0, ',', ' ') }}€</h2>
+            <p class="mb-0 opacity-75">Montant total en retard</p>
+        </div>
+        <div class="col-md-3">
+            <h2 class="mb-1">{{ (totalOverdue / totalContracts)|number_format(0, ',', ' ') }}€</h2>
+            <p class="mb-0 opacity-75">Moyenne par contrat</p>
+        </div>
+    </div>
+</div>
+
+{% if overdueByContract|length > 0 %}
+    <!-- Répartition par gravité -->
+    <div class="row mb-4">
+        {% set highSeverity = 0 %}
+        {% set mediumSeverity = 0 %}
+        {% set lowSeverity = 0 %}
+        {% for contractId, data in overdueByContract %}
+            {% if data.days_overdue > 60 %}
+                {% set highSeverity = highSeverity + 1 %}
+            {% elseif data.days_overdue > 30 %}
+                {% set mediumSeverity = mediumSeverity + 1 %}
+            {% else %}
+                {% set lowSeverity = lowSeverity + 1 %}
+            {% endif %}
+        {% endfor %}
+
+        <div class="col-md-4">
+            <div class="card text-center severity-high">
+                <div class="card-body">
+                    <h4 class="text-danger mb-1">{{ highSeverity }}</h4>
+                    <p class="mb-0 text-muted">Retard > 60 jours</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center severity-medium">
+                <div class="card-body">
+                    <h4 class="text-warning mb-1">{{ mediumSeverity }}</h4>
+                    <p class="mb-0 text-muted">Retard 30-60 jours</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-center severity-low">
+                <div class="card-body">
+                    <h4 class="text-secondary mb-1">{{ lowSeverity }}</h4>
+                    <p class="mb-0 text-muted">Retard < 30 jours</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Liste détaillée des contrats en retard -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-list me-2"></i>
+                Détail des Contrats en Retard
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            {% for contractId, data in overdueByContract %}
+                {% set severityClass = data.days_overdue > 60 ? 'severity-high' : (data.days_overdue > 30 ? 'severity-medium' : 'severity-low') %}
+                <div class="card overdue-card {{ severityClass }} m-3">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <h6 class="fw-bold mb-1">{{ data.contract.contractNumber }}</h6>
+                                <p class="mb-1">
+                                    <i class="fas fa-user me-1"></i>
+                                    {{ data.user.firstName }} {{ data.user.lastName }}
+                                </p>
+                                <small class="text-muted">{{ data.user.email }}</small>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <div class="fw-bold text-danger fs-4">{{ data.days_overdue }}</div>
+                                <small class="text-muted">jours de retard</small>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <div class="fw-bold fs-5">{{ data.total_amount|number_format(0, ',', ' ') }}€</div>
+                                <small class="text-muted">{{ data.payments|length }} paiement(s)</small>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="mb-2">
+                                    <small class="text-muted">Contrat original:</small>
+                                    <div class="fw-bold">{{ data.contract.originalAmount|number_format(0, ',', ' ') }}€</div>
+                                </div>
+                                <div>
+                                    <small class="text-muted">Statut:</small>
+                                    <span class="badge {{ data.contract.status == 'ACTIVE' ? 'bg-success' : 'bg-secondary' }}">
+                                        {{ data.contract.status }}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-2 text-end">
+                                <div class="btn-group-vertical">
+                                    <a href="{{ path('admin_contracts_show', {id: data.contract.id}) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye me-1"></i>
+                                        Voir contrat
+                                    </a>
+                                    <a href="{{ path('admin_contracts_payments', {id: data.contract.id}) }}" 
+                                       class="btn btn-sm btn-outline-info">
+                                        <i class="fas fa-credit-card me-1"></i>
+                                        Paiements
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-warning" 
+                                            onclick="contactClient({{ data.user.id }}, '{{ data.user.email }}')">
+                                        <i class="fas fa-envelope me-1"></i>
+                                        Contacter
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Détail des paiements en retard -->
+                        <div class="mt-3">
+                            <h6 class="text-muted mb-2">Paiements en retard:</h6>
+                            <div class="row">
+                                {% for payment in data.payments %}
+                                    <div class="col-md-6 col-lg-4 mb-2">
+                                        <div class="card card-body p-2 bg-light">
+                                            <div class="d-flex justify-content-between">
+                                                <small>
+                                                    <strong>{{ payment.amount|number_format(2, ',', ' ') }}€</strong><br>
+                                                    Échéance: {{ payment.dueDate|date('d/m/Y') }}
+                                                </small>
+                                                <small class="text-danger">
+                                                    {{ (date().diff(payment.dueDate).days) }} jours
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Actions en masse -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-cogs me-2"></i>
+                Actions en Masse
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <button class="btn btn-warning w-100" onclick="sendMassReminders()">
+                        <i class="fas fa-bell me-1"></i>
+                        Envoyer rappels à tous
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-info w-100" onclick="generateReports()">
+                        <i class="fas fa-file-pdf me-1"></i>
+                        Générer attestations
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-secondary w-100" onclick="scheduleFollowUp()">
+                        <i class="fas fa-calendar-check me-1"></i>
+                        Programmer relance
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button class="btn btn-danger w-100" onclick="escalateOverdue()">
+                        <i class="fas fa-exclamation-circle me-1"></i>
+                        Escalader graves
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <!-- Aucun impayé -->
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+            <h4 class="text-success">Excellent !</h4>
+            <p class="text-muted">Aucun paiement en retard détecté dans le système.</p>
+            <p class="text-muted">Tous les clients sont à jour dans leurs remboursements.</p>
+            
+            <div class="mt-4">
+                <a href="{{ path('admin_contracts_index') }}" class="btn btn-primary">
+                    <i class="fas fa-list me-1"></i>
+                    Voir tous les contrats
+                </a>
+                <a href="{{ path('admin_dashboard') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-tachometer-alt me-1"></i>
+                    Retour au dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Modal pour contacter un client -->
+<div class="modal fade" id="contactModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Contacter le client</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="contactForm">
+                    <input type="hidden" id="clientId">
+                    <div class="mb-3">
+                        <label for="clientEmail" class="form-label">Email du client:</label>
+                        <input type="email" class="form-control" id="clientEmail" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Sujet:</label>
+                        <select class="form-select" id="subject">
+                            <option value="payment_reminder">Rappel de paiement</option>
+                            <option value="overdue_notice">Mise en demeure</option>
+                            <option value="payment_plan">Proposition d'échéancier</option>
+                            <option value="custom">Message personnalisé</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="message" class="form-label">Message:</label>
+                        <textarea class="form-control" id="message" rows="6" 
+                                  placeholder="Votre message au client..."></textarea>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="copyToFile">
+                        <label class="form-check-label" for="copyToFile">
+                            Copier dans le dossier client
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane me-1"></i>
+                    Envoyer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        function contactClient(clientId, email) {
+            document.getElementById('clientId').value = clientId;
+            document.getElementById('clientEmail').value = email;
+            
+            // Messages prédéfinis
+            const templates = {
+                payment_reminder: `Cher(e) client(e),
+
+Nous vous rappelons qu'un ou plusieurs paiements de votre prêt EdgeLoan sont échus.
+
+Merci de régulariser votre situation dans les plus brefs délais.
+
+Cordialement,
+L'équipe EdgeLoan`,
+                overdue_notice: `Cher(e) client(e),
+
+Malgré nos rappels précédents, votre compte présente des arriérés de paiement.
+
+Nous vous demandons de nous contacter rapidement pour régulariser votre situation.
+
+Cordialement,
+L'équipe EdgeLoan`,
+                payment_plan: `Cher(e) client(e),
+
+Nous comprenons que vous puissiez rencontrer des difficultés temporaires.
+
+Contactez-nous pour étudier ensemble une solution d'échelonnement adaptée à votre situation.
+
+Cordialement,
+L'équipe EdgeLoan`
+            };
+
+            document.getElementById('subject').addEventListener('change', function() {
+                const template = templates[this.value];
+                if (template) {
+                    document.getElementById('message').value = template;
+                } else {
+                    document.getElementById('message').value = '';
+                }
+            });
+
+            // Déclencher le changement pour charger le template par défaut
+            document.getElementById('subject').dispatchEvent(new Event('change'));
+
+            const modal = new bootstrap.Modal(document.getElementById('contactModal'));
+            modal.show();
+        }
+
+        function sendMessage() {
+            const clientId = document.getElementById('clientId').value;
+            const subject = document.getElementById('subject').value;
+            const message = document.getElementById('message').value;
+            const copyToFile = document.getElementById('copyToFile').checked;
+
+            if (!message.trim()) {
+                showAlert('warning', 'Veuillez saisir un message');
+                return;
+            }
+
+            // Ici, vous implémenteriez l'envoi réel du message
+            // Pour la démo, on simule l'envoi
+            showAlert('success', 'Message envoyé avec succès');
+            bootstrap.Modal.getInstance(document.getElementById('contactModal')).hide();
+        }
+
+        function exportOverdueReport() {
+            // Redirection vers l'export CSV (à implémenter)
+            showAlert('info', 'Export en cours...');
+            // window.location.href = '/admin/contracts/export-overdue';
+        }
+
+        function sendMassReminders() {
+            if (!confirm('Envoyer un rappel de paiement à tous les clients en retard ?')) return;
+            
+            showAlert('info', 'Rappels en cours d\'envoi...');
+            
+            // Simulation de l'envoi
+            setTimeout(() => {
+                showAlert('success', 'Rappels envoyés à tous les clients en retard');
+            }, 2000);
+        }
+
+        function generateReports() {
+            showAlert('info', 'Génération des attestations en cours...');
+            
+            // Simulation
+            setTimeout(() => {
+                showAlert('success', 'Attestations générées et téléchargées');
+            }, 3000);
+        }
+
+        function scheduleFollowUp() {
+            showAlert('info', 'Relances programmées pour dans 7 jours');
+        }
+
+        function escalateOverdue() {
+            if (!confirm('Escalader tous les retards de plus de 60 jours au service juridique ?')) return;
+            
+            showAlert('warning', 'Dossiers transmis au service de recouvrement');
+        }
+
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 5000);
+        }
+    </script>
+{% endblock %}

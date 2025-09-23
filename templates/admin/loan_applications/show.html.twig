@@ -1,0 +1,726 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Demande #{{ application.id }} - {{ user.firstName }} {{ user.lastName }} - Admin EdgeLoan{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .application-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .info-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+        .info-card:hover {
+            transform: translateY(-2px);
+        }
+        .score-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0 auto;
+        }
+        .score-excellent { background: linear-gradient(135deg, #28a745, #20c997); color: white; }
+        .score-good { background: linear-gradient(135deg, #17a2b8, #007bff); color: white; }
+        .score-fair { background: linear-gradient(135deg, #ffc107, #fd7e14); color: white; }
+        .score-poor { background: linear-gradient(135deg, #dc3545, #e83e8c); color: white; }
+        
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e9ecef;
+        }
+        .timeline-item {
+            position: relative;
+            padding-bottom: 2rem;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 0.5rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #007bff;
+        }
+        .timeline-item.completed::before {
+            background: #28a745;
+        }
+        
+        .document-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .document-item {
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        .document-item.uploaded {
+            border-color: #28a745;
+            background: #f8fff8;
+        }
+        .document-item.missing {
+            border-color: #dc3545;
+            background: #fff8f8;
+        }
+        
+        .quick-actions {
+            position: sticky;
+            top: 2rem;
+        }
+        .risk-indicator {
+            font-weight: bold;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+        }
+        .risk-low { background: #d4edda; color: #155724; }
+        .risk-medium { background: #fff3cd; color: #856404; }
+        .risk-high { background: #f8d7da; color: #721c24; }
+        
+        .nav-tabs .nav-link {
+            border-radius: 25px 25px 0 0;
+            margin-right: 0.5rem;
+        }
+        .nav-tabs .nav-link.active {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border-color: transparent;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ path('admin_dashboard') }}">Admin</a></li>
+            <li class="breadcrumb-item"><a href="{{ path('admin_loan_applications_index') }}">Demandes de prêt</a></li>
+            <li class="breadcrumb-item active">Demande #{{ application.id }}</li>
+        </ol>
+    </nav>
+
+    <!-- Header de la demande -->
+    <div class="application-header">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-3">
+                        <div style="width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold;">
+                            {{ user.firstName|first }}{{ user.lastName|first }}
+                        </div>
+                    </div>
+                    <div>
+                        <h2 class="mb-1">{{ user.firstName }} {{ user.lastName }}</h2>
+                        <p class="mb-0 opacity-75">{{ user.email }} • {{ user.phoneNumber }}</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3">
+                        <small class="opacity-75">Demande N°</small>
+                        <div class="h5">#{{ application.id }}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="opacity-75">Montant demandé</small>
+                        <div class="h5">{{ application.requestedAmount|number_format(0, ',', ' ') }}€</div>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="opacity-75">Durée</small>
+                        <div class="h5">{{ application.duration }} mois</div>
+                    </div>
+                    <div class="col-md-3">
+                        <small class="opacity-75">Type de prêt</small>
+                        <div class="h5">{{ application.loanType.name }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 text-end">
+                <div class="mb-3">
+                    <span class="badge bg-{{ application.status.color }} p-3 h5 mb-0">
+                        <i class="fas fa-{{ application.status.icon }} me-2"></i>{{ application.status.label }}
+                    </span>
+                </div>
+                <small class="opacity-75">Soumise le {{ application.createdAt|date('d/m/Y à H:i') }}</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-9">
+            <!-- Onglets -->
+            <ul class="nav nav-tabs mb-4" id="applicationTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button">
+                        <i class="fas fa-eye me-2"></i>Vue d'ensemble
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" data-bs-target="#analysis" type="button">
+                        <i class="fas fa-chart-line me-2"></i>Analyse de risque
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button">
+                        <i class="fas fa-file-alt me-2"></i>Documents
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button">
+                        <i class="fas fa-history me-2"></i>Historique
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="communication-tab" data-bs-toggle="tab" data-bs-target="#communication" type="button">
+                        <i class="fas fa-comments me-2"></i>Communication
+                    </button>
+                </li>
+            </ul>
+
+            <!-- Contenu des onglets -->
+            <div class="tab-content" id="applicationTabsContent">
+                <!-- Vue d'ensemble -->
+                <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="card info-card mb-4">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-user me-2"></i>Informations personnelles</h6>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless mb-0">
+                                        <tr>
+                                            <td class="text-muted">Nom complet :</td>
+                                            <td>{{ user.firstName }} {{ user.lastName }}</td>
+                                        </tr>
+                                        {% if user.dateOfBirth %}
+                                        <tr>
+                                            <td class="text-muted">Date de naissance :</td>
+                                            <td>{{ user.dateOfBirth|date('d/m/Y') }} ({{ user.age }} ans)</td>
+                                        </tr>
+                                        {% endif %}
+                                        <tr>
+                                            <td class="text-muted">Email :</td>
+                                            <td>{{ user.email }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Téléphone :</td>
+                                            <td>{{ user.phoneNumber }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Adresse :</td>
+                                            <td>
+                                                {{ user.address }}<br>
+                                                {{ user.postalCode }} {{ user.city }}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Statut :</td>
+                                            <td>
+                                                {% if user.isVerified %}
+                                                    <span class="badge bg-success">Vérifié</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning">En attente de vérification</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6">
+                            <div class="card info-card mb-4">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-briefcase me-2"></i>Situation professionnelle</h6>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-borderless mb-0">
+                                        {% if user.employmentStatus %}
+                                        <tr>
+                                            <td class="text-muted">Statut professionnel :</td>
+                                            <td>{{ user.employmentStatus }}</td>
+                                        </tr>
+                                        {% endif %}
+                                        {% if user.monthlyIncome %}
+                                        <tr>
+                                            <td class="text-muted">Revenus mensuels :</td>
+                                            <td class="fw-bold text-success">{{ user.monthlyIncome|number_format(0, ',', ' ') }}€</td>
+                                        </tr>
+                                        {% endif %}
+                                        {% if user.companyName %}
+                                        <tr>
+                                            <td class="text-muted">Entreprise :</td>
+                                            <td>{{ user.companyName }}</td>
+                                        </tr>
+                                        {% endif %}
+                                        {% if user.siretNumber %}
+                                        <tr>
+                                            <td class="text-muted">SIRET :</td>
+                                            <td>{{ user.siretNumber }}</td>
+                                        </tr>
+                                        {% endif %}
+                                        <tr>
+                                            <td class="text-muted">Type de compte :</td>
+                                            <td>
+                                                {% if user.accountType.value == 'INDIVIDUAL' %}
+                                                    <i class="fas fa-user me-1"></i>Particulier
+                                                {% else %}
+                                                    <i class="fas fa-building me-1"></i>Professionnel
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card info-card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-calculator me-2"></i>Détails de la demande</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <table class="table table-borderless mb-0">
+                                        <tr>
+                                            <td class="text-muted">Montant demandé :</td>
+                                            <td class="fw-bold text-primary">{{ application.requestedAmount|number_format(0, ',', ' ') }}€</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Durée :</td>
+                                            <td>{{ application.duration }} mois</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Type de prêt :</td>
+                                            <td>{{ application.loanType.name }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Objet du prêt :</td>
+                                            <td>{{ application.purpose ?? 'Non spécifié' }}</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    {% if application.approvedAmount %}
+                                    <table class="table table-borderless mb-0">
+                                        <tr>
+                                            <td class="text-muted">Montant approuvé :</td>
+                                            <td class="fw-bold text-success">{{ application.approvedAmount|number_format(0, ',', ' ') }}€</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Taux approuvé :</td>
+                                            <td>{{ application.approvedRate }}%</td>
+                                        </tr>
+                                        {% if application.approvedAt %}
+                                        <tr>
+                                            <td class="text-muted">Approuvé le :</td>
+                                            <td>{{ application.approvedAt|date('d/m/Y à H:i') }}</td>
+                                        </tr>
+                                        {% endif %}
+                                        {% if application.approvedBy %}
+                                        <tr>
+                                            <td class="text-muted">Approuvé par :</td>
+                                            <td>{{ application.approvedBy.firstName }} {{ application.approvedBy.lastName }}</td>
+                                        </tr>
+                                        {% endif %}
+                                    </table>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if application.adminComment %}
+                            <div class="mt-3 p-3 bg-light rounded">
+                                <strong>Commentaire administratif :</strong><br>
+                                {{ application.adminComment }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analyse de risque -->
+                <div class="tab-pane fade" id="analysis" role="tabpanel">
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <div class="card info-card text-center">
+                                <div class="card-body">
+                                    <h6 class="card-title">Score de crédit</h6>
+                                    {% set scoreClass = creditScore.rating == 'Excellent' ? 'score-excellent' : 
+                                                       creditScore.rating == 'Very Good' ? 'score-good' : 
+                                                       creditScore.rating == 'Good' ? 'score-good' : 
+                                                       creditScore.rating == 'Fair' ? 'score-fair' : 'score-poor' %}
+                                    <div class="score-circle {{ scoreClass }} mb-3">
+                                        {{ creditScore.score }}
+                                    </div>
+                                    <p class="mb-0">{{ creditScore.rating }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-8">
+                            <div class="card info-card">
+                                <div class="card-header">
+                                    <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Facteurs d'évaluation</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <h6>Revenus mensuels</h6>
+                                            <div class="progress mb-3">
+                                                {% set incomeScore = creditScore.factors.income > 3000 ? 100 : (creditScore.factors.income / 3000 * 100) %}
+                                                <div class="progress-bar bg-{{ incomeScore > 70 ? 'success' : (incomeScore > 40 ? 'warning' : 'danger') }}" 
+                                                     style="width: {{ incomeScore }}%"></div>
+                                            </div>
+                                            <small class="text-muted">{{ creditScore.factors.income|number_format(0, ',', ' ') }}€</small>
+                                        </div>
+                                        
+                                        <div class="col-6">
+                                            <h6>Taux d'endettement</h6>
+                                            <div class="progress mb-3">
+                                                {% set debtScore = 100 - creditScore.factors.debt_to_income %}
+                                                <div class="progress-bar bg-{{ debtScore > 70 ? 'success' : (debtScore > 40 ? 'warning' : 'danger') }}" 
+                                                     style="width: {{ debtScore }}%"></div>
+                                            </div>
+                                            <small class="text-muted">{{ creditScore.factors.debt_to_income }}%</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row mt-3">
+                                        <div class="col-6">
+                                            <h6>Vérification d'identité</h6>
+                                            {% if creditScore.factors.verification %}
+                                                <span class="badge bg-success">✓ Vérifié</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">En attente</span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="col-6">
+                                            <h6>Évaluation globale</h6>
+                                            {% if creditScore.score >= 740 %}
+                                                <span class="risk-indicator risk-low">Risque faible</span>
+                                            {% elseif creditScore.score >= 670 %}
+                                                <span class="risk-indicator risk-medium">Risque modéré</span>
+                                            {% else %}
+                                                <span class="risk-indicator risk-high">Risque élevé</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card info-card mt-4">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>Recommandations</h6>
+                        </div>
+                        <div class="card-body">
+                            {% if creditScore.score >= 740 %}
+                                <div class="alert alert-success">
+                                    <strong>Profil excellent :</strong> Ce client présente un risque très faible. Approbation recommandée aux conditions standards.
+                                </div>
+                            {% elseif creditScore.score >= 670 %}
+                                <div class="alert alert-info">
+                                    <strong>Profil correct :</strong> Approbation possible avec des conditions légèrement ajustées (taux ou durée).
+                                </div>
+                            {% else %}
+                                <div class="alert alert-warning">
+                                    <strong>Profil à risque :</strong> Examen approfondi requis. Envisager des conditions restrictives ou demander des garanties supplémentaires.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documents -->
+                <div class="tab-pane fade" id="documents" role="tabpanel">
+                    <div class="card info-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0"><i class="fas fa-file-alt me-2"></i>Documents fournis</h6>
+                            <button class="btn btn-outline-primary btn-sm" onclick="requestAdditionalDocuments()">
+                                <i class="fas fa-plus me-1"></i>Demander des documents
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="document-grid">
+                                <div class="document-item uploaded">
+                                    <i class="fas fa-id-card fa-2x text-success mb-2"></i>
+                                    <p class="mb-2"><strong>Pièce d'identité</strong></p>
+                                    <small class="text-muted">Téléchargé le 15/03/2024</small>
+                                    <div class="mt-2">
+                                        <button class="btn btn-sm btn-outline-primary me-1" onclick="viewDocument('identity')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success" onclick="approveDocument('identity')">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="document-item uploaded">
+                                    <i class="fas fa-receipt fa-2x text-success mb-2"></i>
+                                    <p class="mb-2"><strong>Justificatif de revenus</strong></p>
+                                    <small class="text-muted">Téléchargé le 15/03/2024</small>
+                                    <div class="mt-2">
+                                        <button class="btn btn-sm btn-outline-primary me-1" onclick="viewDocument('income')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success" onclick="approveDocument('income')">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="document-item missing">
+                                    <i class="fas fa-home fa-2x text-danger mb-2"></i>
+                                    <p class="mb-2"><strong>Justificatif de domicile</strong></p>
+                                    <small class="text-danger">Manquant</small>
+                                    <div class="mt-2">
+                                        <button class="btn btn-sm btn-outline-warning" onclick="requestSpecificDocument('address')">
+                                            <i class="fas fa-paper-plane"></i> Demander
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="document-item missing">
+                                    <i class="fas fa-university fa-2x text-danger mb-2"></i>
+                                    <p class="mb-2"><strong>Relevés bancaires</strong></p>
+                                    <small class="text-danger">Manquant</small>
+                                    <div class="mt-2">
+                                        <button class="btn btn-sm btn-outline-warning" onclick="requestSpecificDocument('bank')">
+                                            <i class="fas fa-paper-plane"></i> Demander
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Historique -->
+                <div class="tab-pane fade" id="history" role="tabpanel">
+                    <div class="card info-card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-history me-2"></i>Historique des actions</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="timeline">
+                                {% for event in statusHistory %}
+                                <div class="timeline-item completed">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-1">{{ event.status.label }}</h6>
+                                            <p class="mb-1 text-muted">{{ event.comment }}</p>
+                                            {% if event.user %}
+                                                <small class="text-muted">Par {{ event.user.firstName }} {{ event.user.lastName }}</small>
+                                            {% endif %}
+                                        </div>
+                                        <small class="text-muted">{{ event.date|date('d/m/Y H:i') }}</small>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Communication -->
+                <div class="tab-pane fade" id="communication" role="tabpanel">
+                    <div class="card info-card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-comments me-2"></i>Historique des communications</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <div class="alert alert-light border-primary">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <strong>Email de confirmation</strong>
+                                            <p class="mb-1">Confirmation de réception de la demande de prêt</p>
+                                            <small class="text-muted">Envoyé automatiquement</small>
+                                        </div>
+                                        <small class="text-muted">{{ application.createdAt|date('d/m/Y H:i') }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-3">
+                                <form onsubmit="sendMessage(event)">
+                                    <div class="mb-3">
+                                        <label class="form-label">Nouveau message</label>
+                                        <textarea class="form-control" rows="4" name="message" 
+                                                  placeholder="Écrivez votre message au client..."></textarea>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="send_email" id="sendEmail" checked>
+                                                <label class="form-check-label" for="sendEmail">
+                                                    Envoyer par email
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-paper-plane me-2"></i>Envoyer
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3">
+            <!-- Actions rapides -->
+            <div class="card quick-actions mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>Actions rapides</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if application.status.canBeApproved %}
+                            <button class="btn btn-success" onclick="approveApplication({{ application.id }})">
+                                <i class="fas fa-check me-2"></i>Approuver
+                            </button>
+                            <button class="btn btn-danger" onclick="rejectApplication({{ application.id }})">
+                                <i class="fas fa-times me-2"></i>Rejeter
+                            </button>
+                            <button class="btn btn-warning" onclick="requestDocuments({{ application.id }})">
+                                <i class="fas fa-file-alt me-2"></i>Demander documents
+                            </button>
+                        {% endif %}
+                        
+                        <hr>
+                        
+                        <a href="mailto:{{ user.email }}" class="btn btn-outline-primary">
+                            <i class="fas fa-envelope me-2"></i>Contacter le client
+                        </a>
+                        <a href="tel:{{ user.phoneNumber }}" class="btn btn-outline-info">
+                            <i class="fas fa-phone me-2"></i>Appeler
+                        </a>
+                        
+                        <hr>
+                        
+                        <button class="btn btn-outline-secondary" onclick="printApplication()">
+                            <i class="fas fa-print me-2"></i>Imprimer le dossier
+                        </button>
+                        <button class="btn btn-outline-dark" onclick="exportApplication()">
+                            <i class="fas fa-download me-2"></i>Exporter en PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations système -->
+            <div class="card info-card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations système</h6>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm table-borderless mb-0">
+                        <tr>
+                            <td class="text-muted">ID interne :</td>
+                            <td>#{{ application.id }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Créé le :</td>
+                            <td>{{ application.createdAt|date('d/m/Y H:i') }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Modifié le :</td>
+                            <td>{{ application.updatedAt|date('d/m/Y H:i') }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">Source :</td>
+                            <td>Site web</td>
+                        </tr>
+                        <tr>
+                            <td class="text-muted">IP client :</td>
+                            <td><code>192.168.1.100</code></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Inclusion des modals -->
+{% include 'admin/loan_applications/_modals.html.twig' %}
+
+<script>
+// Fonctions spécifiques à la page de détail
+function viewDocument(type) {
+    // Ouvrir le visualiseur de document
+    alert('Fonctionnalité de visualisation des documents à implémenter');
+}
+
+function approveDocument(type) {
+    if (confirm('Approuver ce document ?')) {
+        alert('Document approuvé');
+    }
+}
+
+function requestSpecificDocument(type) {
+    alert('Demande de document spécifique : ' + type);
+}
+
+function sendMessage(event) {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    
+    // AJAX call to send message
+    alert('Message envoyé : ' + formData.get('message'));
+    event.target.reset();
+}
+
+function printApplication() {
+    window.print();
+}
+
+function exportApplication() {
+    // Redirection vers l'export PDF
+    window.open(`/admin/loan-applications/{{ application.id }}/export`, '_blank');
+}
+
+// Gestion des onglets avec hash dans l'URL
+document.addEventListener('DOMContentLoaded', function() {
+    const hash = window.location.hash;
+    if (hash) {
+        const tabButton = document.querySelector(`button[data-bs-target="${hash}"]`);
+        if (tabButton) {
+            const tab = new bootstrap.Tab(tabButton);
+            tab.show();
+        }
+    }
+});
+</script>
+{% endblock %}

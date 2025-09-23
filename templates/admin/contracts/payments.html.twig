@@ -1,0 +1,533 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Paiements du contrat {{ contract.contractNumber }} - Admin EdgeLoan{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .payment-row.paid {
+            background-color: rgba(40, 167, 69, 0.1);
+        }
+        .payment-row.overdue {
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+        .payment-row.upcoming {
+            background-color: rgba(255, 193, 7, 0.1);
+        }
+        .stats-card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .payment-timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+        .payment-timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.5rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #dee2e6;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -0.9rem;
+            top: 0.5rem;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #dee2e6;
+        }
+        .timeline-item.paid::before {
+            border-color: #28a745;
+            background: #28a745;
+        }
+        .timeline-item.overdue::before {
+            border-color: #dc3545;
+            background: #dc3545;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<!-- En-tête -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">
+                    <a href="{{ path('admin_contracts_index') }}">Contrats</a>
+                </li>
+                <li class="breadcrumb-item">
+                    <a href="{{ path('admin_contracts_show', {id: contract.id}) }}">{{ contract.contractNumber }}</a>
+                </li>
+                <li class="breadcrumb-item active">Paiements</li>
+            </ol>
+        </nav>
+        <h1 class="h3 mb-0">
+            <i class="fas fa-credit-card me-2"></i>
+            Paiements - Contrat {{ contract.contractNumber }}
+        </h1>
+    </div>
+    <div>
+        <a href="{{ path('admin_contracts_show', {id: contract.id}) }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-1"></i>
+            Retour au contrat
+        </a>
+    </div>
+</div>
+
+<!-- Statistiques des paiements -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card stats-card text-center">
+            <div class="card-body">
+                <h4 class="text-primary mb-1">{{ stats.total_payments }}</h4>
+                <small class="text-muted">Total</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stats-card text-center">
+            <div class="card-body">
+                <h4 class="text-success mb-1">{{ stats.paid_payments }}</h4>
+                <small class="text-muted">Payés</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stats-card text-center">
+            <div class="card-body">
+                <h4 class="text-warning mb-1">{{ stats.pending_payments }}</h4>
+                <small class="text-muted">En attente</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stats-card text-center">
+            <div class="card-body">
+                <h4 class="text-danger mb-1">{{ stats.overdue_payments }}</h4>
+                <small class="text-muted">En retard</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stats-card text-center">
+            <div class="card-body">
+                <h4 class="text-info mb-1">{{ stats.total_amount|number_format(0, ',', ' ') }}€</h4>
+                <small class="text-muted">Montant total</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card stats-card text-center">
+            <div class="card-body">
+                <h4 class="text-success mb-1">{{ stats.paid_amount|number_format(0, ',', ' ') }}€</h4>
+                <small class="text-muted">Montant payé</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Liste des paiements -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    Échéancier Détaillé
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                {% if payments|length > 0 %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>N°</th>
+                                    <th>Date d'échéance</th>
+                                    <th>Montant</th>
+                                    <th>Capital</th>
+                                    <th>Intérêts</th>
+                                    <th>Statut</th>
+                                    <th>Date paiement</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in payments %}
+                                    {% set isOverdue = payment.status.value == 'PENDING' and payment.dueDate < date() %}
+                                    {% set isPaid = payment.status.value == 'PAID' %}
+                                    {% set isUpcoming = payment.status.value == 'PENDING' and payment.dueDate >= date() %}
+                                    <tr class="payment-row {{ isPaid ? 'paid' : (isOverdue ? 'overdue' : 'upcoming') }}">
+                                        <td class="fw-bold">{{ loop.index }}</td>
+                                        <td>
+                                            {{ payment.dueDate|date('d/m/Y') }}
+                                            {% if isOverdue %}
+                                                <br><small class="text-danger">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                                    Retard: {{ (date().diff(payment.dueDate).days) }} jours
+                                                </small>
+                                            {% elseif isUpcoming and payment.dueDate.diff(date()).days <= 7 %}
+                                                <br><small class="text-warning">
+                                                    <i class="fas fa-clock me-1"></i>
+                                                    Dans {{ payment.dueDate.diff(date()).days }} jours
+                                                </small>
+                                            {% endif %}
+                                        </td>
+                                        <td class="fw-bold">{{ payment.amount|number_format(2, ',', ' ') }}€</td>
+                                        <td>{{ payment.principalAmount|number_format(2, ',', ' ') }}€</td>
+                                        <td>{{ payment.interestAmount|number_format(2, ',', ' ') }}€</td>
+                                        <td>
+                                            {% if isPaid %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check me-1"></i>
+                                                    Payé
+                                                </span>
+                                            {% elseif isOverdue %}
+                                                <span class="badge bg-danger">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                                    En retard
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-clock me-1"></i>
+                                                    En attente
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if payment.paidAt %}
+                                                {{ payment.paidAt|date('d/m/Y H:i') }}
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if not isPaid %}
+                                                <button class="btn btn-sm btn-success" 
+                                                        onclick="markPaymentPaid({{ payment.id }})" 
+                                                        title="Marquer comme payé">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                            {% else %}
+                                                <span class="text-success" title="Paiement effectué">
+                                                    <i class="fas fa-check-circle"></i>
+                                                </span>
+                                            {% endif %}
+                                            
+                                            {% if payment.note %}
+                                                <button class="btn btn-sm btn-outline-info" 
+                                                        onclick="showPaymentNote('{{ payment.note|e('html_attr') }}')"
+                                                        title="Voir note">
+                                                    <i class="fas fa-sticky-note"></i>
+                                                </button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Aucun paiement programmé</h5>
+                        <p class="text-muted">L'échéancier n'a pas encore été généré pour ce contrat.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Actions groupées -->
+        {% if payments|length > 0 %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>
+                        Actions Groupées
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <button class="btn btn-success w-100" onclick="markAllOverduePaid()">
+                                <i class="fas fa-check-double me-1"></i>
+                                Marquer tous les retards comme payés
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <button class="btn btn-warning w-100" onclick="sendPaymentReminders()">
+                                <i class="fas fa-bell me-1"></i>
+                                Envoyer rappels de paiement
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Timeline et résumé -->
+    <div class="col-lg-4">
+        <!-- Résumé du contrat -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-file-contract me-2"></i>
+                    Résumé du Contrat
+                </h6>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless table-sm">
+                    <tr>
+                        <td class="fw-bold">Client:</td>
+                        <td>{{ contract.loanApplication.user.firstName }} {{ contract.loanApplication.user.lastName }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Montant:</td>
+                        <td>{{ contract.originalAmount|number_format(0, ',', ' ') }}€</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Durée:</td>
+                        <td>{{ contract.durationInMonths }} mois</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Taux:</td>
+                        <td>{{ contract.interestRate }}%</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">Statut:</td>
+                        <td>
+                            <span class="badge {{ contract.status == 'ACTIVE' ? 'bg-success' : 'bg-secondary' }}">
+                                {{ contract.status }}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <!-- Progression des paiements -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    Progression
+                </h6>
+            </div>
+            <div class="card-body">
+                {% set progressPercent = stats.total_amount > 0 ? (stats.paid_amount / stats.total_amount * 100) : 0 %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="fw-bold">Paiements effectués</span>
+                        <span class="fw-bold">{{ progressPercent|number_format(1) }}%</span>
+                    </div>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             style="width: {{ progressPercent }}%"></div>
+                    </div>
+                </div>
+                
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="p-2 bg-light rounded">
+                            <div class="fw-bold text-success">{{ stats.paid_amount|number_format(0, ',', ' ') }}€</div>
+                            <small class="text-muted">Payé</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 bg-light rounded">
+                            <div class="fw-bold text-warning">{{ (stats.total_amount - stats.paid_amount)|number_format(0, ',', ' ') }}€</div>
+                            <small class="text-muted">Restant</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Timeline des derniers paiements -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    Derniers Paiements
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="payment-timeline">
+                    {% set recentPayments = payments|filter(p => p.status.value == 'PAID')|slice(-5) %}
+                    {% if recentPayments|length > 0 %}
+                        {% for payment in recentPayments|reverse %}
+                            <div class="timeline-item paid">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="fw-bold">{{ payment.amount|number_format(2, ',', ' ') }}€</div>
+                                        <small class="text-muted">
+                                            Échéance {{ payment.dueDate|date('d/m/Y') }}
+                                        </small>
+                                    </div>
+                                    <small class="text-muted">
+                                        {{ payment.paidAt|date('d/m/Y') }}
+                                    </small>
+                                </div>
+                                {% if payment.note %}
+                                    <small class="text-muted d-block mt-1">
+                                        <i class="fas fa-sticky-note me-1"></i>
+                                        {{ payment.note }}
+                                    </small>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-muted">
+                            <i class="fas fa-clock fa-2x mb-2"></i>
+                            <p class="mb-0">Aucun paiement effectué</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour marquer un paiement comme payé -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmer le paiement</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="paymentForm">
+                    <div class="mb-3">
+                        <label for="paymentNote" class="form-label">Note (optionnel):</label>
+                        <textarea class="form-control" id="paymentNote" rows="3" 
+                                  placeholder="Ajouter une note sur ce paiement (mode de paiement, référence, etc.)..."></textarea>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Ce paiement sera marqué comme effectué à la date et heure actuelles.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-success" onclick="confirmPayment()">
+                    <i class="fas fa-check me-1"></i>
+                    Confirmer le paiement
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour afficher une note -->
+<div class="modal fade" id="noteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Note du paiement</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="noteContent"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        let currentPaymentId = null;
+
+        function markPaymentPaid(paymentId) {
+            currentPaymentId = paymentId;
+            const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+            modal.show();
+        }
+
+        function confirmPayment() {
+            if (!currentPaymentId) return;
+
+            const note = document.getElementById('paymentNote').value;
+            
+            fetch(`{{ path('admin_contracts_mark_payment_paid', {id: contract.id, paymentId: '__PAYMENT_ID__'}) }}`.replace('__PAYMENT_ID__', currentPaymentId), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: `note=${encodeURIComponent(note)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('success', data.message);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showAlert('danger', data.error);
+                }
+                bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('danger', 'Une erreur est survenue');
+                bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
+            });
+        }
+
+        function showPaymentNote(note) {
+            document.getElementById('noteContent').textContent = note;
+            const modal = new bootstrap.Modal(document.getElementById('noteModal'));
+            modal.show();
+        }
+
+        function markAllOverduePaid() {
+            if (!confirm('Êtes-vous sûr de vouloir marquer tous les paiements en retard comme payés ?')) return;
+            
+            // Cette fonctionnalité nécessiterait une route supplémentaire
+            showAlert('info', 'Fonctionnalité en cours de développement');
+        }
+
+        function sendPaymentReminders() {
+            if (!confirm('Envoyer des rappels de paiement pour tous les paiements en attente ?')) return;
+            
+            // Cette fonctionnalité nécessiterait une route supplémentaire
+            showAlert('info', 'Rappels de paiement envoyés');
+        }
+
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 5000);
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,481 @@
+<!-- Modal d'approbation -->
+<div class="modal fade" id="approveModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle me-2"></i>Approuver la demande de prêt
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="approveForm" onsubmit="submitApproval(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="approveApplicationId" name="application_id">
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        L'approbation générera automatiquement le contrat de prêt qui sera envoyé au client.
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Montant approuvé (€) *</label>
+                                <input type="number" class="form-control" name="approved_amount" 
+                                       min="500" max="50000" step="100" required>
+                                <small class="text-muted">Montant entre 500€ et 50 000€</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Taux d'intérêt (%) *</label>
+                                <input type="number" class="form-control" name="approved_rate" 
+                                       min="0.1" max="20" step="0.1" required>
+                                <small class="text-muted">Taux entre 0.1% et 20%</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Durée (mois) *</label>
+                                <select class="form-select" name="duration" required>
+                                    <option value="">Choisir...</option>
+                                    <option value="6">6 mois</option>
+                                    <option value="12">12 mois</option>
+                                    <option value="18">18 mois</option>
+                                    <option value="24">24 mois</option>
+                                    <option value="36">36 mois</option>
+                                    <option value="48">48 mois</option>
+                                    <option value="60">60 mois</option>
+                                    <option value="72">72 mois</option>
+                                    <option value="84">84 mois</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Conditions particulières</label>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="insurance_required" id="insuranceRequired">
+                                    <label class="form-check-label" for="insuranceRequired">
+                                        Assurance obligatoire
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="domiciliation_required" id="domiciliationRequired">
+                                    <label class="form-check-label" for="domiciliationRequired">
+                                        Domiciliation bancaire requise
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Commentaire administratif</label>
+                        <textarea class="form-control" name="admin_comment" rows="3" 
+                                  placeholder="Commentaire interne sur l'approbation..."></textarea>
+                    </div>
+
+                    <!-- Simulation automatique -->
+                    <div class="card bg-light">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-calculator me-2"></i>Simulation automatique</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="simulationResult">
+                                <p class="text-muted">Saisissez les paramètres pour voir la simulation</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-check me-2"></i>Approuver et générer le contrat
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de rejet -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-times-circle me-2"></i>Rejeter la demande de prêt
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="rejectForm" onsubmit="submitRejection(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="rejectApplicationId" name="application_id">
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Cette action est définitive. Le client sera automatiquement notifié du rejet.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Raison du rejet *</label>
+                        <select class="form-select" name="reject_reason" required>
+                            <option value="">Choisir une raison...</option>
+                            <option value="INSUFFICIENT_INCOME">Revenus insuffisants</option>
+                            <option value="DEBT_RATIO_TOO_HIGH">Taux d'endettement trop élevé</option>
+                            <option value="INCOMPLETE_DOCUMENTS">Dossier incomplet</option>
+                            <option value="CREDIT_HISTORY">Historique de crédit défavorable</option>
+                            <option value="EMPLOYMENT_INSTABILITY">Situation professionnelle instable</option>
+                            <option value="POLICY_VIOLATION">Non-conformité aux politiques internes</option>
+                            <option value="FRAUD_SUSPICION">Suspicion de fraude</option>
+                            <option value="OTHER">Autre raison</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Explication détaillée *</label>
+                        <textarea class="form-control" name="admin_comment" rows="4" required
+                                  placeholder="Expliquez les raisons du rejet de manière professionnelle. Ce message sera transmis au client."></textarea>
+                        <small class="text-muted">Ce commentaire sera visible par le client dans sa notification.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Recommandations pour le client</label>
+                        <textarea class="form-control" name="recommendations" rows="3"
+                                  placeholder="Suggestions d'amélioration pour une future demande (optionnel)..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times me-2"></i>Confirmer le rejet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de demande de documents -->
+<div class="modal fade" id="documentsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="fas fa-file-alt me-2"></i>Demander des documents complémentaires
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="documentsForm" onsubmit="submitDocumentRequest(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="documentsApplicationId" name="application_id">
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Le client recevra une notification avec la liste des documents requis et pourra les uploader directement.
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Documents requis *</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="documents_requested[]" value="IDENTITY_PROOF" id="identityProof">
+                                    <label class="form-check-label" for="identityProof">
+                                        Pièce d'identité (recto-verso)
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="documents_requested[]" value="INCOME_PROOF" id="incomeProof">
+                                    <label class="form-check-label" for="incomeProof">
+                                        Justificatifs de revenus (3 derniers)
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="documents_requested[]" value="BANK_STATEMENTS" id="bankStatements">
+                                    <label class="form-check-label" for="bankStatements">
+                                        Relevés bancaires (3 derniers mois)
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="documents_requested[]" value="EMPLOYMENT_CONTRACT" id="employmentContract">
+                                    <label class="form-check-label" for="employmentContract">
+                                        Contrat de travail
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="documents_requested[]" value="ADDRESS_PROOF" id="addressProof">
+                                    <label class="form-check-label" for="addressProof">
+                                        Justificatif de domicile
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="documents_requested[]" value="TAX_NOTICE" id="taxNotice">
+                                    <label class="form-check-label" for="taxNotice">
+                                        Avis d'imposition
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="documents_requested[]" value="INSURANCE_PROOF" id="insuranceProof">
+                                    <label class="form-check-label" for="insuranceProof">
+                                        Attestation d'assurance
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="documents_requested[]" value="OTHER" id="otherDocuments">
+                                    <label class="form-check-label" for="otherDocuments">
+                                        Autres documents
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3" id="otherDocumentsDetail" style="display: none;">
+                        <label class="form-label">Préciser les autres documents :</label>
+                        <input type="text" class="form-control" name="other_documents_detail" 
+                               placeholder="Ex: Contrat de location, Attestation employeur...">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Message personnalisé</label>
+                        <textarea class="form-control" name="message" rows="4"
+                                  placeholder="Message d'accompagnement pour expliquer pourquoi ces documents sont nécessaires...">Bonjour,
+
+Afin de finaliser l'étude de votre dossier de demande de prêt, nous avons besoin des documents complémentaires listés ci-dessus.
+
+Vous pouvez les uploader directement dans votre espace client ou nous les envoyer par email.
+
+Notre équipe reste à votre disposition pour toute question.
+
+Cordialement,
+L'équipe EdgeLoan</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Délai de réponse</label>
+                        <select class="form-select" name="response_deadline">
+                            <option value="7">7 jours</option>
+                            <option value="14" selected>14 jours</option>
+                            <option value="21">21 jours</option>
+                            <option value="30">30 jours</option>
+                        </select>
+                        <small class="text-muted">Délai accordé au client pour fournir les documents</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-paper-plane me-2"></i>Envoyer la demande
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de changement de statut -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier le statut
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="statusForm" onsubmit="submitStatusUpdate(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="statusApplicationId" name="application_id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Nouveau statut</label>
+                        <select class="form-select" name="status" required>
+                            <option value="">Choisir...</option>
+                            <option value="UNDER_REVIEW">En cours d'examen</option>
+                            <option value="DOCUMENTS_REQUESTED">Documents demandés</option>
+                            <option value="APPROVED">Approuvée</option>
+                            <option value="REJECTED">Rejetée</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Commentaire</label>
+                        <textarea class="form-control" name="comment" rows="3"
+                                  placeholder="Commentaire sur le changement de statut..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Mettre à jour
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Gestion des modals
+
+// Modal d'approbation
+function submitApproval(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const applicationId = formData.get('application_id');
+
+    fetch(`/admin/loan-applications/${applicationId}/approve`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('approveModal')).hide();
+            showNotification(data.message, 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showNotification(data.error, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Erreur lors de l\'approbation', 'error');
+    });
+}
+
+// Modal de rejet
+function submitRejection(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const applicationId = formData.get('application_id');
+
+    fetch(`/admin/loan-applications/${applicationId}/reject`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('rejectModal')).hide();
+            showNotification(data.message, 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showNotification(data.error, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Erreur lors du rejet', 'error');
+    });
+}
+
+// Modal de demande de documents
+function submitDocumentRequest(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+    const applicationId = formData.get('application_id');
+
+    fetch(`/admin/loan-applications/${applicationId}/request-documents`, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('documentsModal')).hide();
+            showNotification(data.message, 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showNotification(data.error, 'error');
+        }
+    })
+    .catch(error => {
+        showNotification('Erreur lors de l\'envoi', 'error');
+    });
+}
+
+// Simulation automatique dans le modal d'approbation
+document.addEventListener('DOMContentLoaded', function() {
+    const approveForm = document.getElementById('approveForm');
+    if (approveForm) {
+        const amountInput = approveForm.querySelector('[name="approved_amount"]');
+        const rateInput = approveForm.querySelector('[name="approved_rate"]');
+        const durationSelect = approveForm.querySelector('[name="duration"]');
+        
+        function updateSimulation() {
+            const amount = parseFloat(amountInput.value);
+            const rate = parseFloat(rateInput.value);
+            const duration = parseInt(durationSelect.value);
+            
+            if (amount && rate && duration) {
+                const monthlyRate = rate / 100 / 12;
+                const monthlyPayment = amount * (monthlyRate * Math.pow(1 + monthlyRate, duration)) / (Math.pow(1 + monthlyRate, duration) - 1);
+                const totalAmount = monthlyPayment * duration;
+                const totalInterest = totalAmount - amount;
+                
+                document.getElementById('simulationResult').innerHTML = `
+                    <div class="row">
+                        <div class="col-4 text-center">
+                            <strong class="text-primary">${monthlyPayment.toFixed(2)}€</strong>
+                            <br><small class="text-muted">Mensualité</small>
+                        </div>
+                        <div class="col-4 text-center">
+                            <strong class="text-info">${totalInterest.toFixed(2)}€</strong>
+                            <br><small class="text-muted">Coût total</small>
+                        </div>
+                        <div class="col-4 text-center">
+                            <strong class="text-success">${totalAmount.toFixed(2)}€</strong>
+                            <br><small class="text-muted">Total à rembourser</small>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        amountInput.addEventListener('input', updateSimulation);
+        rateInput.addEventListener('input', updateSimulation);
+        durationSelect.addEventListener('change', updateSimulation);
+    }
+    
+    // Gestion de l'affichage des "autres documents"
+    const otherCheckbox = document.getElementById('otherDocuments');
+    const otherDetail = document.getElementById('otherDocumentsDetail');
+    
+    if (otherCheckbox) {
+        otherCheckbox.addEventListener('change', function() {
+            otherDetail.style.display = this.checked ? 'block' : 'none';
+        });
+    }
+});
+
+// Notifications
+function showNotification(message, type = 'info') {
+    const alertClass = type === 'success' ? 'alert-success' : 
+                      type === 'error' ? 'alert-danger' : 'alert-info';
+    
+    const notification = document.createElement('div');
+    notification.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+</script>
