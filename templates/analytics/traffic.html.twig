@@ -1,0 +1,513 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Analytics - Trafic{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.min.css" rel="stylesheet">
+    <style>
+        .analytics-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 1rem 0;
+        }
+        
+        .date-picker {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .table-responsive {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-chart-area"></i>
+                Analyse du Trafic
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ path('admin_analytics_dashboard') }}">Analytics</a></li>
+                    <li class="breadcrumb-item active">Trafic</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Date Range Picker -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="date-picker">
+                <label for="dateRange" class="form-label">Période d'analyse</label>
+                <select id="dateRange" class="form-select">
+                    <option value="today">Aujourd'hui</option>
+                    <option value="yesterday">Hier</option>
+                    <option value="7days" selected>7 derniers jours</option>
+                    <option value="30days">30 derniers jours</option>
+                    <option value="90days">90 derniers jours</option>
+                    <option value="custom">Période personnalisée</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div id="customDateRange" style="display: none;">
+                <div class="row">
+                    <div class="col-6">
+                        <input type="date" id="fromDate" class="form-control" placeholder="Du">
+                    </div>
+                    <div class="col-6">
+                        <input type="date" id="toDate" class="form-control" placeholder="Au">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Traffic Metrics -->
+    <div class="row mb-4" id="trafficMetrics">
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="metric-value" id="totalViews">-</div>
+                <div class="metric-label">Total des vues</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="metric-value" id="uniqueVisitors">-</div>
+                <div class="metric-label">Visiteurs uniques</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <div class="metric-value" id="bounceRate">-</div>
+                <div class="metric-label">Taux de rebond</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <div class="metric-value" id="avgSessionDuration">-</div>
+                <div class="metric-label">Durée moy. session</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Traffic Charts -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="analytics-card">
+                <h5>Évolution du trafic quotidien</h5>
+                <div class="chart-container">
+                    <canvas id="dailyTrafficChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="analytics-card">
+                <h5>Trafic par heure</h5>
+                <div class="chart-container">
+                    <canvas id="hourlyTrafficChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5>Sources de trafic</h5>
+                <div class="chart-container">
+                    <canvas id="referrersChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5>Appareils utilisés</h5>
+                <div class="chart-container">
+                    <canvas id="devicesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Pages Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="analytics-card">
+                <h5>Pages les plus visitées</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="topPagesTable">
+                        <thead>
+                            <tr>
+                                <th>Page</th>
+                                <th>Vues</th>
+                                <th>Visiteurs uniques</th>
+                                <th>Temps moyen</th>
+                                <th>Taux de rebond</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="5" class="loading">Chargement...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="analytics-card">
+                <h5>Exporter les données de trafic</h5>
+                <div class="btn-group" role="group">
+                    <a href="{{ path('admin_analytics_export', {type: 'traffic', format: 'csv'}) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-download"></i> Exporter CSV
+                    </a>
+                    <a href="{{ path('admin_analytics_export', {type: 'traffic', format: 'json'}) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-download"></i> Exporter JSON
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.min.js"></script>
+    <script>
+        class TrafficAnalytics {
+            constructor() {
+                this.currentDateRange = '7days';
+                this.charts = {};
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadTrafficData();
+            }
+
+            setupEventListeners() {
+                document.getElementById('dateRange').addEventListener('change', (e) => {
+                    this.currentDateRange = e.target.value;
+                    if (e.target.value === 'custom') {
+                        document.getElementById('customDateRange').style.display = 'block';
+                    } else {
+                        document.getElementById('customDateRange').style.display = 'none';
+                        this.loadTrafficData();
+                    }
+                });
+
+                document.getElementById('fromDate').addEventListener('change', () => this.loadTrafficData());
+                document.getElementById('toDate').addEventListener('change', () => this.loadTrafficData());
+            }
+
+            getDateRange() {
+                if (this.currentDateRange === 'custom') {
+                    const from = document.getElementById('fromDate').value;
+                    const to = document.getElementById('toDate').value;
+                    return { from, to };
+                }
+
+                const now = new Date();
+                let from = new Date();
+
+                switch (this.currentDateRange) {
+                    case 'today':
+                        from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                        break;
+                    case 'yesterday':
+                        from = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+                        now.setDate(now.getDate() - 1);
+                        break;
+                    case '7days':
+                        from.setDate(now.getDate() - 7);
+                        break;
+                    case '30days':
+                        from.setDate(now.getDate() - 30);
+                        break;
+                    case '90days':
+                        from.setDate(now.getDate() - 90);
+                        break;
+                }
+
+                return {
+                    from: from.toISOString().split('T')[0],
+                    to: now.toISOString().split('T')[0]
+                };
+            }
+
+            async loadTrafficData() {
+                const dateRange = this.getDateRange();
+                const params = new URLSearchParams(dateRange);
+
+                try {
+                    const response = await fetch(`{{ path('admin_analytics_api_traffic') }}?${params}`);
+                    const data = await response.json();
+
+                    this.updateMetrics(data);
+                    this.updateCharts(data);
+                    this.updateTable(data.top_pages);
+                } catch (error) {
+                    console.error('Error loading traffic data:', error);
+                }
+            }
+
+            updateMetrics(data) {
+                document.getElementById('totalViews').textContent = this.formatNumber(data.total_views);
+                document.getElementById('uniqueVisitors').textContent = this.formatNumber(data.unique_visitors);
+                document.getElementById('bounceRate').textContent = data.bounce_rate + '%';
+                document.getElementById('avgSessionDuration').textContent = this.formatDuration(data.avg_session_duration);
+            }
+
+            updateCharts(data) {
+                this.updateDailyTrafficChart(data.daily_views);
+                this.updateHourlyTrafficChart(data.hourly_views);
+                this.updateReferrersChart(data.referrers);
+                this.updateDevicesChart(data.user_agents.devices);
+            }
+
+            updateDailyTrafficChart(dailyViews) {
+                const ctx = document.getElementById('dailyTrafficChart').getContext('2d');
+                
+                if (this.charts.daily) {
+                    this.charts.daily.destroy();
+                }
+
+                this.charts.daily = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: dailyViews.map(d => d.date),
+                        datasets: [{
+                            label: 'Vues de pages',
+                            data: dailyViews.map(d => d.views),
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateHourlyTrafficChart(hourlyViews) {
+                const ctx = document.getElementById('hourlyTrafficChart').getContext('2d');
+                
+                if (this.charts.hourly) {
+                    this.charts.hourly.destroy();
+                }
+
+                this.charts.hourly = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Array.from({length: 24}, (_, i) => i + 'h'),
+                        datasets: [{
+                            label: 'Vues par heure',
+                            data: hourlyViews || Array(24).fill(0),
+                            backgroundColor: '#4facfe'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateReferrersChart(referrers) {
+                const ctx = document.getElementById('referrersChart').getContext('2d');
+                
+                if (this.charts.referrers) {
+                    this.charts.referrers.destroy();
+                }
+
+                const labels = referrers.slice(0, 5).map(r => this.getDomainFromUrl(r.referrer));
+                const data = referrers.slice(0, 5).map(r => r.count);
+
+                this.charts.referrers = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: [
+                                '#667eea',
+                                '#f093fb',
+                                '#4facfe',
+                                '#43e97b',
+                                '#f6d365'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateDevicesChart(devices) {
+                const ctx = document.getElementById('devicesChart').getContext('2d');
+                
+                if (this.charts.devices) {
+                    this.charts.devices.destroy();
+                }
+
+                this.charts.devices = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(devices),
+                        datasets: [{
+                            data: Object.values(devices),
+                            backgroundColor: [
+                                '#667eea',
+                                '#f093fb',
+                                '#4facfe'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateTable(topPages) {
+                const tbody = document.querySelector('#topPagesTable tbody');
+                
+                tbody.innerHTML = topPages.slice(0, 20).map(page => `
+                    <tr>
+                        <td>
+                            <div class="fw-bold">${page.title || 'Sans titre'}</div>
+                            <small class="text-muted">${page.url}</small>
+                        </td>
+                        <td>${this.formatNumber(page.views)}</td>
+                        <td>${this.formatNumber(page.unique_visitors || 0)}</td>
+                        <td>${this.formatDuration(page.avg_time || 0)}</td>
+                        <td>${(page.bounce_rate || 0)}%</td>
+                    </tr>
+                `).join('');
+            }
+
+            formatNumber(num) {
+                if (num >= 1000000) {
+                    return (num / 1000000).toFixed(1) + 'M';
+                }
+                if (num >= 1000) {
+                    return (num / 1000).toFixed(1) + 'K';
+                }
+                return num.toString();
+            }
+
+            formatDuration(seconds) {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const secs = Math.floor(seconds % 60);
+
+                if (hours > 0) {
+                    return `${hours}h ${minutes}m`;
+                }
+                if (minutes > 0) {
+                    return `${minutes}m ${secs}s`;
+                }
+                return `${secs}s`;
+            }
+
+            getDomainFromUrl(url) {
+                if (!url) return 'Direct';
+                try {
+                    const domain = new URL(url).hostname;
+                    return domain.replace('www.', '');
+                } catch {
+                    return 'Inconnu';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new TrafficAnalytics();
+        });
+    </script>
+{% endblock %}

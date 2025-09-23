@@ -25,4 +25,5 @@ return [
     App\Bundle\ApiBundle\ApiBundle::class => ['all' => true],
     Lexik\Bundle\JWTAuthenticationBundle\LexikJWTAuthenticationBundle::class => ['all' => true],
     Nelmio\ApiDocBundle\NelmioApiDocBundle::class => ['all' => true],
+    App\Bundle\AnalyticsBundle\AnalyticsBundle::class => ['all' => true],
 ];

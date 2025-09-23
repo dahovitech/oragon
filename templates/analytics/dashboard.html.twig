@@ -1,0 +1,632 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Analytics Dashboard{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.min.css" rel="stylesheet">
+    <style>
+        .analytics-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 1rem 0;
+        }
+        
+        .nav-tabs .nav-link {
+            border: none;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background: #667eea;
+            color: white;
+            border-radius: 4px;
+        }
+        
+        .date-picker {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .real-time-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #28a745;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .table-responsive {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        
+        .progress {
+            height: 8px;
+            background: #f8f9fa;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-chart-line"></i>
+                Analytics Dashboard
+                <span class="real-time-indicator"></span>
+                <small class="text-muted">Temps réel</small>
+            </h1>
+        </div>
+    </div>
+
+    <!-- Date Range Picker -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="date-picker">
+                <label for="dateRange" class="form-label">Période d'analyse</label>
+                <select id="dateRange" class="form-select">
+                    <option value="today">Aujourd'hui</option>
+                    <option value="yesterday">Hier</option>
+                    <option value="7days" selected>7 derniers jours</option>
+                    <option value="30days">30 derniers jours</option>
+                    <option value="90days">90 derniers jours</option>
+                    <option value="custom">Période personnalisée</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div id="customDateRange" style="display: none;">
+                <div class="row">
+                    <div class="col-6">
+                        <input type="date" id="fromDate" class="form-control" placeholder="Du">
+                    </div>
+                    <div class="col-6">
+                        <input type="date" id="toDate" class="form-control" placeholder="Au">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview Metrics -->
+    <div class="row mb-4" id="overviewMetrics">
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="metric-value" id="pageViews">-</div>
+                <div class="metric-label">Vues de pages</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="metric-value" id="uniqueVisitors">-</div>
+                <div class="metric-label">Visiteurs uniques</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <div class="metric-value" id="bounceRate">-</div>
+                <div class="metric-label">Taux de rebond</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <div class="metric-value" id="avgSessionDuration">-</div>
+                <div class="metric-label">Durée moyenne</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs mb-4" id="analyticsTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">
+                <i class="fas fa-tachometer-alt"></i> Vue d'ensemble
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="traffic-tab" data-bs-toggle="tab" data-bs-target="#traffic" type="button" role="tab">
+                <i class="fas fa-chart-area"></i> Trafic
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="content-tab" data-bs-toggle="tab" data-bs-target="#content" type="button" role="tab">
+                <i class="fas fa-file-alt"></i> Contenu
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ecommerce-tab" data-bs-toggle="tab" data-bs-target="#ecommerce" type="button" role="tab">
+                <i class="fas fa-shopping-cart"></i> E-commerce
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">
+                <i class="fas fa-users"></i> Utilisateurs
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="realtime-tab" data-bs-toggle="tab" data-bs-target="#realtime" type="button" role="tab">
+                <i class="fas fa-broadcast-tower"></i> Temps réel
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="analyticsTabContent">
+        <!-- Overview Tab -->
+        <div class="tab-pane fade show active" id="overview" role="tabpanel">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="analytics-card">
+                        <h5>Évolution du trafic</h5>
+                        <div class="chart-container">
+                            <canvas id="trafficChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="analytics-card">
+                        <h5>Sources de trafic</h5>
+                        <div class="chart-container">
+                            <canvas id="sourceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="analytics-card">
+                        <h5>Pages populaires</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="topPagesTable">
+                                <thead>
+                                    <tr>
+                                        <th>Page</th>
+                                        <th>Vues</th>
+                                        <th>%</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td colspan="3" class="loading">Chargement...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="analytics-card">
+                        <h5>Navigateurs</h5>
+                        <div class="chart-container">
+                            <canvas id="browserChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Traffic Tab -->
+        <div class="tab-pane fade" id="traffic" role="tabpanel">
+            <div class="analytics-card">
+                <h5>Analyse détaillée du trafic</h5>
+                <div class="loading">Chargement des données de trafic...</div>
+            </div>
+        </div>
+
+        <!-- Content Tab -->
+        <div class="tab-pane fade" id="content" role="tabpanel">
+            <div class="analytics-card">
+                <h5>Performance du contenu</h5>
+                <div class="loading">Chargement des données de contenu...</div>
+            </div>
+        </div>
+
+        <!-- E-commerce Tab -->
+        <div class="tab-pane fade" id="ecommerce" role="tabpanel">
+            <div class="analytics-card">
+                <h5>Rapports e-commerce</h5>
+                <div class="loading">Chargement des données e-commerce...</div>
+            </div>
+        </div>
+
+        <!-- Users Tab -->
+        <div class="tab-pane fade" id="users" role="tabpanel">
+            <div class="analytics-card">
+                <h5>Analyse des utilisateurs</h5>
+                <div class="loading">Chargement des données utilisateurs...</div>
+            </div>
+        </div>
+
+        <!-- Real-time Tab -->
+        <div class="tab-pane fade" id="realtime" role="tabpanel">
+            <div class="analytics-card">
+                <h5>Données en temps réel</h5>
+                <div class="loading">Chargement des données temps réel...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Buttons -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="analytics-card">
+                <h5>Exporter les rapports</h5>
+                <div class="btn-group" role="group">
+                    <a href="{{ path('admin_analytics_export', {type: 'overview', format: 'csv'}) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-download"></i> Vue d'ensemble (CSV)
+                    </a>
+                    <a href="{{ path('admin_analytics_export', {type: 'traffic', format: 'csv'}) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-download"></i> Trafic (CSV)
+                    </a>
+                    <a href="{{ path('admin_analytics_export', {type: 'content', format: 'csv'}) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-download"></i> Contenu (CSV)
+                    </a>
+                    <a href="{{ path('admin_analytics_export', {type: 'ecommerce', format: 'csv'}) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-download"></i> E-commerce (CSV)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.min.js"></script>
+    <script>
+        class AnalyticsDashboard {
+            constructor() {
+                this.currentDateRange = '7days';
+                this.charts = {};
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadDashboardData();
+                this.startRealTimeUpdates();
+            }
+
+            setupEventListeners() {
+                // Date range picker
+                document.getElementById('dateRange').addEventListener('change', (e) => {
+                    this.currentDateRange = e.target.value;
+                    if (e.target.value === 'custom') {
+                        document.getElementById('customDateRange').style.display = 'block';
+                    } else {
+                        document.getElementById('customDateRange').style.display = 'none';
+                        this.loadDashboardData();
+                    }
+                });
+
+                // Custom date inputs
+                document.getElementById('fromDate').addEventListener('change', () => this.loadDashboardData());
+                document.getElementById('toDate').addEventListener('change', () => this.loadDashboardData());
+
+                // Tab switching
+                document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
+                    tab.addEventListener('shown.bs.tab', (e) => {
+                        const target = e.target.getAttribute('data-bs-target');
+                        this.loadTabData(target);
+                    });
+                });
+            }
+
+            getDateRange() {
+                if (this.currentDateRange === 'custom') {
+                    const from = document.getElementById('fromDate').value;
+                    const to = document.getElementById('toDate').value;
+                    return { from, to };
+                }
+
+                const now = new Date();
+                let from = new Date();
+
+                switch (this.currentDateRange) {
+                    case 'today':
+                        from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                        break;
+                    case 'yesterday':
+                        from = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+                        now.setDate(now.getDate() - 1);
+                        break;
+                    case '7days':
+                        from.setDate(now.getDate() - 7);
+                        break;
+                    case '30days':
+                        from.setDate(now.getDate() - 30);
+                        break;
+                    case '90days':
+                        from.setDate(now.getDate() - 90);
+                        break;
+                }
+
+                return {
+                    from: from.toISOString().split('T')[0],
+                    to: now.toISOString().split('T')[0]
+                };
+            }
+
+            async loadDashboardData() {
+                const dateRange = this.getDateRange();
+                const params = new URLSearchParams(dateRange);
+
+                try {
+                    const response = await fetch(`{{ path('admin_analytics_api_dashboard') }}?${params}`);
+                    const data = await response.json();
+
+                    this.updateOverviewMetrics(data.overview);
+                    this.updateCharts(data);
+                } catch (error) {
+                    console.error('Error loading dashboard data:', error);
+                }
+            }
+
+            updateOverviewMetrics(overview) {
+                document.getElementById('pageViews').textContent = this.formatNumber(overview.page_views);
+                document.getElementById('uniqueVisitors').textContent = this.formatNumber(overview.unique_visitors);
+                document.getElementById('bounceRate').textContent = overview.bounce_rate + '%';
+                document.getElementById('avgSessionDuration').textContent = this.formatDuration(overview.avg_session_duration);
+            }
+
+            updateCharts(data) {
+                // Traffic chart
+                this.updateTrafficChart(data.traffic.daily_views);
+                
+                // Source chart
+                this.updateSourceChart(data.traffic.referrers);
+                
+                // Browser chart
+                this.updateBrowserChart(data.traffic.user_agents.browsers);
+                
+                // Top pages table
+                this.updateTopPagesTable(data.traffic.top_pages);
+            }
+
+            updateTrafficChart(dailyViews) {
+                const ctx = document.getElementById('trafficChart').getContext('2d');
+                
+                if (this.charts.traffic) {
+                    this.charts.traffic.destroy();
+                }
+
+                this.charts.traffic = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: dailyViews.map(d => d.date),
+                        datasets: [{
+                            label: 'Vues de pages',
+                            data: dailyViews.map(d => d.views),
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateSourceChart(referrers) {
+                const ctx = document.getElementById('sourceChart').getContext('2d');
+                
+                if (this.charts.source) {
+                    this.charts.source.destroy();
+                }
+
+                const labels = referrers.slice(0, 5).map(r => this.getDomainFromUrl(r.referrer));
+                const data = referrers.slice(0, 5).map(r => r.count);
+
+                this.charts.source = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: [
+                                '#667eea',
+                                '#f093fb',
+                                '#4facfe',
+                                '#43e97b',
+                                '#f6d365'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateBrowserChart(browsers) {
+                const ctx = document.getElementById('browserChart').getContext('2d');
+                
+                if (this.charts.browser) {
+                    this.charts.browser.destroy();
+                }
+
+                this.charts.browser = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(browsers),
+                        datasets: [{
+                            label: 'Utilisateurs',
+                            data: Object.values(browsers),
+                            backgroundColor: '#667eea'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateTopPagesTable(topPages) {
+                const tbody = document.querySelector('#topPagesTable tbody');
+                const totalViews = topPages.reduce((sum, page) => sum + page.views, 0);
+                
+                tbody.innerHTML = topPages.slice(0, 10).map(page => {
+                    const percentage = totalViews > 0 ? ((page.views / totalViews) * 100).toFixed(1) : 0;
+                    return `
+                        <tr>
+                            <td>
+                                <div class="fw-bold">${page.title || 'Sans titre'}</div>
+                                <small class="text-muted">${page.url}</small>
+                            </td>
+                            <td>${this.formatNumber(page.views)}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <span class="me-2">${percentage}%</span>
+                                    <div class="progress flex-grow-1" style="height: 4px;">
+                                        <div class="progress-bar" style="width: ${percentage}%"></div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            async loadTabData(target) {
+                // Load specific tab data when needed
+                console.log('Loading tab data for:', target);
+            }
+
+            startRealTimeUpdates() {
+                // Update real-time data every 30 seconds
+                setInterval(() => {
+                    if (document.querySelector('#realtime-tab').classList.contains('active')) {
+                        this.loadRealTimeData();
+                    }
+                }, 30000);
+            }
+
+            async loadRealTimeData() {
+                try {
+                    const response = await fetch('{{ path('admin_analytics_api_realtime') }}');
+                    const data = await response.json();
+                    console.log('Real-time data:', data);
+                } catch (error) {
+                    console.error('Error loading real-time data:', error);
+                }
+            }
+
+            formatNumber(num) {
+                if (num >= 1000000) {
+                    return (num / 1000000).toFixed(1) + 'M';
+                }
+                if (num >= 1000) {
+                    return (num / 1000).toFixed(1) + 'K';
+                }
+                return num.toString();
+            }
+
+            formatDuration(seconds) {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const secs = Math.floor(seconds % 60);
+
+                if (hours > 0) {
+                    return `${hours}h ${minutes}m`;
+                }
+                if (minutes > 0) {
+                    return `${minutes}m ${secs}s`;
+                }
+                return `${secs}s`;
+            }
+
+            getDomainFromUrl(url) {
+                if (!url) return 'Direct';
+                try {
+                    const domain = new URL(url).hostname;
+                    return domain.replace('www.', '');
+                } catch {
+                    return 'Inconnu';
+                }
+            }
+        }
+
+        // Initialize dashboard when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new AnalyticsDashboard();
+        });
+    </script>
+{% endblock %}

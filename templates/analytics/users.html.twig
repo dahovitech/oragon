@@ -1,0 +1,785 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Analytics - Utilisateurs{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.min.css" rel="stylesheet">
+    <style>
+        .analytics-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 1rem 0;
+        }
+        
+        .date-picker {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .user-item {
+            border-left: 4px solid #6f42c1;
+            padding-left: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .user-stats {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: #f8f9fa;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        
+        .activity-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        
+        .activity-high { background: #28a745; }
+        .activity-medium { background: #ffc107; }
+        .activity-low { background: #dc3545; }
+        
+        .progress {
+            height: 8px;
+            background: #f8f9fa;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-users"></i>
+                Analyse des Utilisateurs
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ path('admin_analytics_dashboard') }}">Analytics</a></li>
+                    <li class="breadcrumb-item active">Utilisateurs</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Date Range Picker -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="date-picker">
+                <label for="dateRange" class="form-label">Période d'analyse</label>
+                <select id="dateRange" class="form-select">
+                    <option value="today">Aujourd'hui</option>
+                    <option value="yesterday">Hier</option>
+                    <option value="7days" selected>7 derniers jours</option>
+                    <option value="30days">30 derniers jours</option>
+                    <option value="90days">90 derniers jours</option>
+                    <option value="custom">Période personnalisée</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div id="customDateRange" style="display: none;">
+                <div class="row">
+                    <div class="col-6">
+                        <input type="date" id="fromDate" class="form-control" placeholder="Du">
+                    </div>
+                    <div class="col-6">
+                        <input type="date" id="toDate" class="form-control" placeholder="Au">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Metrics -->
+    <div class="row mb-4" id="userMetrics">
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="metric-value" id="totalUsers">-</div>
+                <div class="metric-label">Utilisateurs totaux</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="metric-value" id="newUsers">-</div>
+                <div class="metric-label">Nouveaux utilisateurs</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <div class="metric-value" id="activeUsers">-</div>
+                <div class="metric-label">Utilisateurs actifs</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <div class="metric-value" id="retentionRate">-</div>
+                <div class="metric-label">Taux de rétention</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="metric-card" style="background: linear-gradient(135deg, #fda085 0%, #f6d365 100%); font-size: 0.9rem;">
+                <div class="metric-value" style="font-size: 1.5rem;" id="avgSessionDuration">-</div>
+                <div class="metric-label">Durée session moy.</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="metric-card" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333; font-size: 0.9rem;">
+                <div class="metric-value" style="font-size: 1.5rem;" id="avgPagesPerSession">-</div>
+                <div class="metric-label">Pages par session</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="metric-card" style="background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%); color: #333; font-size: 0.9rem;">
+                <div class="metric-value" style="font-size: 1.5rem;" id="bounceRate">-</div>
+                <div class="metric-label">Taux de rebond</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="metric-card" style="background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); font-size: 0.9rem;">
+                <div class="metric-value" style="font-size: 1.5rem;" id="mobileUsers">-</div>
+                <div class="metric-label">Utilisateurs mobile</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="metric-card" style="background: linear-gradient(135deg, #fdbb2d 0%, #22c1c3 100%); font-size: 0.9rem;">
+                <div class="metric-value" style="font-size: 1.5rem;" id="registrations">-</div>
+                <div class="metric-label">Inscriptions</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="metric-card" style="background: linear-gradient(135deg, #ee9ca7 0%, #ffdde1 100%); color: #333; font-size: 0.9rem;">
+                <div class="metric-value" style="font-size: 1.5rem;" id="churnRate">-</div>
+                <div class="metric-label">Taux d'attrition</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="analytics-card">
+                <h5>Évolution des utilisateurs</h5>
+                <div class="chart-container">
+                    <canvas id="usersChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="analytics-card">
+                <h5>Répartition par âge</h5>
+                <div class="chart-container">
+                    <canvas id="ageChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5>Activité par heure</h5>
+                <div class="chart-container">
+                    <canvas id="activityChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5>Systèmes d'exploitation</h5>
+                <div class="chart-container">
+                    <canvas id="osChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Cohorts -->
+    <div class="row">
+        <div class="col-12">
+            <div class="analytics-card">
+                <h5>Analyse de cohorte</h5>
+                <div class="chart-container">
+                    <canvas id="cohortChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Lists -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5>Utilisateurs les plus actifs</h5>
+                <div id="activeUsersList" class="loading">Chargement...</div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5>Nouveaux utilisateurs</h5>
+                <div id="newUsersList" class="loading">Chargement...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Users Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="analytics-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5>Utilisateurs détaillés</h5>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <input type="radio" class="btn-check" name="userFilter" id="filterAll" checked>
+                        <label class="btn btn-outline-primary" for="filterAll">Tous</label>
+                        
+                        <input type="radio" class="btn-check" name="userFilter" id="filterActive">
+                        <label class="btn btn-outline-primary" for="filterActive">Actifs</label>
+                        
+                        <input type="radio" class="btn-check" name="userFilter" id="filterNew">
+                        <label class="btn btn-outline-primary" for="filterNew">Nouveaux</label>
+                        
+                        <input type="radio" class="btn-check" name="userFilter" id="filterInactive">
+                        <label class="btn btn-outline-primary" for="filterInactive">Inactifs</label>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>Utilisateur</th>
+                                <th>Date d'inscription</th>
+                                <th>Dernière activité</th>
+                                <th>Sessions</th>
+                                <th>Pages vues</th>
+                                <th>Temps total</th>
+                                <th>Activité</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="7" class="loading">Chargement...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="analytics-card">
+                <h5>Exporter les données utilisateurs</h5>
+                <div class="btn-group" role="group">
+                    <a href="{{ path('admin_analytics_export', {type: 'users', format: 'csv'}) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-download"></i> Exporter CSV
+                    </a>
+                    <a href="{{ path('admin_analytics_export', {type: 'users', format: 'json'}) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-download"></i> Exporter JSON
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.min.js"></script>
+    <script>
+        class UserAnalytics {
+            constructor() {
+                this.currentDateRange = '7days';
+                this.currentFilter = 'all';
+                this.charts = {};
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadUserData();
+            }
+
+            setupEventListeners() {
+                document.getElementById('dateRange').addEventListener('change', (e) => {
+                    this.currentDateRange = e.target.value;
+                    if (e.target.value === 'custom') {
+                        document.getElementById('customDateRange').style.display = 'block';
+                    } else {
+                        document.getElementById('customDateRange').style.display = 'none';
+                        this.loadUserData();
+                    }
+                });
+
+                document.getElementById('fromDate').addEventListener('change', () => this.loadUserData());
+                document.getElementById('toDate').addEventListener('change', () => this.loadUserData());
+
+                // User filters
+                document.querySelectorAll('input[name="userFilter"]').forEach(radio => {
+                    radio.addEventListener('change', (e) => {
+                        this.currentFilter = e.target.id.replace('filter', '').toLowerCase();
+                        this.loadUserData();
+                    });
+                });
+            }
+
+            getDateRange() {
+                if (this.currentDateRange === 'custom') {
+                    const from = document.getElementById('fromDate').value;
+                    const to = document.getElementById('toDate').value;
+                    return { from, to };
+                }
+
+                const now = new Date();
+                let from = new Date();
+
+                switch (this.currentDateRange) {
+                    case 'today':
+                        from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                        break;
+                    case 'yesterday':
+                        from = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+                        now.setDate(now.getDate() - 1);
+                        break;
+                    case '7days':
+                        from.setDate(now.getDate() - 7);
+                        break;
+                    case '30days':
+                        from.setDate(now.getDate() - 30);
+                        break;
+                    case '90days':
+                        from.setDate(now.getDate() - 90);
+                        break;
+                }
+
+                return {
+                    from: from.toISOString().split('T')[0],
+                    to: now.toISOString().split('T')[0]
+                };
+            }
+
+            async loadUserData() {
+                const dateRange = this.getDateRange();
+                const params = new URLSearchParams(dateRange);
+
+                try {
+                    const response = await fetch(`{{ path('admin_analytics_api_users') }}?${params}`);
+                    const data = await response.json();
+
+                    this.updateMetrics(data);
+                    this.updateCharts(data);
+                    this.updateUserLists(data);
+                    this.updateUsersTable(data.users);
+                } catch (error) {
+                    console.error('Error loading user data:', error);
+                }
+            }
+
+            updateMetrics(data) {
+                document.getElementById('totalUsers').textContent = this.formatNumber(data.total_users);
+                document.getElementById('newUsers').textContent = this.formatNumber(data.new_users);
+                document.getElementById('activeUsers').textContent = this.formatNumber(data.active_users);
+                document.getElementById('retentionRate').textContent = data.retention_rate + '%';
+                
+                document.getElementById('avgSessionDuration').textContent = this.formatDuration(data.avg_session_duration);
+                document.getElementById('avgPagesPerSession').textContent = data.avg_pages_per_session.toFixed(1);
+                document.getElementById('bounceRate').textContent = data.bounce_rate + '%';
+                document.getElementById('mobileUsers').textContent = data.mobile_users + '%';
+                document.getElementById('registrations').textContent = this.formatNumber(data.registrations);
+                document.getElementById('churnRate').textContent = data.churn_rate + '%';
+            }
+
+            updateCharts(data) {
+                this.updateUsersChart(data.daily_users);
+                this.updateAgeChart(data.age_distribution);
+                this.updateActivityChart(data.hourly_activity);
+                this.updateOsChart(data.operating_systems);
+                this.updateCohortChart(data.cohort_analysis);
+            }
+
+            updateUsersChart(dailyUsers) {
+                const ctx = document.getElementById('usersChart').getContext('2d');
+                
+                if (this.charts.users) {
+                    this.charts.users.destroy();
+                }
+
+                this.charts.users = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: dailyUsers.map(d => d.date),
+                        datasets: [{
+                            label: 'Nouveaux utilisateurs',
+                            data: dailyUsers.map(d => d.new_users),
+                            borderColor: '#f093fb',
+                            backgroundColor: 'rgba(240, 147, 251, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }, {
+                            label: 'Utilisateurs actifs',
+                            data: dailyUsers.map(d => d.active_users),
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            fill: false,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateAgeChart(ageDistribution) {
+                const ctx = document.getElementById('ageChart').getContext('2d');
+                
+                if (this.charts.age) {
+                    this.charts.age.destroy();
+                }
+
+                this.charts.age = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ageDistribution.map(a => a.range),
+                        datasets: [{
+                            data: ageDistribution.map(a => a.count),
+                            backgroundColor: [
+                                '#667eea',
+                                '#f093fb',
+                                '#4facfe',
+                                '#43e97b',
+                                '#f6d365',
+                                '#fda085'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateActivityChart(hourlyActivity) {
+                const ctx = document.getElementById('activityChart').getContext('2d');
+                
+                if (this.charts.activity) {
+                    this.charts.activity.destroy();
+                }
+
+                this.charts.activity = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Array.from({length: 24}, (_, i) => i + 'h'),
+                        datasets: [{
+                            label: 'Activité',
+                            data: hourlyActivity || Array(24).fill(0),
+                            backgroundColor: '#4facfe'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Utilisateurs actifs'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateOsChart(operatingSystems) {
+                const ctx = document.getElementById('osChart').getContext('2d');
+                
+                if (this.charts.os) {
+                    this.charts.os.destroy();
+                }
+
+                this.charts.os = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: operatingSystems.map(os => os.name),
+                        datasets: [{
+                            data: operatingSystems.map(os => os.count),
+                            backgroundColor: [
+                                '#667eea',
+                                '#f093fb',
+                                '#4facfe',
+                                '#43e97b',
+                                '#f6d365'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateCohortChart(cohortData) {
+                const ctx = document.getElementById('cohortChart').getContext('2d');
+                
+                if (this.charts.cohort) {
+                    this.charts.cohort.destroy();
+                }
+
+                this.charts.cohort = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: cohortData.map(c => c.period),
+                        datasets: [{
+                            label: 'Rétention (%)',
+                            data: cohortData.map(c => c.retention_rate),
+                            borderColor: '#28a745',
+                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 100,
+                                title: {
+                                    display: true,
+                                    text: 'Taux de rétention (%)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateUserLists(data) {
+                // Active users list
+                const activeUsersContainer = document.getElementById('activeUsersList');
+                activeUsersContainer.innerHTML = data.most_active_users.slice(0, 5).map(user => `
+                    <div class="user-item">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="user-avatar me-2">${user.username.charAt(0).toUpperCase()}</div>
+                            <div>
+                                <h6 class="mb-0">${user.username}</h6>
+                                <small class="text-muted">${user.email}</small>
+                            </div>
+                        </div>
+                        <div class="user-stats">
+                            <span class="stat-item"><i class="fas fa-eye"></i> ${this.formatNumber(user.page_views)} vues</span>
+                            <span class="stat-item"><i class="fas fa-clock"></i> ${this.formatDuration(user.total_time)}</span>
+                            <span class="stat-item"><i class="fas fa-mouse-pointer"></i> ${user.sessions} sessions</span>
+                        </div>
+                        <small class="text-muted">Dernière activité: ${this.formatDate(user.last_activity)}</small>
+                    </div>
+                `).join('');
+
+                // New users list
+                const newUsersContainer = document.getElementById('newUsersList');
+                newUsersContainer.innerHTML = data.recent_users.slice(0, 5).map(user => {
+                    const activityClass = user.activity_level === 'high' ? 'activity-high' : 
+                                         user.activity_level === 'medium' ? 'activity-medium' : 'activity-low';
+                    return `
+                        <div class="user-item">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="user-avatar me-2">${user.username.charAt(0).toUpperCase()}</div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">${user.username}</h6>
+                                    <small class="text-muted">${user.email}</small>
+                                </div>
+                                <span class="activity-indicator ${activityClass}"></span>
+                            </div>
+                            <div class="user-stats">
+                                <span class="stat-item"><i class="fas fa-calendar"></i> Inscrit le ${this.formatDate(user.created_at)}</span>
+                                <span class="stat-item"><i class="fas fa-chart-line"></i> ${user.engagement_score}/100</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            updateUsersTable(users) {
+                const tbody = document.querySelector('#usersTable tbody');
+                
+                let filteredUsers = users;
+                if (this.currentFilter === 'active') {
+                    filteredUsers = users.filter(user => user.is_active);
+                } else if (this.currentFilter === 'new') {
+                    const weekAgo = new Date();
+                    weekAgo.setDate(weekAgo.getDate() - 7);
+                    filteredUsers = users.filter(user => new Date(user.created_at) > weekAgo);
+                } else if (this.currentFilter === 'inactive') {
+                    filteredUsers = users.filter(user => !user.is_active);
+                }
+                
+                tbody.innerHTML = filteredUsers.slice(0, 50).map(user => {
+                    const activityClass = user.activity_level === 'high' ? 'activity-high' : 
+                                         user.activity_level === 'medium' ? 'activity-medium' : 'activity-low';
+                    const activityLabel = user.activity_level === 'high' ? 'Élevée' : 
+                                         user.activity_level === 'medium' ? 'Moyenne' : 'Faible';
+                    
+                    return `
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="user-avatar me-2">${user.username.charAt(0).toUpperCase()}</div>
+                                    <div>
+                                        <div class="fw-bold">${user.username}</div>
+                                        <small class="text-muted">${user.email}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>${this.formatDate(user.created_at)}</td>
+                            <td>${user.last_activity ? this.formatDate(user.last_activity) : 'Jamais'}</td>
+                            <td>${user.sessions_count}</td>
+                            <td>${this.formatNumber(user.page_views)}</td>
+                            <td>${this.formatDuration(user.total_time)}</td>
+                            <td>
+                                <span class="activity-indicator ${activityClass}"></span>
+                                ${activityLabel}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            formatNumber(num) {
+                if (num >= 1000000) {
+                    return (num / 1000000).toFixed(1) + 'M';
+                }
+                if (num >= 1000) {
+                    return (num / 1000).toFixed(1) + 'K';
+                }
+                return num.toString();
+            }
+
+            formatDuration(seconds) {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const secs = Math.floor(seconds % 60);
+
+                if (hours > 0) {
+                    return `${hours}h ${minutes}m`;
+                }
+                if (minutes > 0) {
+                    return `${minutes}m ${secs}s`;
+                }
+                return `${secs}s`;
+            }
+
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('fr-FR', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new UserAnalytics();
+        });
+    </script>
+{% endblock %}

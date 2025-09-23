@@ -1,0 +1,567 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Analytics - Contenu{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.min.css" rel="stylesheet">
+    <style>
+        .analytics-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 1rem 0;
+        }
+        
+        .date-picker {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .content-item {
+            border-left: 4px solid #667eea;
+            padding-left: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .content-stats {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: #f8f9fa;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        
+        .progress {
+            height: 8px;
+            background: #f8f9fa;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-file-alt"></i>
+                Analyse du Contenu
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ path('admin_analytics_dashboard') }}">Analytics</a></li>
+                    <li class="breadcrumb-item active">Contenu</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Date Range Picker -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="date-picker">
+                <label for="dateRange" class="form-label">Période d'analyse</label>
+                <select id="dateRange" class="form-select">
+                    <option value="today">Aujourd'hui</option>
+                    <option value="yesterday">Hier</option>
+                    <option value="7days" selected>7 derniers jours</option>
+                    <option value="30days">30 derniers jours</option>
+                    <option value="90days">90 derniers jours</option>
+                    <option value="custom">Période personnalisée</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div id="customDateRange" style="display: none;">
+                <div class="row">
+                    <div class="col-6">
+                        <input type="date" id="fromDate" class="form-control" placeholder="Du">
+                    </div>
+                    <div class="col-6">
+                        <input type="date" id="toDate" class="form-control" placeholder="Au">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Metrics -->
+    <div class="row mb-4" id="contentMetrics">
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="metric-value" id="totalPosts">-</div>
+                <div class="metric-label">Articles publiés</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="metric-value" id="totalViews">-</div>
+                <div class="metric-label">Vues totales</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <div class="metric-value" id="avgViews">-</div>
+                <div class="metric-label">Vues moyennes</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <div class="metric-value" id="avgReadTime">-</div>
+                <div class="metric-label">Temps lecture moy.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Charts -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="analytics-card">
+                <h5>Performance du contenu au fil du temps</h5>
+                <div class="chart-container">
+                    <canvas id="contentPerformanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="analytics-card">
+                <h5>Catégories populaires</h5>
+                <div class="chart-container">
+                    <canvas id="categoriesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Content -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5>Articles les plus lus</h5>
+                <div id="topPosts" class="loading">Chargement...</div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5>Articles récents</h5>
+                <div id="recentPosts" class="loading">Chargement...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Content Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="analytics-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5>Analyse détaillée du contenu</h5>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <input type="radio" class="btn-check" name="contentView" id="viewAll" checked>
+                        <label class="btn btn-outline-primary" for="viewAll">Tous</label>
+                        
+                        <input type="radio" class="btn-check" name="contentView" id="viewPosts">
+                        <label class="btn btn-outline-primary" for="viewPosts">Articles</label>
+                        
+                        <input type="radio" class="btn-check" name="contentView" id="viewPages">
+                        <label class="btn btn-outline-primary" for="viewPages">Pages</label>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="contentTable">
+                        <thead>
+                            <tr>
+                                <th>Titre</th>
+                                <th>Type</th>
+                                <th>Auteur</th>
+                                <th>Date</th>
+                                <th>Vues</th>
+                                <th>Temps moyen</th>
+                                <th>Engagement</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="7" class="loading">Chargement...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="analytics-card">
+                <h5>Exporter les données de contenu</h5>
+                <div class="btn-group" role="group">
+                    <a href="{{ path('admin_analytics_export', {type: 'content', format: 'csv'}) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-download"></i> Exporter CSV
+                    </a>
+                    <a href="{{ path('admin_analytics_export', {type: 'content', format: 'json'}) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-download"></i> Exporter JSON
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.min.js"></script>
+    <script>
+        class ContentAnalytics {
+            constructor() {
+                this.currentDateRange = '7days';
+                this.currentView = 'all';
+                this.charts = {};
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadContentData();
+            }
+
+            setupEventListeners() {
+                document.getElementById('dateRange').addEventListener('change', (e) => {
+                    this.currentDateRange = e.target.value;
+                    if (e.target.value === 'custom') {
+                        document.getElementById('customDateRange').style.display = 'block';
+                    } else {
+                        document.getElementById('customDateRange').style.display = 'none';
+                        this.loadContentData();
+                    }
+                });
+
+                document.getElementById('fromDate').addEventListener('change', () => this.loadContentData());
+                document.getElementById('toDate').addEventListener('change', () => this.loadContentData());
+
+                // Content view filters
+                document.querySelectorAll('input[name="contentView"]').forEach(radio => {
+                    radio.addEventListener('change', (e) => {
+                        this.currentView = e.target.id.replace('view', '').toLowerCase();
+                        this.loadContentData();
+                    });
+                });
+            }
+
+            getDateRange() {
+                if (this.currentDateRange === 'custom') {
+                    const from = document.getElementById('fromDate').value;
+                    const to = document.getElementById('toDate').value;
+                    return { from, to };
+                }
+
+                const now = new Date();
+                let from = new Date();
+
+                switch (this.currentDateRange) {
+                    case 'today':
+                        from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                        break;
+                    case 'yesterday':
+                        from = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+                        now.setDate(now.getDate() - 1);
+                        break;
+                    case '7days':
+                        from.setDate(now.getDate() - 7);
+                        break;
+                    case '30days':
+                        from.setDate(now.getDate() - 30);
+                        break;
+                    case '90days':
+                        from.setDate(now.getDate() - 90);
+                        break;
+                }
+
+                return {
+                    from: from.toISOString().split('T')[0],
+                    to: now.toISOString().split('T')[0]
+                };
+            }
+
+            async loadContentData() {
+                const dateRange = this.getDateRange();
+                const params = new URLSearchParams(dateRange);
+
+                try {
+                    const response = await fetch(`{{ path('admin_analytics_api_content') }}?${params}`);
+                    const data = await response.json();
+
+                    this.updateMetrics(data);
+                    this.updateCharts(data);
+                    this.updateContentLists(data);
+                    this.updateTable(data.all_content);
+                } catch (error) {
+                    console.error('Error loading content data:', error);
+                }
+            }
+
+            updateMetrics(data) {
+                document.getElementById('totalPosts').textContent = this.formatNumber(data.total_posts);
+                document.getElementById('totalViews').textContent = this.formatNumber(data.total_views);
+                document.getElementById('avgViews').textContent = this.formatNumber(data.avg_views);
+                document.getElementById('avgReadTime').textContent = this.formatDuration(data.avg_read_time);
+            }
+
+            updateCharts(data) {
+                this.updateContentPerformanceChart(data.daily_performance);
+                this.updateCategoriesChart(data.categories);
+            }
+
+            updateContentPerformanceChart(dailyPerformance) {
+                const ctx = document.getElementById('contentPerformanceChart').getContext('2d');
+                
+                if (this.charts.performance) {
+                    this.charts.performance.destroy();
+                }
+
+                this.charts.performance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: dailyPerformance.map(d => d.date),
+                        datasets: [{
+                            label: 'Vues',
+                            data: dailyPerformance.map(d => d.views),
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            yAxisID: 'y'
+                        }, {
+                            label: 'Articles publiés',
+                            data: dailyPerformance.map(d => d.published_count),
+                            borderColor: '#f093fb',
+                            backgroundColor: 'rgba(240, 147, 251, 0.1)',
+                            fill: false,
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            }
+                        },
+                        scales: {
+                            x: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Date'
+                                }
+                            },
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: {
+                                    display: true,
+                                    text: 'Vues'
+                                }
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: 'Articles'
+                                },
+                                grid: {
+                                    drawOnChartArea: false,
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateCategoriesChart(categories) {
+                const ctx = document.getElementById('categoriesChart').getContext('2d');
+                
+                if (this.charts.categories) {
+                    this.charts.categories.destroy();
+                }
+
+                const labels = categories.map(c => c.name);
+                const data = categories.map(c => c.views);
+
+                this.charts.categories = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: [
+                                '#667eea',
+                                '#f093fb',
+                                '#4facfe',
+                                '#43e97b',
+                                '#f6d365',
+                                '#fda085'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateContentLists(data) {
+                // Top posts
+                const topPostsContainer = document.getElementById('topPosts');
+                topPostsContainer.innerHTML = data.top_posts.slice(0, 5).map(post => `
+                    <div class="content-item">
+                        <h6 class="mb-2">${post.title}</h6>
+                        <div class="content-stats">
+                            <span class="stat-item"><i class="fas fa-eye"></i> ${this.formatNumber(post.views)} vues</span>
+                            <span class="stat-item"><i class="fas fa-clock"></i> ${this.formatDuration(post.avg_time)}</span>
+                            <span class="stat-item"><i class="fas fa-heart"></i> ${post.engagement_rate}%</span>
+                        </div>
+                        <small class="text-muted">${post.author} • ${this.formatDate(post.created_at)}</small>
+                    </div>
+                `).join('');
+
+                // Recent posts
+                const recentPostsContainer = document.getElementById('recentPosts');
+                recentPostsContainer.innerHTML = data.recent_posts.slice(0, 5).map(post => `
+                    <div class="content-item">
+                        <h6 class="mb-2">${post.title}</h6>
+                        <div class="content-stats">
+                            <span class="stat-item"><i class="fas fa-eye"></i> ${this.formatNumber(post.views)} vues</span>
+                            <span class="stat-item"><i class="fas fa-trending-up"></i> ${post.growth_rate > 0 ? '+' : ''}${post.growth_rate}%</span>
+                        </div>
+                        <small class="text-muted">${post.author} • ${this.formatDate(post.created_at)}</small>
+                    </div>
+                `).join('');
+            }
+
+            updateTable(content) {
+                const tbody = document.querySelector('#contentTable tbody');
+                
+                let filteredContent = content;
+                if (this.currentView === 'posts') {
+                    filteredContent = content.filter(item => item.type === 'post');
+                } else if (this.currentView === 'pages') {
+                    filteredContent = content.filter(item => item.type === 'page');
+                }
+                
+                tbody.innerHTML = filteredContent.slice(0, 50).map(item => `
+                    <tr>
+                        <td>
+                            <div class="fw-bold">${item.title}</div>
+                            <small class="text-muted">${item.excerpt || ''}</small>
+                        </td>
+                        <td><span class="badge bg-secondary">${item.type}</span></td>
+                        <td>${item.author}</td>
+                        <td>${this.formatDate(item.created_at)}</td>
+                        <td>${this.formatNumber(item.views)}</td>
+                        <td>${this.formatDuration(item.avg_read_time)}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">${item.engagement_rate}%</span>
+                                <div class="progress flex-grow-1" style="height: 4px; width: 60px;">
+                                    <div class="progress-bar" style="width: ${Math.min(item.engagement_rate, 100)}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            formatNumber(num) {
+                if (num >= 1000000) {
+                    return (num / 1000000).toFixed(1) + 'M';
+                }
+                if (num >= 1000) {
+                    return (num / 1000).toFixed(1) + 'K';
+                }
+                return num.toString();
+            }
+
+            formatDuration(seconds) {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const secs = Math.floor(seconds % 60);
+
+                if (hours > 0) {
+                    return `${hours}h ${minutes}m`;
+                }
+                if (minutes > 0) {
+                    return `${minutes}m ${secs}s`;
+                }
+                return `${secs}s`;
+            }
+
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('fr-FR', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new ContentAnalytics();
+        });
+    </script>
+{% endblock %}

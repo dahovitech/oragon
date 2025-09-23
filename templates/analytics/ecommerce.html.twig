@@ -1,0 +1,768 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Analytics - E-commerce{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.min.css" rel="stylesheet">
+    <style>
+        .analytics-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 1rem 0;
+        }
+        
+        .date-picker {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .product-item {
+            border-left: 4px solid #28a745;
+            padding-left: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .product-stats {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: #f8f9fa;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        
+        .currency {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .trend-up {
+            color: #28a745;
+        }
+        
+        .trend-down {
+            color: #dc3545;
+        }
+        
+        .progress {
+            height: 8px;
+            background: #f8f9fa;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-shopping-cart"></i>
+                Analyse E-commerce
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ path('admin_analytics_dashboard') }}">Analytics</a></li>
+                    <li class="breadcrumb-item active">E-commerce</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Date Range Picker -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="date-picker">
+                <label for="dateRange" class="form-label">Période d'analyse</label>
+                <select id="dateRange" class="form-select">
+                    <option value="today">Aujourd'hui</option>
+                    <option value="yesterday">Hier</option>
+                    <option value="7days" selected>7 derniers jours</option>
+                    <option value="30days">30 derniers jours</option>
+                    <option value="90days">90 derniers jours</option>
+                    <option value="custom">Période personnalisée</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div id="customDateRange" style="display: none;">
+                <div class="row">
+                    <div class="col-6">
+                        <input type="date" id="fromDate" class="form-control" placeholder="Du">
+                    </div>
+                    <div class="col-6">
+                        <input type="date" id="toDate" class="form-control" placeholder="Au">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- E-commerce Metrics -->
+    <div class="row mb-4" id="ecommerceMetrics">
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="metric-value currency" id="totalRevenue">-</div>
+                <div class="metric-label">Chiffre d'affaires</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="metric-value" id="totalOrders">-</div>
+                <div class="metric-label">Commandes</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <div class="metric-value currency" id="avgOrderValue">-</div>
+                <div class="metric-label">Panier moyen</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <div class="metric-value" id="conversionRate">-</div>
+                <div class="metric-label">Taux de conversion</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Secondary Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="metric-card" style="background: linear-gradient(135deg, #fda085 0%, #f6d365 100%); font-size: 0.9rem;">
+                <div class="metric-value" style="font-size: 1.5rem;" id="totalProducts">-</div>
+                <div class="metric-label">Produits vendus</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="metric-card" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); color: #333; font-size: 0.9rem;">
+                <div class="metric-value" style="font-size: 1.5rem;" id="refundRate">-</div>
+                <div class="metric-label">Taux de remboursement</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="metric-card" style="background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%); color: #333; font-size: 0.9rem;">
+                <div class="metric-value" style="font-size: 1.5rem;" id="avgDeliveryTime">-</div>
+                <div class="metric-label">Délai livraison moy.</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="metric-card" style="background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); font-size: 0.9rem;">
+                <div class="metric-value" style="font-size: 1.5rem;" id="cartAbandonRate">-</div>
+                <div class="metric-label">Abandon panier</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="metric-card" style="background: linear-gradient(135deg, #fdbb2d 0%, #22c1c3 100%); font-size: 0.9rem;">
+                <div class="metric-value" style="font-size: 1.5rem;" id="repeatCustomers">-</div>
+                <div class="metric-label">Clients fidèles</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="metric-card" style="background: linear-gradient(135deg, #ee9ca7 0%, #ffdde1 100%); color: #333; font-size: 0.9rem;">
+                <div class="metric-value" style="font-size: 1.5rem;" id="newCustomers">-</div>
+                <div class="metric-label">Nouveaux clients</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="analytics-card">
+                <h5>Évolution des ventes</h5>
+                <div class="chart-container">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="analytics-card">
+                <h5>Méthodes de paiement</h5>
+                <div class="chart-container">
+                    <canvas id="paymentMethodsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5>Catégories populaires</h5>
+                <div class="chart-container">
+                    <canvas id="categoriesChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5>Répartition géographique</h5>
+                <div class="chart-container">
+                    <canvas id="geographyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Products -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5>Produits les plus vendus</h5>
+                <div id="topProducts" class="loading">Chargement...</div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5>Produits en tendance</h5>
+                <div id="trendingProducts" class="loading">Chargement...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales Funnel -->
+    <div class="row">
+        <div class="col-12">
+            <div class="analytics-card">
+                <h5>Tunnel de conversion</h5>
+                <div class="chart-container">
+                    <canvas id="funnelChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Orders Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="analytics-card">
+                <h5>Commandes récentes</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover" id="ordersTable">
+                        <thead>
+                            <tr>
+                                <th>Commande</th>
+                                <th>Client</th>
+                                <th>Date</th>
+                                <th>Produits</th>
+                                <th>Montant</th>
+                                <th>Statut</th>
+                                <th>Mode paiement</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="7" class="loading">Chargement...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="analytics-card">
+                <h5>Exporter les données e-commerce</h5>
+                <div class="btn-group" role="group">
+                    <a href="{{ path('admin_analytics_export', {type: 'ecommerce', format: 'csv'}) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-download"></i> Exporter CSV
+                    </a>
+                    <a href="{{ path('admin_analytics_export', {type: 'ecommerce', format: 'json'}) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-download"></i> Exporter JSON
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.min.js"></script>
+    <script>
+        class EcommerceAnalytics {
+            constructor() {
+                this.currentDateRange = '7days';
+                this.charts = {};
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadEcommerceData();
+            }
+
+            setupEventListeners() {
+                document.getElementById('dateRange').addEventListener('change', (e) => {
+                    this.currentDateRange = e.target.value;
+                    if (e.target.value === 'custom') {
+                        document.getElementById('customDateRange').style.display = 'block';
+                    } else {
+                        document.getElementById('customDateRange').style.display = 'none';
+                        this.loadEcommerceData();
+                    }
+                });
+
+                document.getElementById('fromDate').addEventListener('change', () => this.loadEcommerceData());
+                document.getElementById('toDate').addEventListener('change', () => this.loadEcommerceData());
+            }
+
+            getDateRange() {
+                if (this.currentDateRange === 'custom') {
+                    const from = document.getElementById('fromDate').value;
+                    const to = document.getElementById('toDate').value;
+                    return { from, to };
+                }
+
+                const now = new Date();
+                let from = new Date();
+
+                switch (this.currentDateRange) {
+                    case 'today':
+                        from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                        break;
+                    case 'yesterday':
+                        from = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+                        now.setDate(now.getDate() - 1);
+                        break;
+                    case '7days':
+                        from.setDate(now.getDate() - 7);
+                        break;
+                    case '30days':
+                        from.setDate(now.getDate() - 30);
+                        break;
+                    case '90days':
+                        from.setDate(now.getDate() - 90);
+                        break;
+                }
+
+                return {
+                    from: from.toISOString().split('T')[0],
+                    to: now.toISOString().split('T')[0]
+                };
+            }
+
+            async loadEcommerceData() {
+                const dateRange = this.getDateRange();
+                const params = new URLSearchParams(dateRange);
+
+                try {
+                    const response = await fetch(`{{ path('admin_analytics_api_ecommerce') }}?${params}`);
+                    const data = await response.json();
+
+                    this.updateMetrics(data);
+                    this.updateCharts(data);
+                    this.updateProductLists(data);
+                    this.updateOrdersTable(data.recent_orders);
+                } catch (error) {
+                    console.error('Error loading ecommerce data:', error);
+                }
+            }
+
+            updateMetrics(data) {
+                document.getElementById('totalRevenue').textContent = this.formatCurrency(data.total_revenue);
+                document.getElementById('totalOrders').textContent = this.formatNumber(data.total_orders);
+                document.getElementById('avgOrderValue').textContent = this.formatCurrency(data.avg_order_value);
+                document.getElementById('conversionRate').textContent = data.conversion_rate + '%';
+                
+                document.getElementById('totalProducts').textContent = this.formatNumber(data.total_products_sold);
+                document.getElementById('refundRate').textContent = data.refund_rate + '%';
+                document.getElementById('avgDeliveryTime').textContent = data.avg_delivery_time + 'j';
+                document.getElementById('cartAbandonRate').textContent = data.cart_abandon_rate + '%';
+                document.getElementById('repeatCustomers').textContent = data.repeat_customers + '%';
+                document.getElementById('newCustomers').textContent = this.formatNumber(data.new_customers);
+            }
+
+            updateCharts(data) {
+                this.updateSalesChart(data.daily_sales);
+                this.updatePaymentMethodsChart(data.payment_methods);
+                this.updateCategoriesChart(data.categories);
+                this.updateGeographyChart(data.geography);
+                this.updateFunnelChart(data.conversion_funnel);
+            }
+
+            updateSalesChart(dailySales) {
+                const ctx = document.getElementById('salesChart').getContext('2d');
+                
+                if (this.charts.sales) {
+                    this.charts.sales.destroy();
+                }
+
+                this.charts.sales = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: dailySales.map(d => d.date),
+                        datasets: [{
+                            label: 'Chiffre d\'affaires',
+                            data: dailySales.map(d => d.revenue),
+                            borderColor: '#28a745',
+                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            yAxisID: 'y'
+                        }, {
+                            label: 'Commandes',
+                            data: dailySales.map(d => d.orders),
+                            borderColor: '#667eea',
+                            backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                            fill: false,
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            }
+                        },
+                        scales: {
+                            x: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Date'
+                                }
+                            },
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: {
+                                    display: true,
+                                    text: 'Chiffre d\'affaires (€)'
+                                }
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: {
+                                    display: true,
+                                    text: 'Commandes'
+                                },
+                                grid: {
+                                    drawOnChartArea: false,
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            updatePaymentMethodsChart(paymentMethods) {
+                const ctx = document.getElementById('paymentMethodsChart').getContext('2d');
+                
+                if (this.charts.payment) {
+                    this.charts.payment.destroy();
+                }
+
+                this.charts.payment = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: paymentMethods.map(p => p.method),
+                        datasets: [{
+                            data: paymentMethods.map(p => p.count),
+                            backgroundColor: [
+                                '#28a745',
+                                '#667eea',
+                                '#f093fb',
+                                '#4facfe',
+                                '#43e97b'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateCategoriesChart(categories) {
+                const ctx = document.getElementById('categoriesChart').getContext('2d');
+                
+                if (this.charts.categories) {
+                    this.charts.categories.destroy();
+                }
+
+                this.charts.categories = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: categories.map(c => c.name),
+                        datasets: [{
+                            label: 'Revenus',
+                            data: categories.map(c => c.revenue),
+                            backgroundColor: '#28a745'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Revenus (€)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateGeographyChart(geography) {
+                const ctx = document.getElementById('geographyChart').getContext('2d');
+                
+                if (this.charts.geography) {
+                    this.charts.geography.destroy();
+                }
+
+                this.charts.geography = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: geography.map(g => g.country),
+                        datasets: [{
+                            data: geography.map(g => g.orders),
+                            backgroundColor: [
+                                '#667eea',
+                                '#f093fb',
+                                '#4facfe',
+                                '#43e97b',
+                                '#f6d365',
+                                '#fda085'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateFunnelChart(funnelData) {
+                const ctx = document.getElementById('funnelChart').getContext('2d');
+                
+                if (this.charts.funnel) {
+                    this.charts.funnel.destroy();
+                }
+
+                this.charts.funnel = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Visiteurs', 'Vues produit', 'Ajouts panier', 'Commandes', 'Paiements'],
+                        datasets: [{
+                            label: 'Nombre',
+                            data: [
+                                funnelData.visitors,
+                                funnelData.product_views,
+                                funnelData.cart_additions,
+                                funnelData.orders,
+                                funnelData.payments
+                            ],
+                            backgroundColor: [
+                                '#667eea',
+                                '#f093fb',
+                                '#4facfe',
+                                '#43e97b',
+                                '#28a745'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateProductLists(data) {
+                // Top products
+                const topProductsContainer = document.getElementById('topProducts');
+                topProductsContainer.innerHTML = data.top_products.slice(0, 5).map(product => `
+                    <div class="product-item">
+                        <h6 class="mb-2">${product.name}</h6>
+                        <div class="product-stats">
+                            <span class="stat-item"><i class="fas fa-shopping-cart"></i> ${product.quantity_sold} vendus</span>
+                            <span class="stat-item currency"><i class="fas fa-euro-sign"></i> ${this.formatCurrency(product.revenue)}</span>
+                            <span class="stat-item"><i class="fas fa-star"></i> ${product.rating}/5</span>
+                        </div>
+                        <small class="text-muted">Catégorie: ${product.category}</small>
+                    </div>
+                `).join('');
+
+                // Trending products
+                const trendingProductsContainer = document.getElementById('trendingProducts');
+                trendingProductsContainer.innerHTML = data.trending_products.slice(0, 5).map(product => {
+                    const trendClass = product.growth_rate > 0 ? 'trend-up' : 'trend-down';
+                    const trendIcon = product.growth_rate > 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+                    return `
+                        <div class="product-item">
+                            <h6 class="mb-2">${product.name}</h6>
+                            <div class="product-stats">
+                                <span class="stat-item"><i class="fas fa-shopping-cart"></i> ${product.quantity_sold} vendus</span>
+                                <span class="stat-item ${trendClass}"><i class="fas ${trendIcon}"></i> ${Math.abs(product.growth_rate)}%</span>
+                                <span class="stat-item currency"><i class="fas fa-euro-sign"></i> ${this.formatCurrency(product.revenue)}</span>
+                            </div>
+                            <small class="text-muted">Croissance sur la période</small>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            updateOrdersTable(orders) {
+                const tbody = document.querySelector('#ordersTable tbody');
+                
+                tbody.innerHTML = orders.slice(0, 20).map(order => {
+                    let statusBadge = '';
+                    switch(order.status) {
+                        case 'pending':
+                            statusBadge = '<span class="badge bg-warning">En attente</span>';
+                            break;
+                        case 'processing':
+                            statusBadge = '<span class="badge bg-info">En cours</span>';
+                            break;
+                        case 'shipped':
+                            statusBadge = '<span class="badge bg-primary">Expédiée</span>';
+                            break;
+                        case 'delivered':
+                            statusBadge = '<span class="badge bg-success">Livrée</span>';
+                            break;
+                        case 'cancelled':
+                            statusBadge = '<span class="badge bg-danger">Annulée</span>';
+                            break;
+                        default:
+                            statusBadge = '<span class="badge bg-secondary">' + order.status + '</span>';
+                    }
+                    
+                    return `
+                        <tr>
+                            <td>
+                                <div class="fw-bold">#${order.id}</div>
+                                <small class="text-muted">${order.reference}</small>
+                            </td>
+                            <td>
+                                <div>${order.customer_name}</div>
+                                <small class="text-muted">${order.customer_email}</small>
+                            </td>
+                            <td>${this.formatDate(order.created_at)}</td>
+                            <td>${order.items_count} article(s)</td>
+                            <td class="currency">${this.formatCurrency(order.total)}</td>
+                            <td>${statusBadge}</td>
+                            <td><span class="badge bg-light text-dark">${order.payment_method}</span></td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            formatNumber(num) {
+                if (num >= 1000000) {
+                    return (num / 1000000).toFixed(1) + 'M';
+                }
+                if (num >= 1000) {
+                    return (num / 1000).toFixed(1) + 'K';
+                }
+                return num.toString();
+            }
+
+            formatCurrency(amount) {
+                return new Intl.NumberFormat('fr-FR', {
+                    style: 'currency',
+                    currency: 'EUR'
+                }).format(amount);
+            }
+
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('fr-FR', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new EcommerceAnalytics();
+        });
+    </script>
+{% endblock %}

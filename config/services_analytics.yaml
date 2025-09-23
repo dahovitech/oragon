@@ -1,0 +1,23 @@
+# Analytics Bundle Services
+services:
+    App\Bundle\AnalyticsBundle\Service\AnalyticsTracker:
+        arguments:
+            - '@doctrine.orm.entity_manager'
+            - '@App\Bundle\AnalyticsBundle\Repository\PageViewRepository'
+            - '@App\Bundle\AnalyticsBundle\Repository\EventRepository'
+            - '@security.token_storage'
+
+    App\Bundle\AnalyticsBundle\Service\ReportGenerator:
+        arguments:
+            - '@App\Bundle\AnalyticsBundle\Repository\PageViewRepository'
+            - '@App\Bundle\AnalyticsBundle\Repository\EventRepository'
+            - '@App\Bundle\BlogBundle\Repository\PostRepository'
+            - '@App\Bundle\EcommerceBundle\Repository\OrderRepository'
+            - '@App\Bundle\EcommerceBundle\Repository\ProductRepository'
+            - '@App\Bundle\UserBundle\Repository\UserRepository'
+
+    App\Bundle\AnalyticsBundle\EventListener\AnalyticsListener:
+        arguments:
+            - '@App\Bundle\AnalyticsBundle\Service\AnalyticsTracker'
+        tags:
+            - { name: kernel.event_subscriber }

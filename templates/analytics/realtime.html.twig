@@ -1,0 +1,826 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Analytics - Temps Réel{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.min.css" rel="stylesheet">
+    <style>
+        .analytics-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+        
+        .real-time-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #28a745;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .activity-item {
+            border-left: 3px solid #28a745;
+            padding-left: 1rem;
+            margin-bottom: 0.75rem;
+            background: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .activity-time {
+            font-size: 0.75rem;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        
+        .activity-content {
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+        
+        .visitor-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            background: #f8f9fa;
+        }
+        
+        .visitor-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #667eea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-right: 0.75rem;
+        }
+        
+        .page-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+            background: #f8f9fa;
+        }
+        
+        .page-views-badge {
+            background: #28a745;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        
+        .country-flag {
+            width: 20px;
+            height: 15px;
+            margin-right: 0.5rem;
+            border-radius: 2px;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+        
+        .status-online { background: #28a745; }
+        .status-idle { background: #ffc107; }
+        .status-offline { background: #dc3545; }
+        
+        .live-counter {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+        
+        .refresh-indicator {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.8rem;
+        }
+        
+        .auto-refresh {
+            animation: spin 2s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-broadcast-tower"></i>
+                Analytics Temps Réel
+                <span class="real-time-indicator"></span>
+                <small class="text-muted">Données en direct</small>
+            </h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ path('admin_analytics_dashboard') }}">Analytics</a></li>
+                    <li class="breadcrumb-item active">Temps réel</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Real-time Metrics -->
+    <div class="row mb-4" id="realTimeMetrics">
+        <div class="col-md-3">
+            <div class="metric-card">
+                <div class="refresh-indicator">
+                    <i class="fas fa-sync-alt auto-refresh"></i>
+                </div>
+                <div class="metric-value" id="activeVisitors">-</div>
+                <div class="metric-label">Visiteurs en ligne</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="refresh-indicator">
+                    <i class="fas fa-sync-alt auto-refresh"></i>
+                </div>
+                <div class="metric-value" id="pageViewsPerMinute">-</div>
+                <div class="metric-label">Vues / minute</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <div class="refresh-indicator">
+                    <i class="fas fa-sync-alt auto-refresh"></i>
+                </div>
+                <div class="metric-value" id="newSessions">-</div>
+                <div class="metric-label">Nouvelles sessions</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="metric-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <div class="refresh-indicator">
+                    <i class="fas fa-sync-alt auto-refresh"></i>
+                </div>
+                <div class="metric-value" id="avgSessionDuration">-</div>
+                <div class="metric-label">Durée moy. session</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Real-time Charts -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="analytics-card">
+                <h5>Activité en temps réel (dernières 30 minutes)</h5>
+                <div class="chart-container">
+                    <canvas id="realTimeChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="analytics-card">
+                <h5>Répartition par appareil</h5>
+                <div class="chart-container">
+                    <canvas id="deviceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity Feed and Visitors -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5>
+                    <i class="fas fa-stream"></i>
+                    Activité récente
+                    <span class="real-time-indicator"></span>
+                </h5>
+                <div id="activityFeed" style="height: 400px; overflow-y: auto;">
+                    <div class="text-center p-3">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Chargement de l'activité...
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5>
+                    <i class="fas fa-users"></i>
+                    Visiteurs en ligne
+                    <span class="live-counter" id="onlineCount">0</span>
+                </h5>
+                <div id="onlineVisitors" style="height: 400px; overflow-y: auto;">
+                    <div class="text-center p-3">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Chargement des visiteurs...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Pages and Geographic -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5>Pages actuellement visitées</h5>
+                <div id="currentPages" style="height: 300px; overflow-y: auto;">
+                    <div class="text-center p-3">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Chargement...
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5>Visiteurs par pays</h5>
+                <div id="countriesLive" style="height: 300px; overflow-y: auto;">
+                    <div class="text-center p-3">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Chargement...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Referrers and Social -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5>Sources de trafic en temps réel</h5>
+                <div class="chart-container">
+                    <canvas id="referrersChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="analytics-card">
+                <h5>Événements en temps réel</h5>
+                <div id="realTimeEvents" style="height: 300px; overflow-y: auto;">
+                    <div class="text-center p-3">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Chargement des événements...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="analytics-card">
+                <h5>Contrôles temps réel</h5>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-success" id="pauseBtn">
+                        <i class="fas fa-pause"></i> Pause
+                    </button>
+                    <button type="button" class="btn btn-outline-primary" id="refreshBtn">
+                        <i class="fas fa-sync-alt"></i> Actualiser
+                    </button>
+                    <button type="button" class="btn btn-outline-info" id="fullscreenBtn">
+                        <i class="fas fa-expand"></i> Plein écran
+                    </button>
+                </div>
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        Actualisation automatique toutes les 5 secondes. 
+                        Dernière mise à jour: <span id="lastUpdate">-</span>
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.0.1/dist/chart.min.js"></script>
+    <script>
+        class RealTimeAnalytics {
+            constructor() {
+                this.charts = {};
+                this.isPaused = false;
+                this.updateInterval = null;
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.loadRealTimeData();
+                this.startAutoRefresh();
+            }
+
+            setupEventListeners() {
+                document.getElementById('pauseBtn').addEventListener('click', () => this.togglePause());
+                document.getElementById('refreshBtn').addEventListener('click', () => this.loadRealTimeData());
+                document.getElementById('fullscreenBtn').addEventListener('click', () => this.toggleFullscreen());
+            }
+
+            togglePause() {
+                const pauseBtn = document.getElementById('pauseBtn');
+                if (this.isPaused) {
+                    this.startAutoRefresh();
+                    pauseBtn.innerHTML = '<i class="fas fa-pause"></i> Pause';
+                    pauseBtn.classList.remove('btn-outline-warning');
+                    pauseBtn.classList.add('btn-outline-success');
+                } else {
+                    this.stopAutoRefresh();
+                    pauseBtn.innerHTML = '<i class="fas fa-play"></i> Reprendre';
+                    pauseBtn.classList.remove('btn-outline-success');
+                    pauseBtn.classList.add('btn-outline-warning');
+                }
+                this.isPaused = !this.isPaused;
+            }
+
+            toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+
+            startAutoRefresh() {
+                this.updateInterval = setInterval(() => {
+                    if (!this.isPaused) {
+                        this.loadRealTimeData();
+                    }
+                }, 5000); // Refresh every 5 seconds
+            }
+
+            stopAutoRefresh() {
+                if (this.updateInterval) {
+                    clearInterval(this.updateInterval);
+                }
+            }
+
+            async loadRealTimeData() {
+                try {
+                    const response = await fetch('{{ path('admin_analytics_api_realtime') }}');
+                    const data = await response.json();
+
+                    this.updateMetrics(data);
+                    this.updateCharts(data);
+                    this.updateActivityFeed(data.recent_activity);
+                    this.updateOnlineVisitors(data.online_visitors);
+                    this.updateCurrentPages(data.current_pages);
+                    this.updateCountries(data.countries);
+                    this.updateEvents(data.recent_events);
+                    this.updateLastUpdate();
+                } catch (error) {
+                    console.error('Error loading real-time data:', error);
+                }
+            }
+
+            updateMetrics(data) {
+                document.getElementById('activeVisitors').textContent = data.active_visitors || 0;
+                document.getElementById('pageViewsPerMinute').textContent = data.page_views_per_minute || 0;
+                document.getElementById('newSessions').textContent = data.new_sessions || 0;
+                document.getElementById('avgSessionDuration').textContent = this.formatDuration(data.avg_session_duration || 0);
+                document.getElementById('onlineCount').textContent = data.online_visitors?.length || 0;
+            }
+
+            updateCharts(data) {
+                this.updateRealTimeChart(data.activity_timeline);
+                this.updateDeviceChart(data.devices);
+                this.updateReferrersChart(data.referrers);
+            }
+
+            updateRealTimeChart(timeline) {
+                const ctx = document.getElementById('realTimeChart').getContext('2d');
+                
+                if (this.charts.realtime) {
+                    this.charts.realtime.destroy();
+                }
+
+                // Generate labels for the last 30 minutes
+                const now = new Date();
+                const labels = [];
+                const data = [];
+                
+                for (let i = 29; i >= 0; i--) {
+                    const time = new Date(now.getTime() - (i * 60000));
+                    labels.push(time.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
+                    
+                    // Find corresponding data point or use 0
+                    const timeKey = time.toISOString().slice(0, 16);
+                    const point = timeline?.find(t => t.time.slice(0, 16) === timeKey);
+                    data.push(point ? point.views : 0);
+                }
+
+                this.charts.realtime = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Vues de pages',
+                            data: data,
+                            borderColor: '#28a745',
+                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 0 // Disable animations for real-time updates
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            x: {
+                                display: true,
+                                title: {
+                                    display: true,
+                                    text: 'Heure'
+                                }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Vues'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateDeviceChart(devices) {
+                const ctx = document.getElementById('deviceChart').getContext('2d');
+                
+                if (this.charts.device) {
+                    this.charts.device.destroy();
+                }
+
+                if (!devices || devices.length === 0) {
+                    devices = [
+                        { name: 'Desktop', count: 0 },
+                        { name: 'Mobile', count: 0 },
+                        { name: 'Tablet', count: 0 }
+                    ];
+                }
+
+                this.charts.device = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: devices.map(d => d.name),
+                        datasets: [{
+                            data: devices.map(d => d.count),
+                            backgroundColor: [
+                                '#667eea',
+                                '#f093fb',
+                                '#4facfe'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 0
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateReferrersChart(referrers) {
+                const ctx = document.getElementById('referrersChart').getContext('2d');
+                
+                if (this.charts.referrers) {
+                    this.charts.referrers.destroy();
+                }
+
+                if (!referrers || referrers.length === 0) {
+                    referrers = [{ source: 'Direct', count: 0 }];
+                }
+
+                const labels = referrers.slice(0, 5).map(r => this.getDomainFromUrl(r.source));
+                const data = referrers.slice(0, 5).map(r => r.count);
+
+                this.charts.referrers = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Visiteurs',
+                            data: data,
+                            backgroundColor: '#4facfe'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        animation: {
+                            duration: 0
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateActivityFeed(activities) {
+                const container = document.getElementById('activityFeed');
+                
+                if (!activities || activities.length === 0) {
+                    container.innerHTML = '<div class="text-center p-3 text-muted">Aucune activité récente</div>';
+                    return;
+                }
+
+                container.innerHTML = activities.slice(0, 20).map(activity => {
+                    const timeAgo = this.timeAgo(new Date(activity.timestamp));
+                    return `
+                        <div class="activity-item">
+                            <div class="activity-time">${timeAgo}</div>
+                            <div class="activity-content">
+                                <i class="fas ${this.getActivityIcon(activity.type)}"></i>
+                                ${this.formatActivity(activity)}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            updateOnlineVisitors(visitors) {
+                const container = document.getElementById('onlineVisitors');
+                
+                if (!visitors || visitors.length === 0) {
+                    container.innerHTML = '<div class="text-center p-3 text-muted">Aucun visiteur en ligne</div>';
+                    return;
+                }
+
+                container.innerHTML = visitors.slice(0, 20).map(visitor => {
+                    const status = this.getVisitorStatus(visitor.last_activity);
+                    return `
+                        <div class="visitor-item">
+                            <div class="visitor-avatar">${visitor.username ? visitor.username.charAt(0).toUpperCase() : 'A'}</div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <span>${visitor.username || 'Visiteur anonyme'}</span>
+                                    <small class="text-muted">${this.timeAgo(new Date(visitor.last_activity))}</small>
+                                </div>
+                                <small class="text-muted">
+                                    <span class="status-indicator status-${status}"></span>
+                                    ${visitor.current_page || 'Page inconnue'}
+                                </small>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            updateCurrentPages(pages) {
+                const container = document.getElementById('currentPages');
+                
+                if (!pages || pages.length === 0) {
+                    container.innerHTML = '<div class="text-center p-3 text-muted">Aucune page visitée</div>';
+                    return;
+                }
+
+                container.innerHTML = pages.slice(0, 15).map(page => `
+                    <div class="page-item">
+                        <div>
+                            <div class="fw-bold">${page.title || 'Sans titre'}</div>
+                            <small class="text-muted">${page.url}</small>
+                        </div>
+                        <span class="page-views-badge">${page.current_visitors}</span>
+                    </div>
+                `).join('');
+            }
+
+            updateCountries(countries) {
+                const container = document.getElementById('countriesLive');
+                
+                if (!countries || countries.length === 0) {
+                    container.innerHTML = '<div class="text-center p-3 text-muted">Aucune donnée géographique</div>';
+                    return;
+                }
+
+                container.innerHTML = countries.slice(0, 10).map(country => `
+                    <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                        <div class="d-flex align-items-center">
+                            <span class="country-flag me-2">${this.getCountryFlag(country.code)}</span>
+                            <span>${country.name}</span>
+                        </div>
+                        <span class="badge bg-primary">${country.visitors}</span>
+                    </div>
+                `).join('');
+            }
+
+            updateEvents(events) {
+                const container = document.getElementById('realTimeEvents');
+                
+                if (!events || events.length === 0) {
+                    container.innerHTML = '<div class="text-center p-3 text-muted">Aucun événement récent</div>';
+                    return;
+                }
+
+                container.innerHTML = events.slice(0, 15).map(event => `
+                    <div class="activity-item">
+                        <div class="activity-time">${this.timeAgo(new Date(event.timestamp))}</div>
+                        <div class="activity-content">
+                            <i class="fas ${this.getEventIcon(event.type)}"></i>
+                            ${event.description}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            updateLastUpdate() {
+                document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('fr-FR');
+            }
+
+            getActivityIcon(type) {
+                const icons = {
+                    'page_view': 'fa-eye',
+                    'user_login': 'fa-sign-in-alt',
+                    'user_register': 'fa-user-plus',
+                    'purchase': 'fa-shopping-cart',
+                    'download': 'fa-download',
+                    'search': 'fa-search',
+                    'comment': 'fa-comment'
+                };
+                return icons[type] || 'fa-circle';
+            }
+
+            getEventIcon(type) {
+                const icons = {
+                    'click': 'fa-mouse-pointer',
+                    'scroll': 'fa-arrows-alt-v',
+                    'form_submit': 'fa-paper-plane',
+                    'error': 'fa-exclamation-triangle'
+                };
+                return icons[type] || 'fa-circle';
+            }
+
+            formatActivity(activity) {
+                switch (activity.type) {
+                    case 'page_view':
+                        return `Visite de <strong>${activity.page_title || activity.url}</strong>`;
+                    case 'user_login':
+                        return `Connexion de <strong>${activity.username}</strong>`;
+                    case 'user_register':
+                        return `Inscription de <strong>${activity.username}</strong>`;
+                    case 'purchase':
+                        return `Achat de <strong>${activity.product_name}</strong> (${activity.amount}€)`;
+                    case 'download':
+                        return `Téléchargement de <strong>${activity.file_name}</strong>`;
+                    default:
+                        return activity.description || 'Activité inconnue';
+                }
+            }
+
+            getVisitorStatus(lastActivity) {
+                const now = new Date();
+                const last = new Date(lastActivity);
+                const diffMinutes = (now - last) / 60000;
+                
+                if (diffMinutes < 2) return 'online';
+                if (diffMinutes < 10) return 'idle';
+                return 'offline';
+            }
+
+            getCountryFlag(countryCode) {
+                // Simple flag representation - in a real app, you'd use flag icons
+                const flags = {
+                    'FR': '🇫🇷',
+                    'US': '🇺🇸',
+                    'GB': '🇬🇧',
+                    'DE': '🇩🇪',
+                    'ES': '🇪🇸',
+                    'IT': '🇮🇹'
+                };
+                return flags[countryCode] || '🌍';
+            }
+
+            timeAgo(date) {
+                const now = new Date();
+                const diffMs = now - date;
+                const diffSecs = Math.floor(diffMs / 1000);
+                const diffMins = Math.floor(diffSecs / 60);
+                const diffHours = Math.floor(diffMins / 60);
+
+                if (diffSecs < 60) return 'À l\'instant';
+                if (diffMins < 60) return `Il y a ${diffMins} min`;
+                if (diffHours < 24) return `Il y a ${diffHours}h`;
+                return date.toLocaleDateString('fr-FR');
+            }
+
+            formatDuration(seconds) {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const secs = Math.floor(seconds % 60);
+
+                if (hours > 0) {
+                    return `${hours}h ${minutes}m`;
+                }
+                if (minutes > 0) {
+                    return `${minutes}m ${secs}s`;
+                }
+                return `${secs}s`;
+            }
+
+            getDomainFromUrl(url) {
+                if (!url || url === 'direct') return 'Direct';
+                try {
+                    const domain = new URL(url).hostname;
+                    return domain.replace('www.', '');
+                } catch {
+                    return 'Inconnu';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new RealTimeAnalytics();
+        });
+
+        // Clean up intervals when page unloads
+        window.addEventListener('beforeunload', () => {
+            if (window.analytics) {
+                window.analytics.stopAutoRefresh();
+            }
+        });
+    </script>
+{% endblock %}
