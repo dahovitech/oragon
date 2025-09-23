@@ -880,15 +880,20 @@ async function uploadFiles(files) {
     const progressContainer = document.getElementById('uploadProgress');
     const successMessage = document.getElementById('uploadSuccessMessage');
     
-    // Vérifications de sécurité avant d'accéder aux propriétés
-    if (!progressContainer || !successMessage) {
-        console.error('Éléments requis non trouvés:', { progressContainer, successMessage });
+    // Vérification critique : progressContainer est indispensable
+    if (!progressContainer) {
+        console.error('Élément uploadProgress requis non trouvé');
         return;
     }
     
+    // Affichage de la progression (toujours possible)
     progressContainer.style.display = 'block';
     progressContainer.innerHTML = '';
-    successMessage.style.display = 'none';
+    
+    // Masquer le message de succès seulement s'il existe
+    if (successMessage) {
+        successMessage.style.display = 'none';
+    }
     
     const formData = new FormData();
     
@@ -919,10 +924,12 @@ async function uploadFiles(files) {
                 updateProgressItem(index, 100, 'success', 'Upload réussi');
             });
             
-            // Afficher le message de succès
+            // Afficher le message de succès si disponible
             setTimeout(() => {
-                if (successMessage && progressContainer) {
+                if (successMessage) {
                     successMessage.style.display = 'block';
+                }
+                if (progressContainer) {
                     progressContainer.style.display = 'none';
                 }
             }, 1500);
