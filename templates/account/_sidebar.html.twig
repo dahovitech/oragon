@@ -1,0 +1,246 @@
+<div class="account-sidebar">
+    <div class="user-info">
+        <div class="user-avatar">
+            {% if app.user.avatar %}
+                <img src="{{ asset('uploads/avatars/' ~ app.user.avatar) }}" alt="{{ app.user.firstName }} {{ app.user.lastName }}">
+            {% else %}
+                <div class="avatar-placeholder">
+                    <i class="fa fa-user"></i>
+                </div>
+            {% endif %}
+        </div>
+        <div class="user-details">
+            <h5>{{ app.user.firstName }} {{ app.user.lastName }}</h5>
+            <p class="user-email">{{ app.user.email }}</p>
+            <p class="member-since">
+                <small>{{ 'account.member_since'|trans }} {{ app.user.createdAt|date('M Y') }}</small>
+            </p>
+        </div>
+    </div>
+
+    <nav class="account-navigation">
+        <ul class="nav nav-pills flex-column">
+            <li class="nav-item">
+                <a class="nav-link {{ app.request.get('_route') == 'account_dashboard' ? 'active' : '' }}" 
+                   href="{{ path('account_dashboard', {'_locale': app.request.locale}) }}">
+                    <i class="fa fa-tachometer"></i>
+                    {{ 'account.dashboard'|trans }}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ app.request.get('_route') == 'account_orders' ? 'active' : '' }}" 
+                   href="{{ path('account_orders', {'_locale': app.request.locale}) }}">
+                    <i class="fa fa-shopping-bag"></i>
+                    {{ 'account.orders'|trans }}
+                    {% set pending_orders = app.user.orders|filter(order => order.status in ['pending', 'processing']) %}
+                    {% if pending_orders|length > 0 %}
+                        <span class="badge badge-primary">{{ pending_orders|length }}</span>
+                    {% endif %}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ app.request.get('_route') == 'wishlist_index' ? 'active' : '' }}" 
+                   href="{{ path('wishlist_index', {'_locale': app.request.locale}) }}">
+                    <i class="fa fa-heart"></i>
+                    {{ 'account.wishlist'|trans }}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ app.request.get('_route') == 'account_reviews' ? 'active' : '' }}" 
+                   href="{{ path('account_reviews', {'_locale': app.request.locale}) }}">
+                    <i class="fa fa-star"></i>
+                    {{ 'account.reviews'|trans }}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ app.request.get('_route') == 'account_addresses' ? 'active' : '' }}" 
+                   href="{{ path('account_addresses', {'_locale': app.request.locale}) }}">
+                    <i class="fa fa-map-marker"></i>
+                    {{ 'account.addresses'|trans }}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ app.request.get('_route') == 'account_profile' ? 'active' : '' }}" 
+                   href="{{ path('account_profile', {'_locale': app.request.locale}) }}">
+                    <i class="fa fa-user"></i>
+                    {{ 'account.profile'|trans }}
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {{ app.request.get('_route') == 'account_settings' ? 'active' : '' }}" 
+                   href="{{ path('account_settings', {'_locale': app.request.locale}) }}">
+                    <i class="fa fa-cog"></i>
+                    {{ 'account.settings'|trans }}
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="account-actions">
+        <a href="{{ path('app_logout', {'_locale': app.request.locale}) }}" class="btn btn-outline btn-sm">
+            <i class="fa fa-sign-out"></i>
+            {{ 'auth.logout'|trans }}
+        </a>
+    </div>
+</div>
+
+<style>
+    .account-sidebar {
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        padding: 0;
+        margin-bottom: 2rem;
+        overflow: hidden;
+    }
+    
+    .user-info {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .user-avatar {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1rem;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 3px solid rgba(255,255,255,0.2);
+    }
+    
+    .user-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .avatar-placeholder {
+        width: 100%;
+        height: 100%;
+        background: rgba(255,255,255,0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+    }
+    
+    .user-details h5 {
+        margin: 0 0 0.5rem 0;
+        font-weight: 600;
+    }
+    
+    .user-email {
+        margin: 0 0 0.25rem 0;
+        opacity: 0.9;
+        font-size: 0.9rem;
+    }
+    
+    .member-since {
+        margin: 0;
+        opacity: 0.7;
+    }
+    
+    .account-navigation {
+        padding: 1rem 0;
+    }
+    
+    .account-navigation .nav-link {
+        color: #333;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all 0.3s ease;
+    }
+    
+    .account-navigation .nav-link:hover {
+        background-color: #f8f9fa;
+        color: #667eea;
+    }
+    
+    .account-navigation .nav-link.active {
+        background-color: #667eea;
+        color: white;
+    }
+    
+    .account-navigation .nav-link i {
+        margin-right: 0.75rem;
+        width: 20px;
+        text-align: center;
+    }
+    
+    .account-navigation .badge {
+        font-size: 0.7rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .account-actions {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #eee;
+    }
+    
+    .account-actions .btn {
+        width: 100%;
+        justify-content: center;
+        display: flex;
+        align-items: center;
+    }
+    
+    .account-actions .btn i {
+        margin-right: 0.5rem;
+    }
+    
+    /* Mobile responsive */
+    @media (max-width: 991px) {
+        .account-sidebar {
+            margin-bottom: 1rem;
+        }
+        
+        .user-info {
+            padding: 1rem;
+        }
+        
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+        }
+        
+        .account-navigation .nav-link {
+            padding: 0.5rem 1rem;
+        }
+    }
+    
+    @media (max-width: 767px) {
+        .account-navigation .nav {
+            flex-direction: row;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 0 1rem;
+        }
+        
+        .account-navigation .nav-item {
+            flex-shrink: 0;
+        }
+        
+        .account-navigation .nav-link {
+            padding: 0.5rem 1rem;
+            white-space: nowrap;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            text-align: left;
+        }
+        
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            margin: 0 1rem 0 0;
+        }
+    }
+</style>

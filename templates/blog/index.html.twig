@@ -1,0 +1,625 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'blog.title'|trans }} - {{ parent() }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('assets/css/vendors/slick.css') }}">
+{% endblock %}
+
+{% block body %}
+<!-- breadcrumb start -->
+<div class="breadcrumb-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="page-title">
+                    <h2>{{ 'blog.title'|trans }}</h2>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <nav aria-label="breadcrumb" class="theme-breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ path('home', {'_locale': app.request.locale}) }}">{{ 'nav.home'|trans }}</a></li>
+                        <li class="breadcrumb-item active">{{ 'blog.title'|trans }}</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- breadcrumb End -->
+
+<!-- Blog Section Start -->
+<section class="blog-section section-b-space">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-9 col-md-12">
+                <!-- Search Results Info -->
+                {% if search_query %}
+                <div class="search-results-info">
+                    <p>{{ 'blog.search_results'|trans({'%query%': search_query, '%count%': posts.totalItemCount}) }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Blog Posts Grid -->
+                {% if posts.items|length > 0 %}
+                <div class="blog-posts">
+                    <div class="row">
+                        {% for post in posts.items %}
+                        <div class="col-lg-6 col-md-12 mb-4">
+                            <div class="blog-post-card">
+                                {% set featuredImage = post.featuredImage %}
+                                {% if featuredImage %}
+                                <div class="post-image">
+                                    <a href="{{ path('blog_show', {'slug': post.getTranslation(app.request.locale).slug ?? post.getTranslation(default_locale).slug, '_locale': app.request.locale}) }}">
+                                        <img src="{{ asset('uploads/blog/' ~ featuredImage) }}" 
+                                             alt="{{ post.getTranslation(app.request.locale).title ?? post.getTranslation(default_locale).title }}" 
+                                             class="img-fluid">
+                                    </a>
+                                    <div class="post-date">
+                                        <span class="day">{{ post.publishedAt|date('d') }}</span>
+                                        <span class="month">{{ post.publishedAt|date('M')|upper }}</span>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <div class="post-content">
+                                    <div class="post-meta">
+                                        {% if post.author %}
+                                        <span class="author">
+                                            <i class="fa fa-user"></i>
+                                            <a href="{{ path('blog_author', {'id': post.author.id, '_locale': app.request.locale}) }}">
+                                                {{ post.author.firstName }} {{ post.author.lastName }}
+                                            </a>
+                                        </span>
+                                        {% endif %}
+                                        <span class="date">
+                                            <i class="fa fa-calendar"></i>
+                                            {{ post.publishedAt|date('d/m/Y') }}
+                                        </span>
+                                        <span class="reading-time">
+                                            <i class="fa fa-clock-o"></i>
+                                            {{ post.readingTime ?? '5' }} {{ 'blog.min_read'|trans }}
+                                        </span>
+                                    </div>
+
+                                    <h3 class="post-title">
+                                        <a href="{{ path('blog_show', {'slug': post.getTranslation(app.request.locale).slug ?? post.getTranslation(default_locale).slug, '_locale': app.request.locale}) }}">
+                                            {{ post.getTranslation(app.request.locale).title ?? post.getTranslation(default_locale).title }}
+                                        </a>
+                                    </h3>
+
+                                    {% set excerpt = post.getTranslation(app.request.locale).excerpt ?? post.getTranslation(default_locale).excerpt %}
+                                    {% if excerpt %}
+                                    <div class="post-excerpt">
+                                        {{ excerpt|striptags|slice(0, 150) }}...
+                                    </div>
+                                    {% endif %}
+
+                                    <div class="post-actions">
+                                        <a href="{{ path('blog_show', {'slug': post.getTranslation(app.request.locale).slug ?? post.getTranslation(default_locale).slug, '_locale': app.request.locale}) }}" 
+                                           class="btn btn-solid btn-sm">
+                                            {{ 'blog.read_more'|trans }}
+                                            <i class="fa fa-arrow-right"></i>
+                                        </a>
+                                        
+                                        <div class="post-share">
+                                            <a href="https://www.facebook.com/sharer/sharer.php?u={{ url('blog_show', {'slug': post.getTranslation(app.request.locale).slug ?? post.getTranslation(default_locale).slug, '_locale': app.request.locale}) }}" 
+                                               target="_blank" class="share-btn facebook" title="{{ 'blog.share_facebook'|trans }}">
+                                                <i class="fa fa-facebook"></i>
+                                            </a>
+                                            <a href="https://twitter.com/intent/tweet?url={{ url('blog_show', {'slug': post.getTranslation(app.request.locale).slug ?? post.getTranslation(default_locale).slug, '_locale': app.request.locale}) }}&text={{ post.getTranslation(app.request.locale).title|url_encode }}" 
+                                               target="_blank" class="share-btn twitter" title="{{ 'blog.share_twitter'|trans }}">
+                                                <i class="fa fa-twitter"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                {% if posts.pageCount > 1 %}
+                <nav class="blog-pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if posts.current != 1 %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ path('blog_index', app.request.query.all|merge({page: posts.current - 1, '_locale': app.request.locale})) }}">
+                                <i class="fa fa-chevron-left"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {% for page in 1..posts.pageCount %}
+                            {% if page == posts.current %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page }}</span>
+                            </li>
+                            {% elseif page < posts.current + 3 and page > posts.current - 3 %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ path('blog_index', app.request.query.all|merge({page: page, '_locale': app.request.locale})) }}">{{ page }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if posts.current != posts.pageCount %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ path('blog_index', app.request.query.all|merge({page: posts.current + 1, '_locale': app.request.locale})) }}">
+                                <i class="fa fa-chevron-right"></i>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                {% else %}
+                <!-- No Posts Found -->
+                <div class="no-posts text-center">
+                    <img src="{{ asset('assets/images/icon/empty-blog.png') }}" class="img-fluid mb-4" alt="{{ 'blog.no_posts'|trans }}">
+                    <h3>{{ 'blog.no_posts_title'|trans }}</h3>
+                    <p>{{ 'blog.no_posts_message'|trans }}</p>
+                    {% if search_query %}
+                        <a href="{{ path('blog_index', {'_locale': app.request.locale}) }}" class="btn btn-solid">{{ 'blog.view_all_posts'|trans }}</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-3 col-md-12">
+                <div class="blog-sidebar">
+                    <!-- Search Widget -->
+                    <div class="sidebar-widget">
+                        <h4 class="widget-title">{{ 'blog.search'|trans }}</h4>
+                        <form method="get" action="{{ path('blog_index', {'_locale': app.request.locale}) }}" class="search-form">
+                            <div class="input-group">
+                                <input type="text" name="search" class="form-control" 
+                                       placeholder="{{ 'blog.search_placeholder'|trans }}" 
+                                       value="{{ search_query }}">
+                                <button class="btn btn-solid" type="submit">
+                                    <i class="fa fa-search"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Recent Posts Widget -->
+                    {% if recent_posts|length > 0 %}
+                    <div class="sidebar-widget">
+                        <h4 class="widget-title">{{ 'blog.recent_posts'|trans }}</h4>
+                        <div class="recent-posts">
+                            {% for recent_post in recent_posts %}
+                            <div class="recent-post-item">
+                                {% set recentImage = recent_post.featuredImage %}
+                                {% if recentImage %}
+                                <div class="post-thumb">
+                                    <a href="{{ path('blog_show', {'slug': recent_post.getTranslation(app.request.locale).slug ?? recent_post.getTranslation(default_locale).slug, '_locale': app.request.locale}) }}">
+                                        <img src="{{ asset('uploads/blog/thumbs/' ~ recentImage) }}" 
+                                             alt="{{ recent_post.getTranslation(app.request.locale).title ?? recent_post.getTranslation(default_locale).title }}">
+                                    </a>
+                                </div>
+                                {% endif %}
+                                <div class="post-info">
+                                    <h6>
+                                        <a href="{{ path('blog_show', {'slug': recent_post.getTranslation(app.request.locale).slug ?? recent_post.getTranslation(default_locale).slug, '_locale': app.request.locale}) }}">
+                                            {{ recent_post.getTranslation(app.request.locale).title ?? recent_post.getTranslation(default_locale).title }}
+                                        </a>
+                                    </h6>
+                                    <p class="post-date">
+                                        <i class="fa fa-calendar"></i>
+                                        {{ recent_post.publishedAt|date('d/m/Y') }}
+                                    </p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Categories Widget -->
+                    <div class="sidebar-widget">
+                        <h4 class="widget-title">{{ 'blog.categories'|trans }}</h4>
+                        <ul class="category-list">
+                            <li><a href="{{ path('blog_index', {'_locale': app.request.locale}) }}">{{ 'blog.all_categories'|trans }}</a></li>
+                            <!-- Categories would be dynamically loaded here -->
+                            <li><a href="{{ path('blog_category', {'slug': 'news', '_locale': app.request.locale}) }}">{{ 'blog.category.news'|trans }}</a></li>
+                            <li><a href="{{ path('blog_category', {'slug': 'tutorials', '_locale': app.request.locale}) }}">{{ 'blog.category.tutorials'|trans }}</a></li>
+                            <li><a href="{{ path('blog_category', {'slug': 'tips', '_locale': app.request.locale}) }}">{{ 'blog.category.tips'|trans }}</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Tags Widget -->
+                    <div class="sidebar-widget">
+                        <h4 class="widget-title">{{ 'blog.tags'|trans }}</h4>
+                        <div class="tag-cloud">
+                            <a href="#" class="tag">{{ 'blog.tag.fashion'|trans }}</a>
+                            <a href="#" class="tag">{{ 'blog.tag.style'|trans }}</a>
+                            <a href="#" class="tag">{{ 'blog.tag.trends'|trans }}</a>
+                            <a href="#" class="tag">{{ 'blog.tag.shopping'|trans }}</a>
+                            <a href="#" class="tag">{{ 'blog.tag.lifestyle'|trans }}</a>
+                            <a href="#" class="tag">{{ 'blog.tag.beauty'|trans }}</a>
+                        </div>
+                    </div>
+
+                    <!-- Newsletter Widget -->
+                    <div class="sidebar-widget newsletter-widget">
+                        <h4 class="widget-title">{{ 'blog.newsletter'|trans }}</h4>
+                        <p>{{ 'blog.newsletter_description'|trans }}</p>
+                        <form class="newsletter-form" method="post" action="{{ path('newsletter_subscribe', {'_locale': app.request.locale}) }}">
+                            <div class="input-group">
+                                <input type="email" name="email" class="form-control" 
+                                       placeholder="{{ 'blog.newsletter_email'|trans }}" required>
+                                <button class="btn btn-solid" type="submit">
+                                    {{ 'blog.subscribe'|trans }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- Blog Section End -->
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        $(document).ready(function() {
+            // Newsletter subscription
+            $('.newsletter-form').on('submit', function(e) {
+                e.preventDefault();
+                
+                const form = $(this);
+                const email = form.find('input[name="email"]').val();
+                const button = form.find('button[type="submit"]');
+                const originalText = button.text();
+                
+                button.prop('disabled', true).text('{{ 'blog.subscribing'|trans }}...');
+                
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'POST',
+                    data: { email: email },
+                    success: function(data) {
+                        if (data.success) {
+                            toastr.success('{{ 'blog.subscribe_success'|trans }}');
+                            form[0].reset();
+                        } else {
+                            toastr.error(data.message || '{{ 'error.generic'|trans }}');
+                        }
+                    },
+                    error: function() {
+                        toastr.error('{{ 'error.generic'|trans }}');
+                    },
+                    complete: function() {
+                        button.prop('disabled', false).text(originalText);
+                    }
+                });
+            });
+
+            // Search form enhancement
+            $('.search-form input').on('keypress', function(e) {
+                if (e.which === 13) {
+                    $(this).closest('form').submit();
+                }
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .blog-post-card {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .blog-post-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    
+    .post-image {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .post-image img {
+        width: 100%;
+        height: 250px;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+    
+    .post-image:hover img {
+        transform: scale(1.05);
+    }
+    
+    .post-date {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: rgba(102, 126, 234, 0.9);
+        color: white;
+        padding: 0.5rem;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+    
+    .post-date .day {
+        display: block;
+        font-size: 1.2rem;
+        line-height: 1;
+    }
+    
+    .post-date .month {
+        display: block;
+        font-size: 0.8rem;
+        line-height: 1;
+    }
+    
+    .post-content {
+        padding: 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .post-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+        color: #666;
+    }
+    
+    .post-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .post-meta a {
+        color: #667eea;
+        text-decoration: none;
+    }
+    
+    .post-meta a:hover {
+        text-decoration: underline;
+    }
+    
+    .post-title {
+        margin-bottom: 1rem;
+        font-size: 1.25rem;
+        line-height: 1.4;
+    }
+    
+    .post-title a {
+        color: #333;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    
+    .post-title a:hover {
+        color: #667eea;
+    }
+    
+    .post-excerpt {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+        flex: 1;
+    }
+    
+    .post-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: auto;
+    }
+    
+    .post-share {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .share-btn {
+        width: 35px;
+        height: 35px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        color: white;
+        text-decoration: none;
+        transition: transform 0.3s ease;
+    }
+    
+    .share-btn:hover {
+        transform: scale(1.1);
+        color: white;
+    }
+    
+    .share-btn.facebook { background: #3b5998; }
+    .share-btn.twitter { background: #1da1f2; }
+    
+    /* Sidebar Styles */
+    .blog-sidebar {
+        margin-top: 2rem;
+    }
+    
+    .sidebar-widget {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    
+    .widget-title {
+        color: #333;
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #667eea;
+        display: inline-block;
+    }
+    
+    .recent-post-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .recent-post-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+    }
+    
+    .post-thumb {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .post-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .post-info h6 {
+        margin: 0 0 0.25rem 0;
+        font-size: 0.9rem;
+        line-height: 1.3;
+    }
+    
+    .post-info h6 a {
+        color: #333;
+        text-decoration: none;
+    }
+    
+    .post-info h6 a:hover {
+        color: #667eea;
+    }
+    
+    .post-info .post-date {
+        margin: 0;
+        font-size: 0.8rem;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .category-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .category-list li {
+        margin-bottom: 0.5rem;
+        padding-left: 1rem;
+        position: relative;
+    }
+    
+    .category-list li:before {
+        content: '▶';
+        position: absolute;
+        left: 0;
+        color: #667eea;
+        font-size: 0.8rem;
+    }
+    
+    .category-list a {
+        color: #666;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    
+    .category-list a:hover {
+        color: #667eea;
+    }
+    
+    .tag-cloud {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .tag {
+        background: #f8f9fa;
+        color: #666;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .tag:hover {
+        background: #667eea;
+        color: white;
+    }
+    
+    .newsletter-widget {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .newsletter-widget .widget-title {
+        color: white;
+        border-bottom-color: rgba(255,255,255,0.3);
+    }
+    
+    .newsletter-widget p {
+        color: rgba(255,255,255,0.9);
+    }
+    
+    /* Responsive */
+    @media (max-width: 991px) {
+        .blog-sidebar {
+            margin-top: 3rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .post-actions {
+            flex-direction: column;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+        
+        .post-meta {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .sidebar-widget {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}

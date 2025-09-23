@@ -1,0 +1,603 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'account.profile'|trans }} - {{ parent() }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('assets/css/vendors/select2.css') }}">
+{% endblock %}
+
+{% block body %}
+<!-- breadcrumb start -->
+<div class="breadcrumb-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="page-title">
+                    <h2>{{ 'account.profile'|trans }}</h2>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <nav aria-label="breadcrumb" class="theme-breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ path('home', {'_locale': app.request.locale}) }}">{{ 'nav.home'|trans }}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ path('account_dashboard', {'_locale': app.request.locale}) }}">{{ 'account.dashboard'|trans }}</a></li>
+                        <li class="breadcrumb-item active">{{ 'account.profile'|trans }}</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- breadcrumb End -->
+
+<!-- section start -->
+<section class="section-b-space">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-3">
+                {{ include('account/_sidebar.html.twig') }}
+            </div>
+            <div class="col-lg-9">
+                <div class="dashboard-content">
+                    <div class="dashboard-header">
+                        <h3>{{ 'account.my_profile'|trans }}</h3>
+                        <p>{{ 'account.profile_description'|trans }}</p>
+                    </div>
+
+                    <form method="post" class="profile-form" id="profile-form">
+                        <div class="row">
+                            <!-- Personal Information -->
+                            <div class="col-md-12">
+                                <div class="form-section">
+                                    <h4>{{ 'profile.personal_information'|trans }}</h4>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="first_name">{{ 'profile.first_name'|trans }} <span class="required">*</span></label>
+                                                <input type="text" id="first_name" name="first_name" class="form-control" 
+                                                       value="{{ user.firstName }}" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="last_name">{{ 'profile.last_name'|trans }} <span class="required">*</span></label>
+                                                <input type="text" id="last_name" name="last_name" class="form-control" 
+                                                       value="{{ user.lastName }}" required>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="email">{{ 'profile.email'|trans }}</label>
+                                                <input type="email" id="email" name="email" class="form-control" 
+                                                       value="{{ user.email }}" disabled>
+                                                <small class="form-text text-muted">{{ 'profile.email_readonly'|trans }}</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="phone">{{ 'profile.phone'|trans }}</label>
+                                                <input type="tel" id="phone" name="phone" class="form-control" 
+                                                       value="{{ user.phone }}">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="birth_date">{{ 'profile.birth_date'|trans }}</label>
+                                                <input type="date" id="birth_date" name="birth_date" class="form-control" 
+                                                       value="{{ user.birthDate ? user.birthDate|date('Y-m-d') : '' }}">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="gender">{{ 'profile.gender'|trans }}</label>
+                                                <select id="gender" name="gender" class="form-control">
+                                                    <option value="">{{ 'profile.select_gender'|trans }}</option>
+                                                    <option value="male" {{ user.gender == 'male' ? 'selected' : '' }}>{{ 'profile.gender.male'|trans }}</option>
+                                                    <option value="female" {{ user.gender == 'female' ? 'selected' : '' }}>{{ 'profile.gender.female'|trans }}</option>
+                                                    <option value="other" {{ user.gender == 'other' ? 'selected' : '' }}>{{ 'profile.gender.other'|trans }}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Preferences -->
+                            <div class="col-md-12">
+                                <div class="form-section">
+                                    <h4>{{ 'profile.preferences'|trans }}</h4>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="preferred_language">{{ 'profile.preferred_language'|trans }}</label>
+                                                <select id="preferred_language" name="preferred_language" class="form-control">
+                                                    {% for language in available_languages %}
+                                                        {% set isSelected = (user.preferences and user.preferences.language == language.code) or (not user.preferences and language.code == app.request.locale) %}
+                                                        <option value="{{ language.code }}" {{ isSelected ? 'selected' : '' }}>
+                                                            {{ language.nativeName }}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="preferred_currency">{{ 'profile.preferred_currency'|trans }}</label>
+                                                <select id="preferred_currency" name="preferred_currency" class="form-control">
+                                                    {% set currentCurrency = user.preferences ? user.preferences.currency : 'EUR' %}
+                                                    <option value="EUR" {{ currentCurrency == 'EUR' ? 'selected' : '' }}>{{ 'currency.eur'|trans }} (€)</option>
+                                                    <option value="USD" {{ currentCurrency == 'USD' ? 'selected' : '' }}>{{ 'currency.usd'|trans }} ($)</option>
+                                                    <option value="GBP" {{ currentCurrency == 'GBP' ? 'selected' : '' }}>{{ 'currency.gbp'|trans }} (£)</option>
+                                                    <option value="CAD" {{ currentCurrency == 'CAD' ? 'selected' : '' }}>{{ 'currency.cad'|trans }} (C$)</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Communication Preferences -->
+                            <div class="col-md-12">
+                                <div class="form-section">
+                                    <h4>{{ 'profile.communication_preferences'|trans }}</h4>
+                                    
+                                    <div class="checkbox-group">
+                                        {% set newsletterChecked = user.preferences and user.preferences.newsletter %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="1" id="newsletter_subscription" 
+                                                   name="newsletter_subscription" {{ newsletterChecked ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="newsletter_subscription">
+                                                {{ 'profile.newsletter_subscription'|trans }}
+                                                <small class="form-text text-muted">{{ 'profile.newsletter_description'|trans }}</small>
+                                            </label>
+                                        </div>
+
+                                        {% set marketingChecked = user.preferences and user.preferences.marketing %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="1" id="marketing_emails" 
+                                                   name="marketing_emails" {{ marketingChecked ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="marketing_emails">
+                                                {{ 'profile.marketing_emails'|trans }}
+                                                <small class="form-text text-muted">{{ 'profile.marketing_description'|trans }}</small>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Account Information -->
+                            <div class="col-md-12">
+                                <div class="form-section">
+                                    <h4>{{ 'profile.account_information'|trans }}</h4>
+                                    
+                                    <div class="account-stats">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="stat-item">
+                                                    <div class="stat-icon">
+                                                        <i class="fa fa-calendar"></i>
+                                                    </div>
+                                                    <div class="stat-content">
+                                                        <h5>{{ 'profile.member_since'|trans }}</h5>
+                                                        <p>{{ user.createdAt|date('d/m/Y') }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="stat-item">
+                                                    <div class="stat-icon">
+                                                        <i class="fa fa-shield"></i>
+                                                    </div>
+                                                    <div class="stat-content">
+                                                        <h5>{{ 'profile.account_status'|trans }}</h5>
+                                                        <p class="{{ user.isActive ? 'text-success' : 'text-danger' }}">
+                                                            {{ user.isActive ? 'profile.status.active'|trans : 'profile.status.inactive'|trans }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="stat-item">
+                                                    <div class="stat-icon">
+                                                        <i class="fa fa-key"></i>
+                                                    </div>
+                                                    <div class="stat-content">
+                                                        <h5>{{ 'profile.password'|trans }}</h5>
+                                                        <p>
+                                                            <a href="#" id="change-password-link">{{ 'profile.change_password'|trans }}</a>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-solid">
+                                <i class="fa fa-save"></i>
+                                {{ 'profile.save_changes'|trans }}
+                            </button>
+                            <button type="reset" class="btn btn-outline">
+                                {{ 'profile.reset'|trans }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Change Password Modal -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ 'profile.change_password'|trans }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{{ 'common.close'|trans }}"></button>
+            </div>
+            <form id="change-password-form">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="current_password">{{ 'profile.current_password'|trans }} <span class="required">*</span></label>
+                        <input type="password" id="current_password" name="current_password" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new_password">{{ 'profile.new_password'|trans }} <span class="required">*</span></label>
+                        <input type="password" id="new_password" name="new_password" class="form-control" required minlength="8">
+                        <div class="password-strength" id="password-strength"></div>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm_password">{{ 'profile.confirm_password'|trans }} <span class="required">*</span></label>
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" data-bs-dismiss="modal">{{ 'common.cancel'|trans }}</button>
+                    <button type="submit" class="btn btn-solid">{{ 'profile.update_password'|trans }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- section end -->
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('assets/js/vendors/select2.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            // Initialize Select2 for better dropdowns
+            $('#preferred_language, #preferred_currency, #gender').select2({
+                theme: 'classic',
+                width: '100%'
+            });
+
+            // Profile form submission
+            $('#profile-form').on('submit', function(e) {
+                e.preventDefault();
+                
+                const submitBtn = $(this).find('button[type="submit"]');
+                const originalText = submitBtn.html();
+                submitBtn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> {{ 'profile.saving'|trans }}...');
+
+                $.ajax({
+                    url: $(this).attr('action') || window.location.href,
+                    method: 'POST',
+                    data: $(this).serialize(),
+                    success: function(data) {
+                        toastr.success('{{ 'profile.save_success'|trans }}');
+                        
+                        // Update interface language if changed
+                        const newLanguage = $('#preferred_language').val();
+                        if (newLanguage && newLanguage !== '{{ app.request.locale }}') {
+                            setTimeout(function() {
+                                window.location.href = window.location.href.replace('/{{ app.request.locale }}/', '/' + newLanguage + '/');
+                            }, 1500);
+                        }
+                    },
+                    error: function(xhr) {
+                        if (xhr.status === 422) {
+                            const errors = xhr.responseJSON.errors;
+                            Object.keys(errors).forEach(function(field) {
+                                const input = $('[name="' + field + '"]');
+                                input.addClass('is-invalid');
+                                errors[field].forEach(function(error) {
+                                    toastr.error(error);
+                                });
+                            });
+                        } else {
+                            toastr.error('{{ 'profile.save_error'|trans }}');
+                        }
+                    },
+                    complete: function() {
+                        submitBtn.prop('disabled', false).html(originalText);
+                    }
+                });
+            });
+
+            // Clear validation errors on input
+            $('.form-control').on('input', function() {
+                $(this).removeClass('is-invalid');
+            });
+
+            // Change password modal
+            $('#change-password-link').on('click', function(e) {
+                e.preventDefault();
+                $('#changePasswordModal').modal('show');
+            });
+
+            // Password strength indicator
+            $('#new_password').on('input', function() {
+                const password = $(this).val();
+                const strength = calculatePasswordStrength(password);
+                const strengthIndicator = $('#password-strength');
+                
+                strengthIndicator.removeClass('weak medium strong');
+                if (password.length > 0) {
+                    if (strength < 3) {
+                        strengthIndicator.addClass('weak').text('{{ 'profile.password.weak'|trans }}');
+                    } else if (strength < 5) {
+                        strengthIndicator.addClass('medium').text('{{ 'profile.password.medium'|trans }}');
+                    } else {
+                        strengthIndicator.addClass('strong').text('{{ 'profile.password.strong'|trans }}');
+                    }
+                } else {
+                    strengthIndicator.text('');
+                }
+            });
+
+            // Password confirmation validation
+            $('#confirm_password').on('input', function() {
+                const password = $('#new_password').val();
+                const confirm = $(this).val();
+                
+                if (confirm && password !== confirm) {
+                    $(this).addClass('is-invalid');
+                } else {
+                    $(this).removeClass('is-invalid');
+                }
+            });
+
+            // Change password form submission
+            $('#change-password-form').on('submit', function(e) {
+                e.preventDefault();
+                
+                const password = $('#new_password').val();
+                const confirm = $('#confirm_password').val();
+                
+                if (password !== confirm) {
+                    toastr.error('{{ 'profile.password_mismatch'|trans }}');
+                    return;
+                }
+
+                const submitBtn = $(this).find('button[type="submit"]');
+                const originalText = submitBtn.html();
+                submitBtn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> {{ 'profile.updating'|trans }}...');
+
+                $.ajax({
+                    url: '{{ path('account_change_password', {'_locale': app.request.locale}) }}',
+                    method: 'POST',
+                    data: $(this).serialize(),
+                    success: function(data) {
+                        if (data.success) {
+                            toastr.success('{{ 'profile.password_updated'|trans }}');
+                            $('#changePasswordModal').modal('hide');
+                            $('#change-password-form')[0].reset();
+                        } else {
+                            toastr.error(data.message || '{{ 'profile.password_error'|trans }}');
+                        }
+                    },
+                    error: function() {
+                        toastr.error('{{ 'profile.password_error'|trans }}');
+                    },
+                    complete: function() {
+                        submitBtn.prop('disabled', false).html(originalText);
+                    }
+                });
+            });
+
+            // Password strength calculation
+            function calculatePasswordStrength(password) {
+                let strength = 0;
+                
+                if (password.length >= 8) strength++;
+                if (password.match(/[a-z]/)) strength++;
+                if (password.match(/[A-Z]/)) strength++;
+                if (password.match(/[0-9]/)) strength++;
+                if (password.match(/[^a-zA-Z0-9]/)) strength++;
+                
+                return strength;
+            }
+        });
+    </script>
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .dashboard-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .dashboard-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .form-section {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+    
+    .form-section h4 {
+        color: #333;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #667eea;
+        display: inline-block;
+    }
+    
+    .required {
+        color: #dc3545;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+    
+    .checkbox-group {
+        margin-top: 1rem;
+    }
+    
+    .form-check {
+        margin-bottom: 1rem;
+        padding-left: 2rem;
+    }
+    
+    .form-check-label {
+        font-weight: normal;
+    }
+    
+    .account-stats {
+        margin-top: 1rem;
+    }
+    
+    .stat-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        background: white;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        background: #667eea;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .stat-content h5 {
+        margin: 0 0 0.25rem 0;
+        font-size: 0.9rem;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .stat-content p {
+        margin: 0;
+        font-weight: 600;
+        color: #333;
+    }
+    
+    .form-actions {
+        padding-top: 2rem;
+        border-top: 1px solid #eee;
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .password-strength {
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+    
+    .password-strength.weak {
+        color: #dc3545;
+    }
+    
+    .password-strength.medium {
+        color: #fd7e14;
+    }
+    
+    .password-strength.strong {
+        color: #28a745;
+    }
+    
+    /* Modal styling */
+    .modal-content {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    
+    .modal-header {
+        border-bottom: 1px solid #eee;
+        padding: 1.5rem 2rem;
+    }
+    
+    .modal-body {
+        padding: 2rem;
+    }
+    
+    .modal-footer {
+        border-top: 1px solid #eee;
+        padding: 1rem 2rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .dashboard-content {
+            padding: 1rem;
+        }
+        
+        .form-section {
+            padding: 1rem;
+        }
+        
+        .form-actions {
+            flex-direction: column;
+        }
+        
+        .form-actions .btn {
+            width: 100%;
+        }
+        
+        .stat-item {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .stat-icon {
+            margin: 0 0 1rem 0;
+        }
+    }
+</style>
+{% endblock %}

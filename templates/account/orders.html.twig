@@ -1,0 +1,494 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'account.orders'|trans }} - {{ parent() }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('assets/css/vendors/datatables.css') }}">
+{% endblock %}
+
+{% block body %}
+<!-- breadcrumb start -->
+<div class="breadcrumb-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="page-title">
+                    <h2>{{ 'account.orders'|trans }}</h2>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <nav aria-label="breadcrumb" class="theme-breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ path('home', {'_locale': app.request.locale}) }}">{{ 'nav.home'|trans }}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ path('account_dashboard', {'_locale': app.request.locale}) }}">{{ 'account.dashboard'|trans }}</a></li>
+                        <li class="breadcrumb-item active">{{ 'account.orders'|trans }}</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- breadcrumb End -->
+
+<!-- section start -->
+<section class="section-b-space">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-3">
+                {{ include('account/_sidebar.html.twig') }}
+            </div>
+            <div class="col-lg-9">
+                <div class="dashboard-content">
+                    <div class="dashboard-header">
+                        <h3>{{ 'account.my_orders'|trans }}</h3>
+                        <p>{{ 'account.orders_description'|trans }}</p>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="orders-filters">
+                        <form method="get" class="filter-form">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="status">{{ 'order.status'|trans }}</label>
+                                        <select name="status" id="status" class="form-control">
+                                            <option value="">{{ 'order.all_statuses'|trans }}</option>
+                                            <option value="pending" {{ filters.status == 'pending' ? 'selected' : '' }}>{{ 'order.status.pending'|trans }}</option>
+                                            <option value="processing" {{ filters.status == 'processing' ? 'selected' : '' }}>{{ 'order.status.processing'|trans }}</option>
+                                            <option value="shipped" {{ filters.status == 'shipped' ? 'selected' : '' }}>{{ 'order.status.shipped'|trans }}</option>
+                                            <option value="delivered" {{ filters.status == 'delivered' ? 'selected' : '' }}>{{ 'order.status.delivered'|trans }}</option>
+                                            <option value="cancelled" {{ filters.status == 'cancelled' ? 'selected' : '' }}>{{ 'order.status.cancelled'|trans }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="date_from">{{ 'order.date_from'|trans }}</label>
+                                        <input type="date" name="date_from" id="date_from" class="form-control" value="{{ filters.date_from }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label for="date_to">{{ 'order.date_to'|trans }}</label>
+                                        <input type="date" name="date_to" id="date_to" class="form-control" value="{{ filters.date_to }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <label>&nbsp;</label>
+                                        <div class="filter-buttons">
+                                            <button type="submit" class="btn btn-solid btn-sm">{{ 'order.filter'|trans }}</button>
+                                            <a href="{{ path('account_orders', {'_locale': app.request.locale}) }}" class="btn btn-outline btn-sm">{{ 'order.clear'|trans }}</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Orders List -->
+                    {% if orders.items|length > 0 %}
+                    <div class="orders-list">
+                        {% for order in orders.items %}
+                        <div class="order-card">
+                            <div class="order-header">
+                                <div class="order-info">
+                                    <h5>
+                                        <a href="{{ path('account_order_detail', {'orderNumber': order.orderNumber, '_locale': app.request.locale}) }}" class="order-link">
+                                            #{{ order.orderNumber }}
+                                        </a>
+                                    </h5>
+                                    <p class="order-date">{{ order.createdAt|date('d/m/Y H:i') }}</p>
+                                </div>
+                                <div class="order-status">
+                                    <span class="status-badge status-{{ order.status }}">
+                                        {{ ('order.status.' ~ order.status)|trans }}
+                                    </span>
+                                </div>
+                                <div class="order-total">
+                                    <h4>{{ order.totalAmount|currency(app.request.locale) }}</h4>
+                                </div>
+                            </div>
+
+                            <div class="order-items">
+                                <div class="items-preview">
+                                    {% for item in order.items|slice(0, 3) %}
+                                    <div class="item-preview">
+                                        {% if item.product and item.product.images|first %}
+                                            <img src="{{ asset('uploads/products/thumbs/' ~ item.product.images|first.filename) }}" 
+                                                 alt="{{ item.productName }}" class="item-image">
+                                        {% else %}
+                                            <div class="item-placeholder">
+                                                <i class="fa fa-image"></i>
+                                            </div>
+                                        {% endif %}
+                                        <div class="item-info">
+                                            <p class="item-name">{{ item.productName }}</p>
+                                            <p class="item-quantity">{{ 'order.quantity'|trans }}: {{ item.quantity }}</p>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                    {% if order.items|length > 3 %}
+                                    <div class="more-items">
+                                        <span>+{{ order.items|length - 3 }} {{ 'order.more_items'|trans }}</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="order-actions">
+                                <a href="{{ path('account_order_detail', {'orderNumber': order.orderNumber, '_locale': app.request.locale}) }}" 
+                                   class="btn btn-outline btn-sm">
+                                    <i class="fa fa-eye"></i>
+                                    {{ 'order.view_details'|trans }}
+                                </a>
+                                
+                                {% if order.status in ['delivered', 'completed'] %}
+                                    <button type="button" class="btn btn-solid btn-sm reorder-btn" data-order-id="{{ order.id }}">
+                                        <i class="fa fa-refresh"></i>
+                                        {{ 'order.reorder'|trans }}
+                                    </button>
+                                {% endif %}
+                                
+                                {% if order.status == 'pending' %}
+                                    <button type="button" class="btn btn-danger btn-sm cancel-order-btn" data-order-id="{{ order.id }}">
+                                        <i class="fa fa-times"></i>
+                                        {{ 'order.cancel'|trans }}
+                                    </button>
+                                {% endif %}
+
+                                {% if order.status in ['shipped', 'delivered'] and order.trackingNumber %}
+                                    <a href="{{ path('order_tracking', {'orderNumber': order.orderNumber, '_locale': app.request.locale}) }}" 
+                                       class="btn btn-info btn-sm">
+                                        <i class="fa fa-truck"></i>
+                                        {{ 'order.track'|trans }}
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if orders.pageCount > 1 %}
+                    <div class="pagination-wrapper">
+                        <nav aria-label="Orders pagination">
+                            <ul class="pagination justify-content-center">
+                                {% if orders.current != 1 %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ path('account_orders', app.request.query.all|merge({page: orders.current - 1, '_locale': app.request.locale})) }}">
+                                        <i class="fa fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                                {% endif %}
+
+                                {% for page in 1..orders.pageCount %}
+                                    {% if page == orders.current %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ page }}</span>
+                                    </li>
+                                    {% elseif page < orders.current + 3 and page > orders.current - 3 %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ path('account_orders', app.request.query.all|merge({page: page, '_locale': app.request.locale})) }}">{{ page }}</a>
+                                    </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if orders.current != orders.pageCount %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ path('account_orders', app.request.query.all|merge({page: orders.current + 1, '_locale': app.request.locale})) }}">
+                                        <i class="fa fa-chevron-right"></i>
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                    {% endif %}
+                    {% else %}
+                    <!-- Empty orders -->
+                    <div class="empty-orders text-center">
+                        <img src="{{ asset('assets/images/icon/empty-orders.png') }}" class="img-fluid mb-4 mx-auto" alt="{{ 'order.no_orders'|trans }}">
+                        <h3>{{ 'order.no_orders_title'|trans }}</h3>
+                        <p>{{ 'order.no_orders_message'|trans }}</p>
+                        <a href="{{ path('catalog_index', {'_locale': app.request.locale}) }}" class="btn btn-solid">{{ 'order.start_shopping'|trans }}</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- section end -->
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        $(document).ready(function() {
+            // Reorder functionality
+            $('.reorder-btn').on('click', function() {
+                const orderId = $(this).data('order-id');
+                const button = $(this);
+                
+                if (confirm('{{ 'order.confirm_reorder'|trans }}')) {
+                    button.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> {{ 'order.processing'|trans }}');
+                    
+                    $.ajax({
+                        url: '{{ path('account_reorder', {'_locale': app.request.locale}) }}',
+                        method: 'POST',
+                        data: { order_id: orderId },
+                        success: function(data) {
+                            if (data.success) {
+                                toastr.success('{{ 'order.reorder_success'|trans }}');
+                                window.location.href = data.redirect_url || '{{ path('cart_index', {'_locale': app.request.locale}) }}';
+                            } else {
+                                toastr.error(data.message || '{{ 'error.generic'|trans }}');
+                                button.prop('disabled', false).html('<i class="fa fa-refresh"></i> {{ 'order.reorder'|trans }}');
+                            }
+                        },
+                        error: function() {
+                            toastr.error('{{ 'error.generic'|trans }}');
+                            button.prop('disabled', false).html('<i class="fa fa-refresh"></i> {{ 'order.reorder'|trans }}');
+                        }
+                    });
+                }
+            });
+
+            // Cancel order functionality
+            $('.cancel-order-btn').on('click', function() {
+                const orderId = $(this).data('order-id');
+                const button = $(this);
+                
+                if (confirm('{{ 'order.confirm_cancel'|trans }}')) {
+                    button.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> {{ 'order.cancelling'|trans }}');
+                    
+                    $.ajax({
+                        url: '{{ path('account_cancel_order', {'_locale': app.request.locale}) }}',
+                        method: 'POST',
+                        data: { order_id: orderId },
+                        success: function(data) {
+                            if (data.success) {
+                                toastr.success('{{ 'order.cancel_success'|trans }}');
+                                location.reload();
+                            } else {
+                                toastr.error(data.message || '{{ 'error.generic'|trans }}');
+                                button.prop('disabled', false).html('<i class="fa fa-times"></i> {{ 'order.cancel'|trans }}');
+                            }
+                        },
+                        error: function() {
+                            toastr.error('{{ 'error.generic'|trans }}');
+                            button.prop('disabled', false).html('<i class="fa fa-times"></i> {{ 'order.cancel'|trans }}');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .dashboard-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .dashboard-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .orders-filters {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+    
+    .filter-buttons {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+    }
+    
+    .order-card {
+        background: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        overflow: hidden;
+        transition: box-shadow 0.3s ease;
+    }
+    
+    .order-card:hover {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .order-header {
+        background: #f8f9fa;
+        padding: 1rem 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .order-info h5 {
+        margin: 0 0 0.25rem 0;
+    }
+    
+    .order-link {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: 600;
+    }
+    
+    .order-link:hover {
+        text-decoration: underline;
+    }
+    
+    .order-date {
+        margin: 0;
+        color: #666;
+        font-size: 0.9rem;
+    }
+    
+    .order-total h4 {
+        margin: 0;
+        color: #333;
+        font-weight: 700;
+    }
+    
+    .status-badge {
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-pending { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+    .status-processing { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+    .status-shipped { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .status-delivered { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .status-cancelled { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    
+    .order-items {
+        padding: 1.5rem;
+    }
+    
+    .items-preview {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .item-preview {
+        display: flex;
+        align-items: center;
+        background: #f8f9fa;
+        padding: 0.75rem;
+        border-radius: 8px;
+        min-width: 200px;
+    }
+    
+    .item-image, .item-placeholder {
+        width: 50px;
+        height: 50px;
+        border-radius: 4px;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .item-placeholder {
+        background: #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+    }
+    
+    .item-image {
+        object-fit: cover;
+    }
+    
+    .item-info {
+        flex: 1;
+    }
+    
+    .item-name {
+        margin: 0 0 0.25rem 0;
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: #333;
+    }
+    
+    .item-quantity {
+        margin: 0;
+        color: #666;
+        font-size: 0.8rem;
+    }
+    
+    .more-items {
+        background: #667eea;
+        color: white;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .order-actions {
+        padding: 1rem 1.5rem;
+        background: #f8f9fa;
+        border-top: 1px solid #e0e0e0;
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+    
+    .order-actions .btn {
+        font-size: 0.875rem;
+    }
+    
+    .empty-orders {
+        padding: 3rem 0;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .order-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .order-actions {
+            flex-direction: column;
+        }
+        
+        .order-actions .btn {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .items-preview {
+            flex-direction: column;
+        }
+        
+        .item-preview {
+            width: 100%;
+        }
+        
+        .filter-form .row > div {
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+{% endblock %}
