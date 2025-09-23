@@ -4,18 +4,19 @@ namespace App\Service;
 
 use App\Entity\Language;
 use App\Repository\LanguageRepository;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
-use Symfony\Component\Intl\Currencies;
-use Symfony\Component\Intl\Countries;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
-/**
- * Service for managing locale and internationalization for e-commerce
- */
 class LocaleService
 {
+    private const SESSION_LOCALE_KEY = '_locale';
+    private const DEFAULT_LOCALE = 'fr';
+
     public function __construct(
         private LanguageRepository $languageRepository,
-        private RequestStack $requestStack
+        private RequestStack $requestStack,
+        private string $defaultLocale = self::DEFAULT_LOCALE
     ) {
     }
 
@@ -24,327 +25,270 @@ class LocaleService
      */
     public function getActiveLanguages(): array
     {
-        return $this->languageRepository->findBy(
-            ['isActive' => true],
-            ['sortOrder' => 'ASC']
-        );
-    }
-
-    /**
-     * Get current language
-     */
-    public function getCurrentLanguage(): ?Language
-    {
-        $currentLocale = $this->getCurrentLocale();
-        return $this->languageRepository->findActiveByCode($currentLocale);
-    }
-
-    /**
-     * Get current locale code
-     */
-    public function getCurrentLocale(): string
-    {
-        $request = $this->requestStack->getCurrentRequest();
-        if (!$request) {
-            return $this->getDefaultLanguage()->getCode();
-        }
-
-        return $request->getLocale();
+        return $this->languageRepository->findBy(['isActive' => true], ['sortOrder' => 'ASC']);
     }
 
     /**
      * Get default language
      */
-    public function getDefaultLanguage(): Language
+    public function getDefaultLanguage(): ?Language
     {
-        $default = $this->languageRepository->findDefaultLanguage();
+        return $this->languageRepository->findOneBy(['isDefault' => true]) 
+            ?? $this->languageRepository->findOneBy(['code' => $this->defaultLocale]);
+    }
+
+    /**
+     * Get current language from various sources
+     */
+    public function getCurrentLanguage(): ?Language
+    {
+        $locale = $this->getCurrentLocale();
+        return $this->languageRepository->findOneBy(['code' => $locale, 'isActive' => true]);
+    }
+
+    /**
+     * Get current locale with fallback priority:
+     * 1. Request attribute (_locale)
+     * 2. Session stored locale
+     * 3. Browser preferred language
+     * 4. Default locale
+     */
+    public function getCurrentLocale(): string
+    {
+        $request = $this->requestStack->getCurrentRequest();
         
-        if (!$default) {
-            // Fallback to first active language
-            $active = $this->getActiveLanguages();
-            if (!empty($active)) {
-                return $active[0];
-            }
-            
-            throw new \RuntimeException('No active languages found in the system');
+        if (!$request) {
+            return $this->defaultLocale;
         }
-        
-        return $default;
+
+        // 1. Check request attribute (from URL routing)
+        $locale = $request->attributes->get('_locale');
+        if ($locale && $this->isValidLocale($locale)) {
+            return $locale;
+        }
+
+        // 2. Check session
+        $session = $request->getSession();
+        $locale = $session->get(self::SESSION_LOCALE_KEY);
+        if ($locale && $this->isValidLocale($locale)) {
+            return $locale;
+        }
+
+        // 3. Check browser preference
+        $locale = $this->getBrowserPreferredLocale($request);
+        if ($locale && $this->isValidLocale($locale)) {
+            return $locale;
+        }
+
+        // 4. Fallback to default
+        return $this->defaultLocale;
     }
 
     /**
-     * Get default locale code
-     */
-    public function getDefaultLocale(): string
-    {
-        return $this->getDefaultLanguage()->getCode();
-    }
-
-    /**
-     * Check if a locale is available and active
-     */
-    public function isLocaleAvailable(string $locale): bool
-    {
-        return $this->languageRepository->findActiveByCode($locale) !== null;
-    }
-
-    /**
-     * Switch to a different language
+     * Switch to a new language
      */
     public function switchLanguage(string $locale): bool
     {
-        if (!$this->isLocaleAvailable($locale)) {
+        if (!$this->isValidLocale($locale)) {
             return false;
         }
 
         $request = $this->requestStack->getCurrentRequest();
         if ($request && $request->hasSession()) {
-            $session = $request->getSession();
-            $session->set('_locale', $locale);
+            $request->getSession()->set(self::SESSION_LOCALE_KEY, $locale);
             $request->setLocale($locale);
-            return true;
         }
 
-        return false;
+        return true;
     }
 
     /**
-     * Format currency for current locale
+     * Check if locale is valid (exists and is active)
+     */
+    public function isValidLocale(string $locale): bool
+    {
+        return $this->languageRepository->findOneBy(['code' => $locale, 'isActive' => true]) !== null;
+    }
+
+    /**
+     * Get available locale codes
+     */
+    public function getAvailableLocales(): array
+    {
+        return array_map(
+            fn(Language $lang) => $lang->getCode(),
+            $this->getActiveLanguages()
+        );
+    }
+
+    /**
+     * Get language by code
+     */
+    public function getLanguageByCode(string $code): ?Language
+    {
+        return $this->languageRepository->findOneBy(['code' => $code, 'isActive' => true]);
+    }
+
+    /**
+     * Format currency according to locale
      */
     public function formatCurrency(float $amount, ?string $locale = null): string
     {
-        $locale = $locale ?: $this->getCurrentLocale();
-        $language = $this->languageRepository->findActiveByCode($locale);
+        $locale = $locale ?? $this->getCurrentLocale();
+        $language = $this->getLanguageByCode($locale);
         
-        $currency = $language ? $language->getCurrency() : 'EUR';
+        $currency = $language?->getCurrency() ?? 'EUR';
         
-        if (!$currency) {
-            $currency = 'EUR';
-        }
-
         $formatter = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
         return $formatter->formatCurrency($amount, $currency);
     }
 
     /**
-     * Get currency symbol for current locale
-     */
-    public function getCurrencySymbol(?string $locale = null): string
-    {
-        $locale = $locale ?: $this->getCurrentLocale();
-        $language = $this->languageRepository->findActiveByCode($locale);
-        
-        $currency = $language ? $language->getCurrency() : 'EUR';
-        
-        if (!$currency) {
-            $currency = 'EUR';
-        }
-
-        return Currencies::getSymbol($currency, $locale);
-    }
-
-    /**
-     * Get currency code for current locale
-     */
-    public function getCurrencyCode(?string $locale = null): string
-    {
-        $locale = $locale ?: $this->getCurrentLocale();
-        $language = $this->languageRepository->findActiveByCode($locale);
-        
-        return $language ? ($language->getCurrency() ?: 'EUR') : 'EUR';
-    }
-
-    /**
-     * Format date for current locale
+     * Format date according to locale
      */
     public function formatDate(\DateTimeInterface $date, ?string $locale = null, int $dateType = \IntlDateFormatter::MEDIUM): string
     {
-        $locale = $locale ?: $this->getCurrentLocale();
+        $locale = $locale ?? $this->getCurrentLocale();
+        $language = $this->getLanguageByCode($locale);
+        
+        // Use custom date format if available
+        if ($language && $language->getDateFormat()) {
+            return $date->format($language->getDateFormat());
+        }
         
         $formatter = new \IntlDateFormatter(
             $locale,
             $dateType,
-            \IntlDateFormatter::NONE
+            \IntlDateFormatter::NONE,
+            $date->getTimezone()
         );
         
-        return $formatter->format($date);
+        return $formatter->format($date) ?: $date->format('Y-m-d');
     }
 
     /**
-     * Format date and time for current locale
+     * Format number according to locale
      */
-    public function formatDateTime(\DateTimeInterface $dateTime, ?string $locale = null, int $dateType = \IntlDateFormatter::MEDIUM, int $timeType = \IntlDateFormatter::SHORT): string
+    public function formatNumber(float $number, ?string $locale = null): string
     {
-        $locale = $locale ?: $this->getCurrentLocale();
-        
-        $formatter = new \IntlDateFormatter(
-            $locale,
-            $dateType,
-            $timeType
-        );
-        
-        return $formatter->format($dateTime);
-    }
-
-    /**
-     * Format number for current locale
-     */
-    public function formatNumber(float $number, ?string $locale = null, int $decimals = 2): string
-    {
-        $locale = $locale ?: $this->getCurrentLocale();
+        $locale = $locale ?? $this->getCurrentLocale();
         
         $formatter = new \NumberFormatter($locale, \NumberFormatter::DECIMAL);
-        $formatter->setAttribute(\NumberFormatter::FRACTION_DIGITS, $decimals);
-        
-        return $formatter->format($number);
+        return $formatter->format($number) ?: (string) $number;
     }
 
     /**
-     * Get country name in current locale
+     * Get text direction for current locale (RTL/LTR)
      */
-    public function getCountryName(string $countryCode, ?string $locale = null): string
+    public function getTextDirection(?string $locale = null): string
     {
-        $locale = $locale ?: $this->getCurrentLocale();
-        return Countries::getName($countryCode, $locale);
-    }
-
-    /**
-     * Get language direction (LTR or RTL)
-     */
-    public function getLanguageDirection(?string $locale = null): string
-    {
-        $locale = $locale ?: $this->getCurrentLocale();
-        $language = $this->languageRepository->findActiveByCode($locale);
+        $locale = $locale ?? $this->getCurrentLocale();
+        $language = $this->getLanguageByCode($locale);
         
-        return $language && $language->isRtl() ? 'rtl' : 'ltr';
+        return $language?->getTextDirection() ?? 'ltr';
     }
 
     /**
-     * Check if current language is RTL
+     * Check if current locale is RTL
      */
     public function isRtl(?string $locale = null): bool
     {
-        return $this->getLanguageDirection($locale) === 'rtl';
+        return $this->getTextDirection($locale) === 'rtl';
     }
 
     /**
-     * Get URLs for language switcher
+     * Get browser preferred locale from Accept-Language header
      */
-    public function getLanguageSwitcherUrls(): array
+    private function getBrowserPreferredLocale(Request $request): ?string
     {
-        $urls = [];
-        $request = $this->requestStack->getCurrentRequest();
+        $acceptLanguage = $request->headers->get('Accept-Language');
         
-        if (!$request) {
-            return $urls;
-        }
-
-        $currentPath = $request->getPathInfo();
-        $currentLocale = $this->getCurrentLocale();
-        
-        // Remove current locale from path
-        $pathWithoutLocale = preg_replace('#^/' . preg_quote($currentLocale) . '(/.*)?$#', '$1', $currentPath);
-        if (empty($pathWithoutLocale)) {
-            $pathWithoutLocale = '/';
-        }
-
-        foreach ($this->getActiveLanguages() as $language) {
-            $localeCode = $language->getCode();
-            $localizedPath = '/' . $localeCode . $pathWithoutLocale;
-            
-            $urls[$localeCode] = [
-                'url' => $localizedPath,
-                'language' => $language,
-                'is_current' => $localeCode === $currentLocale
-            ];
-        }
-
-        return $urls;
-    }
-
-    /**
-     * Generate localized path
-     */
-    public function getLocalizedPath(string $path, ?string $locale = null): string
-    {
-        $locale = $locale ?: $this->getCurrentLocale();
-        
-        // Ensure path starts with /
-        if (!str_starts_with($path, '/')) {
-            $path = '/' . $path;
-        }
-        
-        return '/' . $locale . $path;
-    }
-
-    /**
-     * Get language statistics
-     */
-    public function getLanguageStatistics(): array
-    {
-        $languages = $this->getActiveLanguages();
-        $stats = [];
-        
-        foreach ($languages as $language) {
-            $stats[] = [
-                'code' => $language->getCode(),
-                'name' => $language->getName(),
-                'native_name' => $language->getNativeName(),
-                'currency' => $language->getCurrency(),
-                'region' => $language->getRegion(),
-                'is_default' => $language->isDefault(),
-                'is_rtl' => $language->isRtl(),
-                'sort_order' => $language->getSortOrder()
-            ];
-        }
-        
-        return $stats;
-    }
-
-    /**
-     * Get preferred language from browser headers
-     */
-    public function getPreferredLanguageFromBrowser(): ?string
-    {
-        $request = $this->requestStack->getCurrentRequest();
-        
-        if (!$request) {
+        if (!$acceptLanguage) {
             return null;
         }
 
-        $acceptLanguages = $request->getLanguages();
-        $activeLanguageCodes = array_map(
-            fn(Language $lang) => $lang->getCode(),
-            $this->getActiveLanguages()
-        );
-        
-        foreach ($acceptLanguages as $browserLocale) {
-            // Try exact match first
-            if (in_array($browserLocale, $activeLanguageCodes)) {
-                return $browserLocale;
+        // Parse Accept-Language header
+        $locales = [];
+        foreach (explode(',', $acceptLanguage) as $part) {
+            $parts = explode(';', trim($part));
+            $locale = trim($parts[0]);
+            $quality = 1.0;
+            
+            if (isset($parts[1]) && strpos($parts[1], 'q=') === 0) {
+                $quality = (float) substr($parts[1], 2);
             }
             
-            // Try language part only (e.g., 'en' from 'en-US')
-            $languagePart = substr($browserLocale, 0, 2);
-            if (in_array($languagePart, $activeLanguageCodes)) {
-                return $languagePart;
+            // Extract just the language part (e.g., 'fr' from 'fr-FR')
+            $langCode = strtolower(explode('-', $locale)[0]);
+            $locales[$langCode] = $quality;
+        }
+
+        // Sort by quality (preference)
+        arsort($locales);
+
+        // Find first available locale
+        foreach (array_keys($locales) as $locale) {
+            if ($this->isValidLocale($locale)) {
+                return $locale;
             }
         }
-        
+
         return null;
     }
 
     /**
-     * Validate and normalize locale
+     * Get localized URL for current route in different language
      */
-    public function normalizeLocale(string $locale): ?string
+    public function getLocalizedUrl(string $targetLocale, ?Request $request = null): ?string
     {
-        $locale = strtolower(trim($locale));
+        $request = $request ?? $this->requestStack->getCurrentRequest();
         
-        if (strlen($locale) !== 2) {
+        if (!$request) {
             return null;
         }
+
+        $pathInfo = $request->getPathInfo();
+        $currentLocale = $this->getCurrentLocale();
         
-        return $this->isLocaleAvailable($locale) ? $locale : null;
+        // If URL starts with current locale, replace it
+        if (str_starts_with($pathInfo, "/$currentLocale/")) {
+            return str_replace("/$currentLocale/", "/$targetLocale/", $pathInfo);
+        }
+        
+        // If URL doesn't have locale prefix, add target locale
+        return "/$targetLocale$pathInfo";
+    }
+
+    /**
+     * Get language options for forms
+     */
+    public function getLanguageChoices(): array
+    {
+        $choices = [];
+        foreach ($this->getActiveLanguages() as $language) {
+            $choices[$language->getNativeName()] = $language->getCode();
+        }
+        return $choices;
+    }
+
+    /**
+     * Get locale display name in current language
+     */
+    public function getLocaleDisplayName(string $locale, ?string $displayLocale = null): string
+    {
+        $displayLocale = $displayLocale ?? $this->getCurrentLocale();
+        
+        $language = $this->getLanguageByCode($locale);
+        if (!$language) {
+            return $locale;
+        }
+
+        // If displaying in the same locale, use native name
+        if ($locale === $displayLocale) {
+            return $language->getNativeName();
+        }
+
+        // Otherwise use the regular name
+        return $language->getName();
     }
 }

@@ -169,6 +169,36 @@ class Language
         return $this;
     }
 
+    /**
+     * Get text direction (rtl or ltr)
+     */
+    public function getTextDirection(): string
+    {
+        return $this->isRtl ? 'rtl' : 'ltr';
+    }
+
+    /**
+     * Get locale for internationalization (combines code and region)
+     */
+    public function getLocale(): string
+    {
+        if ($this->region) {
+            return $this->code . '_' . strtoupper($this->region);
+        }
+        return $this->code;
+    }
+
+    /**
+     * Get full display name (name + native name)
+     */
+    public function getFullDisplayName(): string
+    {
+        if ($this->name !== $this->nativeName) {
+            return $this->name . ' (' . $this->nativeName . ')';
+        }
+        return $this->name;
+    }
+
     public function __toString(): string
     {
         return $this->name;
