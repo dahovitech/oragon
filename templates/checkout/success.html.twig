@@ -1,0 +1,283 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'checkout.order_confirmed'|trans }} - {{ parent() }}{% endblock %}
+
+{% block body %}
+<!-- breadcrumb start -->
+<div class="breadcrumb-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="page-title">
+                    <h2>{{ 'checkout.order_confirmed'|trans }}</h2>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <nav aria-label="breadcrumb" class="theme-breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ path('home', {'_locale': app.request.locale}) }}">{{ 'nav.home'|trans }}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ path('checkout_index', {'_locale': app.request.locale}) }}">{{ 'checkout.title'|trans }}</a></li>
+                        <li class="breadcrumb-item active">{{ 'checkout.success'|trans }}</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- breadcrumb End -->
+
+<!-- order success start -->
+<section class="order-success section-b-space">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <div class="success-content">
+                    <div class="success-icon">
+                        <i class="fa fa-check-circle text-success"></i>
+                    </div>
+                    <h2>{{ 'checkout.thank_you'|trans }}</h2>
+                    <h4>{{ 'checkout.order_received'|trans }}</h4>
+                    <p>{{ 'checkout.order_confirmation_message'|trans }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6 col-sm-12 mb-4">
+                <div class="order-info">
+                    <h4>{{ 'checkout.order_details'|trans }}</h4>
+                    <ul class="order-details">
+                        <li>
+                            <span>{{ 'checkout.order_number'|trans }}:</span>
+                            <strong>{{ order.orderNumber }}</strong>
+                        </li>
+                        <li>
+                            <span>{{ 'checkout.order_date'|trans }}:</span>
+                            {{ order.createdAt|date('d/m/Y H:i') }}
+                        </li>
+                        <li>
+                            <span>{{ 'checkout.total'|trans }}:</span>
+                            <strong>{{ order.totalAmount|currency(app.request.locale) }}</strong>
+                        </li>
+                        <li>
+                            <span>{{ 'checkout.payment_method'|trans }}:</span>
+                            {% if order.paymentMethod %}
+                                {{ order.paymentMethod.getTranslation(app.request.locale).name ?? order.paymentMethod.getTranslation(default_locale).name }}
+                            {% else %}
+                                {{ 'payment.not_specified'|trans }}
+                            {% endif %}
+                        </li>
+                        <li>
+                            <span>{{ 'checkout.shipping_method'|trans }}:</span>
+                            {% if order.shippingMethod %}
+                                {{ order.shippingMethod.getTranslation(app.request.locale).name ?? order.shippingMethod.getTranslation(default_locale).name }}
+                            {% else %}
+                                {{ 'shipping.not_specified'|trans }}
+                            {% endif %}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-lg-6 col-sm-12 mb-4">
+                <div class="order-address">
+                    <h4>{{ 'checkout.delivery_address'|trans }}</h4>
+                    {% set shippingAddress = order.shippingAddress %}
+                    <div class="address-details">
+                        <p><strong>{{ shippingAddress.first_name }} {{ shippingAddress.last_name }}</strong></p>
+                        <p>{{ shippingAddress.address1 }}</p>
+                        {% if shippingAddress.address2 %}
+                            <p>{{ shippingAddress.address2 }}</p>
+                        {% endif %}
+                        <p>{{ shippingAddress.postal_code }} {{ shippingAddress.city }}</p>
+                        <p>{{ ('country.' ~ shippingAddress.country|lower)|trans }}</p>
+                        {% if shippingAddress.phone %}
+                            <p>{{ 'checkout.phone'|trans }}: {{ shippingAddress.phone }}</p>
+                        {% endif %}
+                        <p>{{ 'checkout.email'|trans }}: {{ shippingAddress.email }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="order-items">
+                    <h4>{{ 'checkout.ordered_items'|trans }}</h4>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>{{ 'checkout.product'|trans }}</th>
+                                    <th>{{ 'checkout.quantity'|trans }}</th>
+                                    <th>{{ 'checkout.unit_price'|trans }}</th>
+                                    <th>{{ 'checkout.total'|trans }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.items %}
+                                <tr>
+                                    <td>
+                                        <div class="product-info">
+                                            {% if item.product %}
+                                                {% set productImage = item.product.images|first %}
+                                                {% if productImage %}
+                                                    <img src="{{ asset('uploads/products/thumbs/' ~ productImage.filename) }}" 
+                                                         alt="{{ item.productName }}" class="product-thumb">
+                                                {% endif %}
+                                                <a href="{{ path('product_detail', {'slug': item.product.getTranslation(app.request.locale).slug ?? item.product.getTranslation(default_locale).slug, '_locale': app.request.locale}) }}">
+                                                    {{ item.productName }}
+                                                </a>
+                                            {% else %}
+                                                {{ item.productName }}
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>{{ item.unitPrice|currency(app.request.locale) }}</td>
+                                    <td>{{ item.totalPrice|currency(app.request.locale) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3"><strong>{{ 'checkout.subtotal'|trans }}</strong></td>
+                                    <td><strong>{{ (order.totalAmount - (order.shippingAmount ?? 0))|currency(app.request.locale) }}</strong></td>
+                                </tr>
+                                {% if order.shippingAmount and order.shippingAmount > 0 %}
+                                <tr>
+                                    <td colspan="3">{{ 'checkout.shipping'|trans }}</td>
+                                    <td>{{ order.shippingAmount|currency(app.request.locale) }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr class="total-row">
+                                    <td colspan="3"><strong>{{ 'checkout.total'|trans }}</strong></td>
+                                    <td><strong>{{ order.totalAmount|currency(app.request.locale) }}</strong></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 text-center">
+                <div class="order-actions">
+                    {% if app.user %}
+                        <a href="{{ path('account_orders', {'_locale': app.request.locale}) }}" class="btn btn-solid">{{ 'checkout.view_order_history'|trans }}</a>
+                    {% endif %}
+                    <a href="{{ path('catalog_index', {'_locale': app.request.locale}) }}" class="btn btn-outline">{{ 'checkout.continue_shopping'|trans }}</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order tracking info -->
+        {% if order.shippingMethod %}
+        <div class="row">
+            <div class="col-12">
+                <div class="order-tracking-info">
+                    <h4>{{ 'checkout.tracking_info'|trans }}</h4>
+                    <p>{{ 'checkout.tracking_message'|trans }}</p>
+                    <p><strong>{{ 'checkout.estimated_delivery'|trans }}:</strong> 
+                        {% if order.shippingMethod.estimatedDays %}
+                            {{ (order.createdAt|date_modify('+' ~ order.shippingMethod.estimatedDays ~ ' days'))|date('d/m/Y') }}
+                        {% else %}
+                            {{ 'checkout.tbd'|trans }}
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Email confirmation notice -->
+        <div class="row">
+            <div class="col-12">
+                <div class="email-notice">
+                    <div class="alert alert-info">
+                        <i class="fa fa-envelope"></i>
+                        {{ 'checkout.email_confirmation_sent'|trans({'%email%': order.billingAddress.email}) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- order success end -->
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .success-content {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .success-icon i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .order-info, .order-address, .order-items {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        
+        .order-details {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .order-details li {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .order-details li:last-child {
+            border-bottom: none;
+        }
+        
+        .address-details p {
+            margin-bottom: 0.25rem;
+        }
+        
+        .product-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .product-thumb {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 1rem;
+        }
+        
+        .total-row td {
+            font-size: 1.1rem;
+            background-color: #e9ecef;
+        }
+        
+        .order-actions {
+            margin: 2rem 0;
+        }
+        
+        .order-actions .btn {
+            margin: 0.5rem;
+        }
+        
+        .order-tracking-info, .email-notice {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+    </style>
+{% endblock %}

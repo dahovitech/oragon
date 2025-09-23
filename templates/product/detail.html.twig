@@ -1,0 +1,501 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ product.getTranslation(app.request.locale).name ?? product.getTranslation(default_locale).name }} - {{ parent() }}{% endblock %}
+
+{% block meta_description %}{{ product.getTranslation(app.request.locale).metaDescription ?? product.getTranslation(default_locale).metaDescription }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('assets/css/vendors/slick.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/vendors/slick-theme.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/vendors/zoom.css') }}">
+{% endblock %}
+
+{% block body %}
+<!-- breadcrumb start -->
+<div class="breadcrumb-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="page-title">
+                    <h2>{{ 'product.details'|trans }}</h2>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <nav aria-label="breadcrumb" class="theme-breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ path('home', {'_locale': app.request.locale}) }}">{{ 'nav.home'|trans }}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ path('catalog_index', {'_locale': app.request.locale}) }}">{{ 'catalog.products'|trans }}</a></li>
+                        {% if product.category %}
+                        <li class="breadcrumb-item"><a href="{{ path('catalog_category', {'slug': product.category.getTranslation(app.request.locale).slug ?? product.category.getTranslation(default_locale).slug, '_locale': app.request.locale}) }}">{{ product.category.getTranslation(app.request.locale).name ?? product.category.getTranslation(default_locale).name }}</a></li>
+                        {% endif %}
+                        <li class="breadcrumb-item active">{{ product.getTranslation(app.request.locale).name ?? product.getTranslation(default_locale).name }}</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- breadcrumb End -->
+
+<!--section start-->
+<section>
+    <div class="collection-wrapper">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="product-slick">
+                        {% for image in product.images %}
+                        <div>
+                            <img src="{{ asset('uploads/products/' ~ image.filename) }}" alt="{{ product.getTranslation(app.request.locale).name ?? product.getTranslation(default_locale).name }}" 
+                                 class="img-fluid blur-up lazyload image_zoom_cls-{{ loop.index0 }}">
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="row">
+                        <div class="col-12 p-0">
+                            <div class="slider-nav">
+                                {% for image in product.images %}
+                                <div>
+                                    <img src="{{ asset('uploads/products/thumbs/' ~ image.filename) }}" alt="{{ product.getTranslation(app.request.locale).name ?? product.getTranslation(default_locale).name }}" 
+                                         class="img-fluid blur-up lazyload">
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6 rtl-text">
+                    <div class="product-right">
+                        <div class="product-count">
+                            <ul>
+                                {% if product.brand %}
+                                <li>
+                                    <img src="{{ asset('assets/images/icon/truck.png') }}" class="img-fluid blur-up lazyload" alt="">
+                                    <span class="lang">{{ 'product.brand'|trans }}: {{ product.brand.getTranslation(app.request.locale).name ?? product.brand.getTranslation(default_locale).name }}</span>
+                                </li>
+                                {% endif %}
+                                {% if product.sku %}
+                                <li>
+                                    <img src="{{ asset('assets/images/icon/coin.png') }}" class="img-fluid blur-up lazyload" alt="">
+                                    <span class="lang">{{ 'product.sku'|trans }}: {{ product.sku }}</span>
+                                </li>
+                                {% endif %}
+                                {% if product.stockQuantity is defined %}
+                                <li>
+                                    <img src="{{ asset('assets/images/icon/reload.png') }}" class="img-fluid blur-up lazyload" alt="">
+                                    <span class="lang">{{ 'product.availability'|trans }}: 
+                                        {% if product.stockQuantity > 0 %}
+                                            <span class="text-success">{{ 'product.in_stock'|trans }} ({{ product.stockQuantity }})</span>
+                                        {% else %}
+                                            <span class="text-danger">{{ 'product.out_of_stock'|trans }}</span>
+                                        {% endif %}
+                                    </span>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                        <h2>{{ product.getTranslation(app.request.locale).name ?? product.getTranslation(default_locale).name }}</h2>
+                        <div class="rating">
+                            {% for i in 1..5 %}
+                                <i class="fa fa-star{% if i > (product.averageRating|default(0)) %}-o{% endif %}"></i>
+                            {% endfor %}
+                            <span class="review-count">({{ product.reviewsCount|default(0) }} {{ 'product.reviews'|trans }})</span>
+                        </div>
+                        <h3 class="price-detail">
+                            {{ product.price|currency(app.request.locale) }}
+                            {% if product.comparePrice and product.comparePrice > product.price %}
+                                <del>{{ product.comparePrice|currency(app.request.locale) }}</del>
+                                <span class="discount">{{ ((product.comparePrice - product.price) / product.comparePrice * 100)|round }}% {{ 'product.off'|trans }}</span>
+                            {% endif %}
+                        </h3>
+                        {% if product.getTranslation(app.request.locale).shortDescription %}
+                        <div class="product-description border-product">
+                            {{ product.getTranslation(app.request.locale).shortDescription|raw }}
+                        </div>
+                        {% endif %}
+
+                        <!-- Product variants and options -->
+                        <form id="add-to-cart-form" method="post" action="{{ path('cart_add', {'_locale': app.request.locale}) }}">
+                            <input type="hidden" name="product_id" value="{{ product.id }}">
+                            
+                            <!-- Color selection -->
+                            {% if product.colorVariants is defined and product.colorVariants|length > 0 %}
+                            <div class="border-product">
+                                <h6 class="product-title">{{ 'product.color'|trans }}</h6>
+                                <div class="color-selector">
+                                    {% for color in product.colorVariants %}
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input color-option" type="radio" name="color" 
+                                               id="color-{{ color.id }}" value="{{ color.id }}" {% if loop.first %}checked{% endif %}>
+                                        <label class="form-check-label color-option-label" for="color-{{ color.id }}" 
+                                               style="background-color: {{ color.hexCode ?? '#ccc' }}" 
+                                               title="{{ color.getTranslation(app.request.locale).value ?? color.getTranslation(default_locale).value }}">
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Size selection -->
+                            {% if product.sizeVariants is defined and product.sizeVariants|length > 0 %}
+                            <div class="border-product">
+                                <h6 class="product-title size-text">{{ 'product.size'|trans }} <a href="#" data-bs-toggle="modal" data-bs-target="#sizemodal">{{ 'product.size_chart'|trans }}</a></h6>
+                                <div class="size-box">
+                                    <ul>
+                                        {% for size in product.sizeVariants %}
+                                        <li>
+                                            <input type="radio" name="size" id="size-{{ size.id }}" value="{{ size.id }}" {% if loop.first %}checked{% endif %}>
+                                            <label for="size-{{ size.id }}">{{ size.getTranslation(app.request.locale).value ?? size.getTranslation(default_locale).value }}</label>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Quantity -->
+                            <div class="border-product">
+                                <h6 class="product-title">{{ 'product.quantity'|trans }}</h6>
+                                <div class="qty-box">
+                                    <div class="input-group">
+                                        <span class="input-group-prepend">
+                                            <button type="button" class="btn quantity-left-minus" onclick="quantityMinus()">
+                                                <i class="ti-angle-left"></i>
+                                            </button>
+                                        </span>
+                                        <input type="number" name="quantity" value="1" min="1" max="{{ product.stockQuantity ?? 999 }}" class="form-control input-number">
+                                        <span class="input-group-append">
+                                            <button type="button" class="btn quantity-right-plus" onclick="quantityPlus()">
+                                                <i class="ti-angle-right"></i>
+                                            </button>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Add to cart and wishlist buttons -->
+                            <div class="product-buttons">
+                                <button type="submit" class="btn btn-solid hover-solid btn-animation">
+                                    <i class="fa fa-shopping-cart"></i>
+                                    <span>{{ 'product.add_to_cart'|trans }}</span>
+                                </button>
+                                <button type="button" class="btn btn-solid wishlist-btn" data-product-id="{{ product.id }}">
+                                    <i class="fa fa-heart"></i>
+                                    <span>{{ 'product.add_to_wishlist'|trans }}</span>
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Social share -->
+                        <div class="border-product">
+                            <h6 class="product-title">{{ 'product.share'|trans }}</h6>
+                            <div class="product-icon">
+                                <ul class="product-social">
+                                    <li><a href="https://www.facebook.com/sharer/sharer.php?u={{ url(app.request.uri) }}" target="_blank"><i class="fa fa-facebook"></i></a></li>
+                                    <li><a href="https://www.twitter.com/share?url={{ url(app.request.uri) }}&text={{ product.getTranslation(app.request.locale).name }}" target="_blank"><i class="fa fa-google-plus"></i></a></li>
+                                    <li><a href="https://www.twitter.com/share?url={{ url(app.request.uri) }}" target="_blank"><i class="fa fa-twitter"></i></a></li>
+                                    <li><a href="https://www.instagram.com/" target="_blank"><i class="fa fa-instagram"></i></a></li>
+                                    <li><a href="#" onclick="navigator.share({title: '{{ product.getTranslation(app.request.locale).name }}', url: '{{ url(app.request.uri) }}'})"><i class="ti-sharethis"></i></a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Product delivery info -->
+                        <div class="border-product">
+                            <h6 class="product-title">{{ 'product.delivery_info'|trans }}</h6>
+                            <ul class="delivery-info">
+                                <li><i class="fa fa-truck"></i> {{ 'product.free_delivery'|trans }}</li>
+                                <li><i class="fa fa-refresh"></i> {{ 'product.return_policy'|trans }}</li>
+                                <li><i class="fa fa-shield"></i> {{ 'product.warranty'|trans }}</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!--Section ends-->
+
+<!--section start-->
+<section class="tab-product m-0">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12 col-lg-12">
+                <ul class="nav nav-tabs nav-material" id="top-tab" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="top-home-tab" data-bs-toggle="tab" href="#top-home" role="tab" aria-selected="true">
+                            <i class="icofont icofont-ui-home"></i>{{ 'product.description'|trans }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="profile-top-tab" data-bs-toggle="tab" href="#top-profile" role="tab" aria-selected="false">
+                            <i class="icofont icofont-man-in-glasses"></i>{{ 'product.specifications'|trans }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="contact-top-tab" data-bs-toggle="tab" href="#top-contact" role="tab" aria-selected="false">
+                            <i class="icofont icofont-contacts"></i>{{ 'product.reviews'|trans }} ({{ product.reviewsCount|default(0) }})
+                        </a>
+                    </li>
+                </ul>
+                <div class="tab-content nav-material" id="top-tabContent">
+                    <div class="tab-pane fade show active" id="top-home" role="tabpanel" aria-labelledby="top-home-tab">
+                        <div class="product-tab-discription">
+                            <div class="part">
+                                <h4>{{ 'product.about_product'|trans }}</h4>
+                                {% if product.getTranslation(app.request.locale).description %}
+                                    {{ product.getTranslation(app.request.locale).description|raw }}
+                                {% else %}
+                                    <p>{{ 'product.no_description'|trans }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="top-profile" role="tabpanel" aria-labelledby="profile-top-tab">
+                        <div class="product-tab-discription">
+                            <div class="part">
+                                <h4>{{ 'product.specifications'|trans }}</h4>
+                                <div class="single-product-tables detail-section">
+                                    <table class="table">
+                                        <tbody>
+                                        {% if product.weight %}
+                                        <tr>
+                                            <td>{{ 'product.weight'|trans }}:</td>
+                                            <td>{{ product.weight }} kg</td>
+                                        </tr>
+                                        {% endif %}
+                                        {% if product.dimensions %}
+                                        <tr>
+                                            <td>{{ 'product.dimensions'|trans }}:</td>
+                                            <td>{{ product.dimensions }}</td>
+                                        </tr>
+                                        {% endif %}
+                                        {% if product.brand %}
+                                        <tr>
+                                            <td>{{ 'product.brand'|trans }}:</td>
+                                            <td>{{ product.brand.getTranslation(app.request.locale).name ?? product.brand.getTranslation(default_locale).name }}</td>
+                                        </tr>
+                                        {% endif %}
+                                        {% if product.category %}
+                                        <tr>
+                                            <td>{{ 'product.category'|trans }}:</td>
+                                            <td>{{ product.category.getTranslation(app.request.locale).name ?? product.category.getTranslation(default_locale).name }}</td>
+                                        </tr>
+                                        {% endif %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="top-contact" role="tabpanel" aria-labelledby="contact-top-tab">
+                        <div class="product-tab-discription">
+                            <div class="part">
+                                <h4>{{ 'product.customer_reviews'|trans }}</h4>
+                                {% if product.reviews is defined and product.reviews|length > 0 %}
+                                    {% for review in product.reviews %}
+                                    <div class="review-item">
+                                        <div class="media">
+                                            <div class="media-body ml-3">
+                                                <div class="row">
+                                                    <div class="col">
+                                                        <h6>{{ review.user.firstName ?? 'Anonymous' }} {{ review.user.lastName ?? '' }}</h6>
+                                                        <div class="rating mb-2">
+                                                            {% for i in 1..5 %}
+                                                                <i class="fa fa-star{% if i > review.rating %}-o{% endif %}"></i>
+                                                            {% endfor %}
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-auto">
+                                                        <span class="review-date">{{ review.createdAt|date('d M Y') }}</span>
+                                                    </div>
+                                                </div>
+                                                {% if review.title %}
+                                                    <h6>{{ review.title }}</h6>
+                                                {% endif %}
+                                                <p>{{ review.comment }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <p>{{ 'product.no_reviews'|trans }}</p>
+                                {% endif %}
+
+                                <!-- Add review form -->
+                                {% if app.user %}
+                                <div class="review-form mt-4">
+                                    <h5>{{ 'product.write_review'|trans }}</h5>
+                                    <form method="post" action="{{ path('product_review', {'id': product.id, '_locale': app.request.locale}) }}">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <input type="text" name="title" class="form-control" placeholder="{{ 'review.title'|trans }}">
+                                            </div>
+                                            <div class="col-md-6">
+                                                <select name="rating" class="form-control" required>
+                                                    <option value="">{{ 'review.select_rating'|trans }}</option>
+                                                    <option value="5">5 {{ 'review.stars'|trans }}</option>
+                                                    <option value="4">4 {{ 'review.stars'|trans }}</option>
+                                                    <option value="3">3 {{ 'review.stars'|trans }}</option>
+                                                    <option value="2">2 {{ 'review.stars'|trans }}</option>
+                                                    <option value="1">1 {{ 'review.star'|trans }}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-12">
+                                                <textarea name="comment" class="form-control" rows="4" placeholder="{{ 'review.comment'|trans }}" required></textarea>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-solid mt-3">{{ 'review.submit'|trans }}</button>
+                                    </form>
+                                </div>
+                                {% else %}
+                                    <p><a href="{{ path('app_login', {'_locale': app.request.locale}) }}">{{ 'auth.login'|trans }}</a> {{ 'product.login_to_review'|trans }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!--Section ends-->
+
+<!-- Related products -->
+{% if related_products is defined and related_products|length > 0 %}
+<section class="section-b-space pt-0 ratio_asos">
+    <div class="container">
+        <div class="row">
+            <div class="col-12 product-related">
+                <h2>{{ 'product.related_products'|trans }}</h2>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <div class="slide-4 product-m no-arrow">
+                    {% for related_product in related_products %}
+                    <div>
+                        <div class="product-box">
+                            <div class="img-wrapper">
+                                <div class="front">
+                                    <a href="{{ path('product_detail', {'slug': related_product.getTranslation(app.request.locale).slug ?? related_product.getTranslation(default_locale).slug, '_locale': app.request.locale}) }}">
+                                        {% set relatedImage = related_product.images|first %}
+                                        <img src="{{ relatedImage ? asset('uploads/products/' ~ relatedImage.filename) : asset('assets/images/product/placeholder.jpg') }}" 
+                                             class="img-fluid blur-up lazyload bg-img" alt="{{ related_product.getTranslation(app.request.locale).name ?? related_product.getTranslation(default_locale).name }}">
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="product-detail">
+                                <a href="{{ path('product_detail', {'slug': related_product.getTranslation(app.request.locale).slug ?? related_product.getTranslation(default_locale).slug, '_locale': app.request.locale}) }}">
+                                    <h6>{{ related_product.getTranslation(app.request.locale).name ?? related_product.getTranslation(default_locale).name }}</h6>
+                                </a>
+                                <h4>{{ related_product.price|currency(app.request.locale) }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('assets/js/vendors/slick.js') }}"></script>
+    <script src="{{ asset('assets/js/vendors/zoom.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            // Product image slider
+            $('.product-slick').slick({
+                slidesToShow: 1,
+                slidesToScroll: 1,
+                arrows: false,
+                fade: false,
+                asNavFor: '.slider-nav',
+            });
+
+            $('.slider-nav').slick({
+                slidesToShow: 4,
+                slidesToScroll: 1,
+                vertical: true,
+                asNavFor: '.product-slick',
+                dots: false,
+                arrows: true,
+                focusOnSelect: true,
+                verticalSwiping: true,
+            });
+
+            // Quantity controls
+            window.quantityPlus = function() {
+                const input = $('.input-number');
+                let currentVal = parseInt(input.val());
+                const maxVal = parseInt(input.attr('max'));
+                if (!isNaN(currentVal) && currentVal < maxVal) {
+                    input.val(currentVal + 1).change();
+                }
+            };
+
+            window.quantityMinus = function() {
+                const input = $('.input-number');
+                let currentVal = parseInt(input.val());
+                if (!isNaN(currentVal) && currentVal > 1) {
+                    input.val(currentVal - 1).change();
+                }
+            };
+
+            // Add to cart form
+            $('#add-to-cart-form').on('submit', function(e) {
+                e.preventDefault();
+                const formData = $(this).serialize();
+                
+                $.post($(this).attr('action'), formData)
+                    .done(function(data) {
+                        if (data.success) {
+                            toastr.success('{{ 'product.added_to_cart'|trans }}');
+                            // Update cart counter
+                            $('.cart-counter').text(data.cart_count);
+                        } else {
+                            toastr.error(data.message || '{{ 'error.generic'|trans }}');
+                        }
+                    })
+                    .fail(function() {
+                        toastr.error('{{ 'error.generic'|trans }}');
+                    });
+            });
+
+            // Wishlist functionality
+            $('.wishlist-btn').on('click', function() {
+                const productId = $(this).data('product-id');
+                const button = $(this);
+                
+                $.post('{{ path('wishlist_toggle', {'_locale': app.request.locale}) }}', {
+                    product_id: productId
+                })
+                .done(function(data) {
+                    if (data.success) {
+                        button.toggleClass('active');
+                        if (data.added) {
+                            toastr.success('{{ 'product.added_to_wishlist'|trans }}');
+                        } else {
+                            toastr.info('{{ 'product.removed_from_wishlist'|trans }}');
+                        }
+                    }
+                })
+                .fail(function() {
+                    toastr.error('{{ 'error.generic'|trans }}');
+                });
+            });
+
+            // Image zoom
+            $('.image_zoom_cls-0').zoom();
+        });
+    </script>
+{% endblock %}

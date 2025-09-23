@@ -1,0 +1,354 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'catalog.products'|trans }} - {{ parent() }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('assets/css/vendors/slick.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/vendors/slick-theme.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/vendors/price-range.css') }}">
+{% endblock %}
+
+{% block body %}
+<!-- breadcrumb start -->
+<div class="breadcrumb-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="page-title">
+                    <h2>{{ 'catalog.products'|trans }}</h2>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <nav aria-label="breadcrumb" class="theme-breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ path('home', {'_locale': app.request.locale}) }}">{{ 'nav.home'|trans }}</a></li>
+                        {% if category is defined and category %}
+                            <li class="breadcrumb-item active">{{ category.getTranslation(app.request.locale).name ?? category.getTranslation(default_locale).name }}</li>
+                        {% else %}
+                            <li class="breadcrumb-item active">{{ 'catalog.all_products'|trans }}</li>
+                        {% endif %}
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- breadcrumb End -->
+
+<!-- section start -->
+<section class="section-b-space">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-3">
+                <!-- Sidebar filters -->
+                <div class="collection-filter">
+                    <!-- Category Filter -->
+                    {% if categories is defined and categories|length > 0 %}
+                    <div class="collection-filter-block">
+                        <h4 class="section-title section-title-sm">{{ 'filter.categories'|trans }}</h4>
+                        <div class="collection-collapse-block">
+                            <div class="collection-collapse-block-content">
+                                {% for cat in categories %}
+                                <div class="form-check collection-filter-checkbox">
+                                    <input type="checkbox" class="form-check-input category-filter" 
+                                           id="category-{{ cat.id }}" value="{{ cat.id }}"
+                                           {% if category is defined and category and category.id == cat.id %}checked{% endif %}>
+                                    <label class="form-check-label" for="category-{{ cat.id }}">
+                                        {{ cat.getTranslation(app.request.locale).name ?? cat.getTranslation(default_locale).name }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Brand Filter -->
+                    {% if brands is defined and brands|length > 0 %}
+                    <div class="collection-filter-block">
+                        <h4 class="section-title section-title-sm">{{ 'filter.brands'|trans }}</h4>
+                        <div class="collection-collapse-block">
+                            <div class="collection-collapse-block-content">
+                                {% for brand in brands %}
+                                <div class="form-check collection-filter-checkbox">
+                                    <input type="checkbox" class="form-check-input brand-filter" 
+                                           id="brand-{{ brand.id }}" value="{{ brand.id }}">
+                                    <label class="form-check-label" for="brand-{{ brand.id }}">
+                                        {{ brand.getTranslation(app.request.locale).name ?? brand.getTranslation(default_locale).name }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Price Range Filter -->
+                    <div class="collection-filter-block">
+                        <h4 class="section-title section-title-sm">{{ 'filter.price_range'|trans }}</h4>
+                        <div class="collection-collapse-block">
+                            <div class="collection-collapse-block-content">
+                                <div class="range-slider">
+                                    <input type="text" class="js-range-slider" value="" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Color Filter -->
+                    {% if colors is defined and colors|length > 0 %}
+                    <div class="collection-filter-block">
+                        <h4 class="section-title section-title-sm">{{ 'filter.colors'|trans }}</h4>
+                        <div class="collection-collapse-block">
+                            <div class="collection-collapse-block-content">
+                                <ul class="color-filter">
+                                    {% for color in colors %}
+                                    <li class="color-item">
+                                        <input type="checkbox" id="color-{{ color.id }}" value="{{ color.id }}" class="color-filter">
+                                        <label for="color-{{ color.id }}" style="background-color: {{ color.hexCode ?? '#ccc' }}" title="{{ color.getTranslation(app.request.locale).value ?? color.getTranslation(default_locale).value }}"></label>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-lg-9 col-sm-12">
+                <!-- Product toolbar -->
+                <div class="collection-product-wrapper">
+                    <div class="product-top-filter">
+                        <div class="row">
+                            <div class="col-xl-12">
+                                <div class="filter-main-btn">
+                                    <span class="filter-btn btn btn-theme"><i class="fa fa-filter" aria-hidden="true"></i> {{ 'catalog.filter'|trans }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="product-filter-content">
+                                    <div class="search-count">
+                                        <h5>{{ 'catalog.showing_results'|trans({'%count%': products.count, '%total%': products.totalItemCount}) }}</h5>
+                                    </div>
+                                    <div class="collection-view">
+                                        <ul>
+                                            <li><i class="fa fa-th grid-layout-view" data-toggle="tooltip" data-placement="top" title="{{ 'catalog.grid_view'|trans }}"></i></li>
+                                            <li><i class="fa fa-list-ul list-layout-view" data-toggle="tooltip" data-placement="top" title="{{ 'catalog.list_view'|trans }}"></i></li>
+                                        </ul>
+                                    </div>
+                                    <div class="collection-grid-view">
+                                        <ul>
+                                            <li><img src="{{ asset('assets/images/icon/2.png') }}" alt="" class="product-2-layout-view"></li>
+                                            <li><img src="{{ asset('assets/images/icon/3.png') }}" alt="" class="product-3-layout-view"></li>
+                                            <li><img src="{{ asset('assets/images/icon/4.png') }}" alt="" class="product-4-layout-view"></li>
+                                            <li><img src="{{ asset('assets/images/icon/6.png') }}" alt="" class="product-6-layout-view"></li>
+                                        </ul>
+                                    </div>
+                                    <div class="product-page-per-view">
+                                        <select id="products-per-page">
+                                            <option value="12">12 {{ 'catalog.per_page'|trans }}</option>
+                                            <option value="24">24 {{ 'catalog.per_page'|trans }}</option>
+                                            <option value="36">36 {{ 'catalog.per_page'|trans }}</option>
+                                            <option value="48">48 {{ 'catalog.per_page'|trans }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="product-page-filter">
+                                        <select id="sort-products">
+                                            <option value="created_at_desc">{{ 'catalog.sort.newest'|trans }}</option>
+                                            <option value="created_at_asc">{{ 'catalog.sort.oldest'|trans }}</option>
+                                            <option value="name_asc">{{ 'catalog.sort.name_az'|trans }}</option>
+                                            <option value="name_desc">{{ 'catalog.sort.name_za'|trans }}</option>
+                                            <option value="price_asc">{{ 'catalog.sort.price_low'|trans }}</option>
+                                            <option value="price_desc">{{ 'catalog.sort.price_high'|trans }}</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Products Grid -->
+                    <div class="product-wrapper-grid" id="products-container">
+                        <div class="row margin-res" data-layout="grid">
+                            {% for product in products %}
+                            <div class="col-xl-3 col-6 col-grid-box">
+                                <div class="product-box">
+                                    <div class="img-wrapper">
+                                        <div class="front">
+                                            {% set productImage = product.images|first %}
+                                            <a href="{{ path('product_detail', {'slug': product.getTranslation(app.request.locale).slug ?? product.getTranslation(default_locale).slug, '_locale': app.request.locale}) }}">
+                                                <img src="{{ productImage ? asset('uploads/products/' ~ productImage.filename) : asset('assets/images/product/placeholder.jpg') }}" 
+                                                     class="img-fluid blur-up lazyload bg-img" alt="{{ product.getTranslation(app.request.locale).name ?? product.getTranslation(default_locale).name }}">
+                                            </a>
+                                        </div>
+                                        {% if product.images|length > 1 %}
+                                        <div class="back">
+                                            <a href="{{ path('product_detail', {'slug': product.getTranslation(app.request.locale).slug ?? product.getTranslation(default_locale).slug, '_locale': app.request.locale}) }}">
+                                                <img src="{{ asset('uploads/products/' ~ product.images[1].filename) }}" 
+                                                     class="img-fluid blur-up lazyload bg-img" alt="{{ product.getTranslation(app.request.locale).name ?? product.getTranslation(default_locale).name }}">
+                                            </a>
+                                        </div>
+                                        {% endif %}
+                                        <div class="cart-info cart-wrap">
+                                            <button onclick="openCart()" title="{{ 'product.quick_view'|trans }}"><i class="ti-search" aria-hidden="true"></i></button>
+                                            <a href="javascript:void(0)" title="{{ 'product.compare'|trans }}"><i class="ti-reload" aria-hidden="true"></i></a>
+                                            <a href="javascript:void(0)" title="{{ 'product.wishlist'|trans }}" class="wishlist-btn" data-product-id="{{ product.id }}"><i class="ti-heart" aria-hidden="true"></i></a>
+                                        </div>
+                                        {% if product.comparePrice and product.comparePrice > product.price %}
+                                        <div class="product-label">
+                                            <span class="label-text">{{ ((product.comparePrice - product.price) / product.comparePrice * 100)|round }}% {{ 'product.off'|trans }}</span>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="product-detail">
+                                        <div class="rating">
+                                            {% for i in 1..5 %}
+                                                <i class="fa fa-star{% if i > (product.averageRating|default(0)) %}-o{% endif %}"></i>
+                                            {% endfor %}
+                                            <span class="rating-count">({{ product.reviewsCount|default(0) }})</span>
+                                        </div>
+                                        <a href="{{ path('product_detail', {'slug': product.getTranslation(app.request.locale).slug ?? product.getTranslation(default_locale).slug, '_locale': app.request.locale}) }}">
+                                            <h6>{{ product.getTranslation(app.request.locale).name ?? product.getTranslation(default_locale).name }}</h6>
+                                        </a>
+                                        <h4>
+                                            {{ product.price|currency(app.request.locale) }}
+                                            {% if product.comparePrice and product.comparePrice > product.price %}
+                                                <del>{{ product.comparePrice|currency(app.request.locale) }}</del>
+                                            {% endif %}
+                                        </h4>
+                                        <ul class="color-variant">
+                                            {% for variant in product.colorVariants|default([]) %}
+                                            <li class="bg-light{{ loop.index }}"></li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if products.pageCount > 1 %}
+                    <nav class="custome-pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if products.current != 1 %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ path(app.request.attributes.get('_route'), app.request.query.all|merge({page: products.current - 1})) }}" tabindex="-1">
+                                    <span aria-hidden="true"><i class="fa fa-chevron-left" aria-hidden="true"></i></span>
+                                    <span class="sr-only">{{ 'pagination.previous'|trans }}</span>
+                                </a>
+                            </li>
+                            {% endif %}
+
+                            {% for page in 1..products.pageCount %}
+                                {% if page == products.current %}
+                                <li class="page-item active">
+                                    <a class="page-link" href="#">{{ page }}</a>
+                                </li>
+                                {% elseif page < products.current + 3 and page > products.current - 3 %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ path(app.request.attributes.get('_route'), app.request.query.all|merge({page: page})) }}">{{ page }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if products.current != products.pageCount %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ path(app.request.attributes.get('_route'), app.request.query.all|merge({page: products.current + 1})) }}">
+                                    <span aria-hidden="true"><i class="fa fa-chevron-right" aria-hidden="true"></i></span>
+                                    <span class="sr-only">{{ 'pagination.next'|trans }}</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- section End -->
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="{{ asset('assets/js/vendors/slick.js') }}"></script>
+    <script src="{{ asset('assets/js/vendors/ion.rangeSlider.min.js') }}"></script>
+    <script>
+        // Initialize price range slider
+        $(".js-range-slider").ionRangeSlider({
+            type: "double",
+            min: 0,
+            max: 1000,
+            from: {{ filters.price_min ?? 0 }},
+            to: {{ filters.price_max ?? 1000 }},
+            grid: true,
+            currency: "{{ app.request.locale == 'fr' ? '€' : '$' }}",
+            onFinish: function (data) {
+                applyFilters();
+            }
+        });
+
+        // Filter functionality
+        function applyFilters() {
+            // Get selected filters
+            const categoryIds = $('input.category-filter:checked').map(function() { return this.value; }).get();
+            const brandIds = $('input.brand-filter:checked').map(function() { return this.value; }).get();
+            const colorIds = $('input.color-filter:checked').map(function() { return this.value; }).get();
+            const priceRange = $(".js-range-slider").data("ionRangeSlider");
+            const sort = $('#sort-products').val();
+            const perPage = $('#products-per-page').val();
+            
+            // Build query parameters
+            const params = new URLSearchParams();
+            if (categoryIds.length) params.append('categories', categoryIds.join(','));
+            if (brandIds.length) params.append('brands', brandIds.join(','));
+            if (colorIds.length) params.append('colors', colorIds.join(','));
+            if (priceRange) {
+                params.append('price_min', priceRange.from);
+                params.append('price_max', priceRange.to);
+            }
+            if (sort) params.append('sort', sort);
+            if (perPage) params.append('limit', perPage);
+            
+            // Reload page with new filters
+            window.location.search = params.toString();
+        }
+
+        // Bind filter changes
+        $(document).ready(function() {
+            $('.category-filter, .brand-filter, .color-filter').on('change', applyFilters);
+            $('#sort-products, #products-per-page').on('change', applyFilters);
+            
+            // Wishlist functionality
+            $('.wishlist-btn').on('click', function() {
+                const productId = $(this).data('product-id');
+                const button = $(this);
+                
+                $.post('{{ path('wishlist_toggle', {'_locale': app.request.locale}) }}', {
+                    product_id: productId
+                })
+                .done(function(data) {
+                    if (data.success) {
+                        button.toggleClass('active');
+                        if (data.added) {
+                            button.find('i').removeClass('ti-heart').addClass('ti-heart');
+                            toastr.success('{{ 'product.added_to_wishlist'|trans }}');
+                        } else {
+                            toastr.info('{{ 'product.removed_from_wishlist'|trans }}');
+                        }
+                    }
+                })
+                .fail(function() {
+                    toastr.error('{{ 'error.generic'|trans }}');
+                });
+            });
+        });
+    </script>
+{% endblock %}

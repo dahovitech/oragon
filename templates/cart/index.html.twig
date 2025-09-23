@@ -1,0 +1,398 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'cart.title'|trans }} - {{ parent() }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('assets/css/vendors/datatables.css') }}">
+{% endblock %}
+
+{% block body %}
+<!-- breadcrumb start -->
+<div class="breadcrumb-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="page-title">
+                    <h2>{{ 'cart.title'|trans }}</h2>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <nav aria-label="breadcrumb" class="theme-breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ path('home', {'_locale': app.request.locale}) }}">{{ 'nav.home'|trans }}</a></li>
+                        <li class="breadcrumb-item active">{{ 'cart.title'|trans }}</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- breadcrumb End -->
+
+<!--section start-->
+<section class="cart-section section-b-space">
+    <div class="container">
+        {% if cart_items is defined and cart_items|length > 0 %}
+        <div class="row">
+            <div class="col-sm-12">
+                <table class="table cart-table table-responsive-xs">
+                    <thead>
+                        <tr class="table-head">
+                            <th scope="col">{{ 'cart.image'|trans }}</th>
+                            <th scope="col">{{ 'cart.product_name'|trans }}</th>
+                            <th scope="col">{{ 'cart.price'|trans }}</th>
+                            <th scope="col">{{ 'cart.quantity'|trans }}</th>
+                            <th scope="col">{{ 'cart.action'|trans }}</th>
+                            <th scope="col">{{ 'cart.total'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in cart_items %}
+                        {% set product = item.product %}
+                        <tr class="cart-item" data-item-id="{{ item.id }}">
+                            <td>
+                                <a href="{{ path('product_detail', {'slug': product.getTranslation(app.request.locale).slug ?? product.getTranslation(default_locale).slug, '_locale': app.request.locale}) }}">
+                                    {% set productImage = product.images|first %}
+                                    <img src="{{ productImage ? asset('uploads/products/thumbs/' ~ productImage.filename) : asset('assets/images/product/placeholder.jpg') }}" 
+                                         alt="{{ product.getTranslation(app.request.locale).name ?? product.getTranslation(default_locale).name }}" 
+                                         class="blur-up lazyload">
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{{ path('product_detail', {'slug': product.getTranslation(app.request.locale).slug ?? product.getTranslation(default_locale).slug, '_locale': app.request.locale}) }}">
+                                    {{ product.getTranslation(app.request.locale).name ?? product.getTranslation(default_locale).name }}
+                                </a>
+                                {% if item.selectedVariants is defined and item.selectedVariants|length > 0 %}
+                                <div class="mobile-cart-content row">
+                                    <div class="col-xs-3">
+                                        <div class="qty-box">
+                                            <div class="input-group">
+                                                <input type="number" name="quantity" class="form-control input-number quantity-input" 
+                                                       value="{{ item.quantity }}" min="1" data-item-id="{{ item.id }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-xs-3">
+                                        <h2 class="td-color">{{ item.unitPrice|currency(app.request.locale) }}</h2>
+                                    </div>
+                                    <div class="col-xs-3">
+                                        <h2 class="td-color">
+                                            <a href="javascript:void(0)" class="icon remove-item" data-item-id="{{ item.id }}">
+                                                <i class="ti-close"></i>
+                                            </a>
+                                        </h2>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Product variants -->
+                                {% if item.selectedVariants is defined and item.selectedVariants|length > 0 %}
+                                <div class="product-variants">
+                                    {% for variant in item.selectedVariants %}
+                                    <small class="text-muted">
+                                        {{ variant.attribute.getTranslation(app.request.locale).name ?? variant.attribute.getTranslation(default_locale).name }}: 
+                                        {{ variant.getTranslation(app.request.locale).value ?? variant.getTranslation(default_locale).value }}
+                                    </small>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <h2>{{ item.unitPrice|currency(app.request.locale) }}</h2>
+                            </td>
+                            <td>
+                                <div class="qty-box">
+                                    <div class="input-group">
+                                        <span class="input-group-prepend">
+                                            <button type="button" class="btn quantity-left-minus" onclick="quantityMinus('{{ item.id }}')">
+                                                <i class="ti-angle-left"></i>
+                                            </button>
+                                        </span>
+                                        <input type="number" name="quantity" class="form-control input-number quantity-input" 
+                                               value="{{ item.quantity }}" min="1" max="{{ product.stockQuantity ?? 999 }}" 
+                                               data-item-id="{{ item.id }}">
+                                        <span class="input-group-append">
+                                            <button type="button" class="btn quantity-right-plus" onclick="quantityPlus('{{ item.id }}')">
+                                                <i class="ti-angle-right"></i>
+                                            </button>
+                                        </span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <a href="javascript:void(0)" class="icon remove-item" data-item-id="{{ item.id }}">
+                                    <i class="ti-close"></i>
+                                </a>
+                            </td>
+                            <td>
+                                <h2 class="td-color item-total" data-item-id="{{ item.id }}">{{ item.totalPrice|currency(app.request.locale) }}</h2>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <table class="table cart-table table-responsive-md">
+                    <tfoot>
+                        <tr>
+                            <td>{{ 'cart.total'|trans }} :</td>
+                            <td>
+                                <h2 id="cart-total">{{ cart_total|currency(app.request.locale) }}</h2>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        <div class="row cart-buttons">
+            <div class="col-12">
+                <a href="{{ path('catalog_index', {'_locale': app.request.locale}) }}" class="btn btn-solid">{{ 'cart.continue_shopping'|trans }}</a>
+                <a href="{{ path('checkout_index', {'_locale': app.request.locale}) }}" class="btn btn-solid checkout-btn">{{ 'cart.proceed_checkout'|trans }}</a>
+            </div>
+        </div>
+
+        <!-- Coupon section -->
+        <div class="row">
+            <div class="col-12">
+                <div class="cart-info">
+                    <div class="cart-apply-coupon">
+                        <form method="post" action="{{ path('cart_apply_coupon', {'_locale': app.request.locale}) }}" id="coupon-form">
+                            <h6>{{ 'cart.coupon_code'|trans }}</h6>
+                            <div class="form-group">
+                                <input type="text" class="form-control" name="coupon_code" placeholder="{{ 'cart.enter_coupon'|trans }}" required>
+                                <button type="submit" class="btn btn-solid btn-sm">{{ 'cart.apply'|trans }}</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cart summary -->
+        <div class="row">
+            <div class="col-lg-6 col-sm-12">
+                <!-- Shipping calculator -->
+                <div class="cart-info shipping-info">
+                    <h6>{{ 'cart.shipping_calculator'|trans }}</h6>
+                    <form method="post" action="{{ path('cart_calculate_shipping', {'_locale': app.request.locale}) }}" id="shipping-form">
+                        <div class="row">
+                            <div class="col-md-6 col-sm-12">
+                                <div class="form-group">
+                                    <label>{{ 'checkout.country'|trans }}</label>
+                                    <select class="form-control" name="country" required>
+                                        <option value="">{{ 'checkout.select_country'|trans }}</option>
+                                        <option value="FR">{{ 'country.france'|trans }}</option>
+                                        <option value="US">{{ 'country.usa'|trans }}</option>
+                                        <option value="CA">{{ 'country.canada'|trans }}</option>
+                                        <option value="GB">{{ 'country.uk'|trans }}</option>
+                                        <option value="DE">{{ 'country.germany'|trans }}</option>
+                                        <option value="ES">{{ 'country.spain'|trans }}</option>
+                                        <option value="IT">{{ 'country.italy'|trans }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-sm-12">
+                                <div class="form-group">
+                                    <label>{{ 'checkout.postal_code'|trans }}</label>
+                                    <input type="text" class="form-control" name="postal_code" placeholder="{{ 'checkout.postal_code'|trans }}">
+                                </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-solid btn-sm">{{ 'cart.calculate_shipping'|trans }}</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-lg-6 col-sm-12">
+                <!-- Cart totals -->
+                <div class="cart-info cart-totals">
+                    <h6>{{ 'cart.order_summary'|trans }}</h6>
+                    <ul>
+                        <li>{{ 'cart.subtotal'|trans }} <span id="cart-subtotal">{{ cart_subtotal|currency(app.request.locale) }}</span></li>
+                        {% if shipping_cost is defined %}
+                        <li>{{ 'cart.shipping'|trans }} <span id="shipping-cost">{{ shipping_cost|currency(app.request.locale) }}</span></li>
+                        {% endif %}
+                        {% if tax_amount is defined %}
+                        <li>{{ 'cart.tax'|trans }} <span id="tax-amount">{{ tax_amount|currency(app.request.locale) }}</span></li>
+                        {% endif %}
+                        {% if discount_amount is defined and discount_amount > 0 %}
+                        <li>{{ 'cart.discount'|trans }} <span id="discount-amount">-{{ discount_amount|currency(app.request.locale) }}</span></li>
+                        {% endif %}
+                        <li class="total">{{ 'cart.total'|trans }} <span id="cart-final-total">{{ cart_total|currency(app.request.locale) }}</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- Empty cart -->
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="empty-cart text-center">
+                    <img src="{{ asset('assets/images/icon/empty-cart.png') }}" class="img-fluid mb-4 mx-auto" alt="{{ 'cart.empty'|trans }}">
+                    <h3>{{ 'cart.empty_title'|trans }}</h3>
+                    <h4>{{ 'cart.empty_message'|trans }}</h4>
+                    <a href="{{ path('catalog_index', {'_locale': app.request.locale}) }}" class="btn btn-solid">{{ 'cart.continue_shopping'|trans }}</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+<!--section end-->
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        $(document).ready(function() {
+            // Quantity controls
+            window.quantityPlus = function(itemId) {
+                const input = $(`.quantity-input[data-item-id="${itemId}"]`);
+                let currentVal = parseInt(input.val());
+                const maxVal = parseInt(input.attr('max'));
+                if (!isNaN(currentVal) && currentVal < maxVal) {
+                    input.val(currentVal + 1);
+                    updateCartItem(itemId, currentVal + 1);
+                }
+            };
+
+            window.quantityMinus = function(itemId) {
+                const input = $(`.quantity-input[data-item-id="${itemId}"]`);
+                let currentVal = parseInt(input.val());
+                if (!isNaN(currentVal) && currentVal > 1) {
+                    input.val(currentVal - 1);
+                    updateCartItem(itemId, currentVal - 1);
+                }
+            };
+
+            // Direct quantity change
+            $('.quantity-input').on('change', function() {
+                const itemId = $(this).data('item-id');
+                const quantity = parseInt($(this).val());
+                if (quantity >= 1) {
+                    updateCartItem(itemId, quantity);
+                }
+            });
+
+            // Remove item
+            $('.remove-item').on('click', function() {
+                const itemId = $(this).data('item-id');
+                removeCartItem(itemId);
+            });
+
+            // Update cart item
+            function updateCartItem(itemId, quantity) {
+                $.ajax({
+                    url: '{{ path('cart_update', {'_locale': app.request.locale}) }}',
+                    method: 'POST',
+                    data: {
+                        item_id: itemId,
+                        quantity: quantity
+                    },
+                    success: function(data) {
+                        if (data.success) {
+                            // Update item total
+                            $(`.item-total[data-item-id="${itemId}"]`).text(data.item_total);
+                            // Update cart totals
+                            updateCartTotals(data);
+                            toastr.success('{{ 'cart.updated'|trans }}');
+                        } else {
+                            toastr.error(data.message || '{{ 'error.generic'|trans }}');
+                        }
+                    },
+                    error: function() {
+                        toastr.error('{{ 'error.generic'|trans }}');
+                    }
+                });
+            }
+
+            // Remove cart item
+            function removeCartItem(itemId) {
+                if (confirm('{{ 'cart.confirm_remove'|trans }}')) {
+                    $.ajax({
+                        url: '{{ path('cart_remove', {'_locale': app.request.locale}) }}',
+                        method: 'POST',
+                        data: {
+                            item_id: itemId
+                        },
+                        success: function(data) {
+                            if (data.success) {
+                                $(`.cart-item[data-item-id="${itemId}"]`).fadeOut(300, function() {
+                                    $(this).remove();
+                                    // Check if cart is empty
+                                    if (data.cart_count === 0) {
+                                        location.reload();
+                                    } else {
+                                        updateCartTotals(data);
+                                    }
+                                });
+                                toastr.success('{{ 'cart.item_removed'|trans }}');
+                            } else {
+                                toastr.error(data.message || '{{ 'error.generic'|trans }}');
+                            }
+                        },
+                        error: function() {
+                            toastr.error('{{ 'error.generic'|trans }}');
+                        }
+                    });
+                }
+            }
+
+            // Update cart totals
+            function updateCartTotals(data) {
+                if (data.cart_subtotal !== undefined) {
+                    $('#cart-subtotal').text(data.cart_subtotal);
+                }
+                if (data.cart_total !== undefined) {
+                    $('#cart-total, #cart-final-total').text(data.cart_total);
+                }
+                if (data.shipping_cost !== undefined) {
+                    $('#shipping-cost').text(data.shipping_cost);
+                }
+                if (data.tax_amount !== undefined) {
+                    $('#tax-amount').text(data.tax_amount);
+                }
+                if (data.cart_count !== undefined) {
+                    $('.cart-counter').text(data.cart_count);
+                }
+            }
+
+            // Apply coupon
+            $('#coupon-form').on('submit', function(e) {
+                e.preventDefault();
+                const formData = $(this).serialize();
+                
+                $.post($(this).attr('action'), formData)
+                    .done(function(data) {
+                        if (data.success) {
+                            toastr.success('{{ 'cart.coupon_applied'|trans }}');
+                            updateCartTotals(data);
+                        } else {
+                            toastr.error(data.message || '{{ 'cart.coupon_invalid'|trans }}');
+                        }
+                    })
+                    .fail(function() {
+                        toastr.error('{{ 'error.generic'|trans }}');
+                    });
+            });
+
+            // Calculate shipping
+            $('#shipping-form').on('submit', function(e) {
+                e.preventDefault();
+                const formData = $(this).serialize();
+                
+                $.post($(this).attr('action'), formData)
+                    .done(function(data) {
+                        if (data.success) {
+                            toastr.success('{{ 'cart.shipping_calculated'|trans }}');
+                            updateCartTotals(data);
+                        } else {
+                            toastr.error(data.message || '{{ 'error.generic'|trans }}');
+                        }
+                    })
+                    .fail(function() {
+                        toastr.error('{{ 'error.generic'|trans }}');
+                    });
+            });
+        });
+    </script>
+{% endblock %}

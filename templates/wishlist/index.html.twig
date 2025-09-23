@@ -1,0 +1,409 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'wishlist.title'|trans }} - {{ parent() }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('assets/css/vendors/datatables.css') }}">
+{% endblock %}
+
+{% block body %}
+<!-- breadcrumb start -->
+<div class="breadcrumb-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="page-title">
+                    <h2>{{ 'wishlist.title'|trans }}</h2>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <nav aria-label="breadcrumb" class="theme-breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ path('home', {'_locale': app.request.locale}) }}">{{ 'nav.home'|trans }}</a></li>
+                        <li class="breadcrumb-item active">{{ 'wishlist.title'|trans }}</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- breadcrumb End -->
+
+<!--section start-->
+<section class="wishlist-section section-b-space">
+    <div class="container">
+        {% if wishlist_items is defined and wishlist_items|length > 0 %}
+        <div class="row">
+            <div class="col-sm-12">
+                <table class="table cart-table table-responsive-xs">
+                    <thead>
+                        <tr class="table-head">
+                            <th scope="col">{{ 'wishlist.image'|trans }}</th>
+                            <th scope="col">{{ 'wishlist.product_name'|trans }}</th>
+                            <th scope="col">{{ 'wishlist.price'|trans }}</th>
+                            <th scope="col">{{ 'wishlist.availability'|trans }}</th>
+                            <th scope="col">{{ 'wishlist.action'|trans }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in wishlist_items %}
+                        {% set product = item.product %}
+                        <tr class="wishlist-item" data-item-id="{{ item.id }}">
+                            <td>
+                                <a href="{{ path('product_detail', {'slug': product.getTranslation(app.request.locale).slug ?? product.getTranslation(default_locale).slug, '_locale': app.request.locale}) }}">
+                                    {% set productImage = product.images|first %}
+                                    <img src="{{ productImage ? asset('uploads/products/thumbs/' ~ productImage.filename) : asset('assets/images/product/placeholder.jpg') }}" 
+                                         alt="{{ product.getTranslation(app.request.locale).name ?? product.getTranslation(default_locale).name }}" 
+                                         class="blur-up lazyload">
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{{ path('product_detail', {'slug': product.getTranslation(app.request.locale).slug ?? product.getTranslation(default_locale).slug, '_locale': app.request.locale}) }}">
+                                    {{ product.getTranslation(app.request.locale).name ?? product.getTranslation(default_locale).name }}
+                                </a>
+                                
+                                <!-- Mobile content -->
+                                <div class="mobile-cart-content row">
+                                    <div class="col">
+                                        <div class="qty-box">
+                                            <h2 class="td-color">{{ product.price|currency(app.request.locale) }}</h2>
+                                        </div>
+                                    </div>
+                                    <div class="col">
+                                        <h2 class="td-color">
+                                            {% if product.stockQuantity > 0 %}
+                                                <span class="text-success">{{ 'product.in_stock'|trans }}</span>
+                                            {% else %}
+                                                <span class="text-danger">{{ 'product.out_of_stock'|trans }}</span>
+                                            {% endif %}
+                                        </h2>
+                                    </div>
+                                    <div class="col">
+                                        <h2 class="td-color">
+                                            <a href="javascript:void(0)" class="icon remove-item" data-item-id="{{ item.id }}">
+                                                <i class="ti-close"></i>
+                                            </a>
+                                        </h2>
+                                    </div>
+                                </div>
+
+                                {% if product.getTranslation(app.request.locale).shortDescription %}
+                                <div class="product-description">
+                                    <small class="text-muted">{{ product.getTranslation(app.request.locale).shortDescription|striptags|slice(0, 100) }}...</small>
+                                </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <h2 class="td-color">
+                                    {{ product.price|currency(app.request.locale) }}
+                                    {% if product.comparePrice and product.comparePrice > product.price %}
+                                        <br><del class="text-muted">{{ product.comparePrice|currency(app.request.locale) }}</del>
+                                    {% endif %}
+                                </h2>
+                            </td>
+                            <td>
+                                {% if product.stockQuantity > 0 %}
+                                    <span class="badge badge-success">{{ 'product.in_stock'|trans }}</span>
+                                {% else %}
+                                    <span class="badge badge-danger">{{ 'product.out_of_stock'|trans }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="wishlist-actions">
+                                    {% if product.stockQuantity > 0 %}
+                                        <button type="button" class="btn btn-solid btn-sm add-to-cart-btn" 
+                                                data-product-id="{{ product.id }}" 
+                                                title="{{ 'product.add_to_cart'|trans }}">
+                                            <i class="fa fa-shopping-cart"></i>
+                                        </button>
+                                    {% endif %}
+                                    <a href="{{ path('product_detail', {'slug': product.getTranslation(app.request.locale).slug ?? product.getTranslation(default_locale).slug, '_locale': app.request.locale}) }}" 
+                                       class="btn btn-outline btn-sm" title="{{ 'product.view_details'|trans }}">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-danger btn-sm remove-item" 
+                                            data-item-id="{{ item.id }}" 
+                                            title="{{ 'wishlist.remove'|trans }}">
+                                        <i class="ti-close"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="row wishlist-buttons">
+            <div class="col-12">
+                <a href="{{ path('catalog_index', {'_locale': app.request.locale}) }}" class="btn btn-solid">{{ 'wishlist.continue_shopping'|trans }}</a>
+                <button type="button" class="btn btn-outline" id="clear-wishlist">{{ 'wishlist.clear_all'|trans }}</button>
+                <button type="button" class="btn btn-solid" id="add-all-to-cart">{{ 'wishlist.add_all_to_cart'|trans }}</button>
+            </div>
+        </div>
+
+        <!-- Wishlist sharing -->
+        <div class="row">
+            <div class="col-12">
+                <div class="wishlist-share">
+                    <h4>{{ 'wishlist.share'|trans }}</h4>
+                    <div class="share-buttons">
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ url(app.request.uri) }}" 
+                           target="_blank" class="btn btn-facebook btn-sm">
+                            <i class="fa fa-facebook"></i> {{ 'social.facebook'|trans }}
+                        </a>
+                        <a href="https://twitter.com/intent/tweet?url={{ url(app.request.uri) }}&text={{ 'wishlist.share_text'|trans|url_encode }}" 
+                           target="_blank" class="btn btn-twitter btn-sm">
+                            <i class="fa fa-twitter"></i> {{ 'social.twitter'|trans }}
+                        </a>
+                        <button type="button" class="btn btn-secondary btn-sm" id="copy-link">
+                            <i class="fa fa-link"></i> {{ 'wishlist.copy_link'|trans }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <!-- Empty wishlist -->
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="empty-wishlist text-center">
+                    <img src="{{ asset('assets/images/icon/empty-wishlist.png') }}" class="img-fluid mb-4 mx-auto" alt="{{ 'wishlist.empty'|trans }}">
+                    <h3>{{ 'wishlist.empty_title'|trans }}</h3>
+                    <h4>{{ 'wishlist.empty_message'|trans }}</h4>
+                    <a href="{{ path('catalog_index', {'_locale': app.request.locale}) }}" class="btn btn-solid">{{ 'wishlist.start_shopping'|trans }}</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+<!--section end-->
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        $(document).ready(function() {
+            // Remove item from wishlist
+            $('.remove-item').on('click', function() {
+                const itemId = $(this).data('item-id');
+                
+                if (confirm('{{ 'wishlist.confirm_remove'|trans }}')) {
+                    removeWishlistItem(itemId);
+                }
+            });
+
+            // Add to cart from wishlist
+            $('.add-to-cart-btn').on('click', function() {
+                const productId = $(this).data('product-id');
+                addToCart(productId);
+            });
+
+            // Clear all wishlist
+            $('#clear-wishlist').on('click', function() {
+                if (confirm('{{ 'wishlist.confirm_clear'|trans }}')) {
+                    clearWishlist();
+                }
+            });
+
+            // Add all to cart
+            $('#add-all-to-cart').on('click', function() {
+                addAllToCart();
+            });
+
+            // Copy link
+            $('#copy-link').on('click', function() {
+                navigator.clipboard.writeText(window.location.href).then(function() {
+                    toastr.success('{{ 'wishlist.link_copied'|trans }}');
+                }).catch(function() {
+                    toastr.error('{{ 'error.generic'|trans }}');
+                });
+            });
+
+            // Remove wishlist item
+            function removeWishlistItem(itemId) {
+                $.ajax({
+                    url: '{{ path('wishlist_remove', {'id': '__ID__', '_locale': app.request.locale})|raw }}'.replace('__ID__', itemId),
+                    method: 'POST',
+                    success: function(data) {
+                        if (data.success) {
+                            $(`.wishlist-item[data-item-id="${itemId}"]`).fadeOut(300, function() {
+                                $(this).remove();
+                                
+                                // Check if wishlist is empty
+                                if ($('.wishlist-item').length === 0) {
+                                    location.reload();
+                                }
+                            });
+                            
+                            // Update wishlist counter
+                            $('.wishlist-counter').text(data.wishlist_count);
+                            toastr.success('{{ 'wishlist.item_removed'|trans }}');
+                        } else {
+                            toastr.error(data.message || '{{ 'error.generic'|trans }}');
+                        }
+                    },
+                    error: function() {
+                        toastr.error('{{ 'error.generic'|trans }}');
+                    }
+                });
+            }
+
+            // Add to cart
+            function addToCart(productId) {
+                $.ajax({
+                    url: '{{ path('cart_add', {'_locale': app.request.locale}) }}',
+                    method: 'POST',
+                    data: {
+                        product_id: productId,
+                        quantity: 1
+                    },
+                    success: function(data) {
+                        if (data.success) {
+                            // Update cart counter
+                            $('.cart-counter').text(data.cart_count);
+                            toastr.success('{{ 'product.added_to_cart'|trans }}');
+                        } else {
+                            toastr.error(data.message || '{{ 'error.generic'|trans }}');
+                        }
+                    },
+                    error: function() {
+                        toastr.error('{{ 'error.generic'|trans }}');
+                    }
+                });
+            }
+
+            // Clear wishlist
+            function clearWishlist() {
+                $.ajax({
+                    url: '{{ path('wishlist_clear', {'_locale': app.request.locale}) }}',
+                    method: 'POST',
+                    success: function(data) {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            toastr.error(data.message || '{{ 'error.generic'|trans }}');
+                        }
+                    },
+                    error: function() {
+                        toastr.error('{{ 'error.generic'|trans }}');
+                    }
+                });
+            }
+
+            // Add all to cart
+            function addAllToCart() {
+                const productIds = [];
+                $('.add-to-cart-btn').each(function() {
+                    productIds.push($(this).data('product-id'));
+                });
+
+                if (productIds.length === 0) {
+                    toastr.warning('{{ 'wishlist.no_available_products'|trans }}');
+                    return;
+                }
+
+                let addedCount = 0;
+                const totalProducts = productIds.length;
+
+                productIds.forEach(function(productId) {
+                    $.ajax({
+                        url: '{{ path('cart_add', {'_locale': app.request.locale}) }}',
+                        method: 'POST',
+                        data: {
+                            product_id: productId,
+                            quantity: 1
+                        },
+                        success: function(data) {
+                            addedCount++;
+                            if (addedCount === totalProducts) {
+                                toastr.success('{{ 'wishlist.all_added_to_cart'|trans }}');
+                                // Update cart counter with the last response
+                                if (data.cart_count) {
+                                    $('.cart-counter').text(data.cart_count);
+                                }
+                            }
+                        },
+                        error: function() {
+                            addedCount++;
+                            if (addedCount === totalProducts) {
+                                toastr.warning('{{ 'wishlist.some_items_failed'|trans }}');
+                            }
+                        }
+                    });
+                });
+            }
+        });
+    </script>
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    .wishlist-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .wishlist-actions .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .wishlist-buttons {
+        margin-top: 2rem;
+    }
+    
+    .wishlist-buttons .btn {
+        margin-right: 1rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .wishlist-share {
+        margin-top: 2rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    
+    .share-buttons .btn {
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .btn-facebook {
+        background-color: #3b5998;
+        border-color: #3b5998;
+        color: white;
+    }
+    
+    .btn-twitter {
+        background-color: #1da1f2;
+        border-color: #1da1f2;
+        color: white;
+    }
+    
+    .empty-wishlist {
+        padding: 3rem 0;
+    }
+    
+    .product-description {
+        margin-top: 0.5rem;
+    }
+    
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .badge-success {
+        background-color: #28a745;
+    }
+    
+    .badge-danger {
+        background-color: #dc3545;
+    }
+</style>
+{% endblock %}

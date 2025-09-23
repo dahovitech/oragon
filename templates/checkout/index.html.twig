@@ -1,0 +1,487 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'checkout.title'|trans }} - {{ parent() }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('assets/css/vendors/bootstrap.css') }}">
+{% endblock %}
+
+{% block body %}
+<!-- breadcrumb start -->
+<div class="breadcrumb-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="page-title">
+                    <h2>{{ 'checkout.title'|trans }}</h2>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <nav aria-label="breadcrumb" class="theme-breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ path('home', {'_locale': app.request.locale}) }}">{{ 'nav.home'|trans }}</a></li>
+                        <li class="breadcrumb-item"><a href="{{ path('cart_index', {'_locale': app.request.locale}) }}">{{ 'cart.title'|trans }}</a></li>
+                        <li class="breadcrumb-item active">{{ 'checkout.title'|trans }}</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- breadcrumb End -->
+
+<!-- section start -->
+<section class="section-b-space">
+    <div class="container">
+        {% if not app.user %}
+        <div class="checkout-page">
+            <div class="checkout-form">
+                <form method="post" action="{{ path('checkout_process', {'_locale': app.request.locale}) }}" id="checkout-form">
+                    <!-- Guest checkout option -->
+                    <div class="row">
+                        <div class="col-lg-6 col-sm-12 mb-5">
+                            <div class="checkout-title">
+                                <h3>{{ 'checkout.billing_details'|trans }}</h3>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="" id="existing-user">
+                                    <label class="form-check-label" for="existing-user">
+                                        {{ 'checkout.existing_customer'|trans }}? <a href="{{ path('app_login', {'_locale': app.request.locale}) }}">{{ 'auth.login'|trans }}</a>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        {% else %}
+        <div class="checkout-page">
+            <div class="checkout-form">
+                <form method="post" action="{{ path('checkout_process', {'_locale': app.request.locale}) }}" id="checkout-form">
+        {% endif %}
+
+                    <div class="row">
+                        <div class="col-lg-6 col-sm-12 mb-5">
+                            <div class="checkout-title">
+                                <h3>{{ 'checkout.billing_details'|trans }}</h3>
+                            </div>
+                            <div class="row check-out">
+                                <div class="form-group col-md-6 col-sm-12 col-xs-12">
+                                    <div class="field-label">{{ 'checkout.first_name'|trans }}</div>
+                                    <input type="text" name="billing[first_name]" class="form-control" 
+                                           value="{{ app.user ? app.user.firstName : '' }}" required>
+                                </div>
+                                <div class="form-group col-md-6 col-sm-12 col-xs-12">
+                                    <div class="field-label">{{ 'checkout.last_name'|trans }}</div>
+                                    <input type="text" name="billing[last_name]" class="form-control" 
+                                           value="{{ app.user ? app.user.lastName : '' }}" required>
+                                </div>
+                                <div class="form-group col-md-6 col-sm-12 col-xs-12">
+                                    <div class="field-label">{{ 'checkout.phone'|trans }}</div>
+                                    <input type="text" name="billing[phone]" class="form-control" 
+                                           value="{{ app.user and app.user.phone ? app.user.phone : '' }}" required>
+                                </div>
+                                <div class="form-group col-md-6 col-sm-12 col-xs-12">
+                                    <div class="field-label">{{ 'checkout.email'|trans }}</div>
+                                    <input type="email" name="billing[email]" class="form-control" 
+                                           value="{{ app.user ? app.user.email : '' }}" required>
+                                </div>
+                                <div class="form-group col-md-12 col-sm-12 col-xs-12">
+                                    <div class="field-label">{{ 'checkout.country'|trans }}</div>
+                                    <select class="form-control" name="billing[country]" required>
+                                        <option value="">{{ 'checkout.select_country'|trans }}</option>
+                                        <option value="FR">{{ 'country.france'|trans }}</option>
+                                        <option value="US">{{ 'country.usa'|trans }}</option>
+                                        <option value="CA">{{ 'country.canada'|trans }}</option>
+                                        <option value="GB">{{ 'country.uk'|trans }}</option>
+                                        <option value="DE">{{ 'country.germany'|trans }}</option>
+                                        <option value="ES">{{ 'country.spain'|trans }}</option>
+                                        <option value="IT">{{ 'country.italy'|trans }}</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-12 col-sm-12 col-xs-12">
+                                    <div class="field-label">{{ 'checkout.address'|trans }}</div>
+                                    <input type="text" name="billing[address1]" class="form-control" 
+                                           placeholder="{{ 'checkout.street_address'|trans }}" required>
+                                </div>
+                                <div class="form-group col-md-12 col-sm-12 col-xs-12">
+                                    <input type="text" name="billing[address2]" class="form-control" 
+                                           placeholder="{{ 'checkout.address_line_2'|trans }} ({{ 'checkout.optional'|trans }})">
+                                </div>
+                                <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                                    <div class="field-label">{{ 'checkout.city'|trans }}</div>
+                                    <input type="text" name="billing[city]" class="form-control" required>
+                                </div>
+                                <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                                    <div class="field-label">{{ 'checkout.postal_code'|trans }}</div>
+                                    <input type="text" name="billing[postal_code]" class="form-control" required>
+                                </div>
+                                <div class="form-group col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="1" id="create-account" name="create_account">
+                                        <label class="form-check-label" for="create-account">
+                                            {{ 'checkout.create_account'|trans }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% if not app.user %}
+                                <div class="form-group col-lg-12 col-md-12 col-sm-12 col-xs-12" id="password-fields" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="field-label">{{ 'auth.password'|trans }}</div>
+                                            <input type="password" name="password" class="form-control">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="field-label">{{ 'auth.confirm_password'|trans }}</div>
+                                            <input type="password" name="password_confirm" class="form-control">
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                <div class="form-group col-lg-12 col-md-12 col-sm-12 col-xs-12">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="1" id="different-shipping" name="different_shipping">
+                                        <label class="form-check-label" for="different-shipping">
+                                            {{ 'checkout.ship_different_address'|trans }}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Shipping Address -->
+                        <div class="col-lg-6 col-sm-12 mb-5" id="shipping-address" style="display: none;">
+                            <div class="checkout-title">
+                                <h3>{{ 'checkout.shipping_details'|trans }}</h3>
+                            </div>
+                            <div class="row check-out">
+                                <div class="form-group col-md-6 col-sm-12 col-xs-12">
+                                    <div class="field-label">{{ 'checkout.first_name'|trans }}</div>
+                                    <input type="text" name="shipping[first_name]" class="form-control">
+                                </div>
+                                <div class="form-group col-md-6 col-sm-12 col-xs-12">
+                                    <div class="field-label">{{ 'checkout.last_name'|trans }}</div>
+                                    <input type="text" name="shipping[last_name]" class="form-control">
+                                </div>
+                                <div class="form-group col-md-6 col-sm-12 col-xs-12">
+                                    <div class="field-label">{{ 'checkout.phone'|trans }}</div>
+                                    <input type="text" name="shipping[phone]" class="form-control">
+                                </div>
+                                <div class="form-group col-md-6 col-sm-12 col-xs-12">
+                                    <div class="field-label">{{ 'checkout.email'|trans }}</div>
+                                    <input type="email" name="shipping[email]" class="form-control">
+                                </div>
+                                <div class="form-group col-md-12 col-sm-12 col-xs-12">
+                                    <div class="field-label">{{ 'checkout.country'|trans }}</div>
+                                    <select class="form-control" name="shipping[country]">
+                                        <option value="">{{ 'checkout.select_country'|trans }}</option>
+                                        <option value="FR">{{ 'country.france'|trans }}</option>
+                                        <option value="US">{{ 'country.usa'|trans }}</option>
+                                        <option value="CA">{{ 'country.canada'|trans }}</option>
+                                        <option value="GB">{{ 'country.uk'|trans }}</option>
+                                        <option value="DE">{{ 'country.germany'|trans }}</option>
+                                        <option value="ES">{{ 'country.spain'|trans }}</option>
+                                        <option value="IT">{{ 'country.italy'|trans }}</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-12 col-sm-12 col-xs-12">
+                                    <div class="field-label">{{ 'checkout.address'|trans }}</div>
+                                    <input type="text" name="shipping[address1]" class="form-control" placeholder="{{ 'checkout.street_address'|trans }}">
+                                </div>
+                                <div class="form-group col-md-12 col-sm-12 col-xs-12">
+                                    <input type="text" name="shipping[address2]" class="form-control" placeholder="{{ 'checkout.address_line_2'|trans }} ({{ 'checkout.optional'|trans }})">
+                                </div>
+                                <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                                    <div class="field-label">{{ 'checkout.city'|trans }}</div>
+                                    <input type="text" name="shipping[city]" class="form-control">
+                                </div>
+                                <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                                    <div class="field-label">{{ 'checkout.postal_code'|trans }}</div>
+                                    <input type="text" name="shipping[postal_code]" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Order Summary -->
+                        <div class="col-lg-6 col-sm-12">
+                            <div class="checkout-details">
+                                <div class="order-box">
+                                    <div class="title-box">
+                                        <div class="checkbox-title">
+                                            <h4>{{ 'checkout.order_summary'|trans }}</h4>
+                                        </div>
+                                    </div>
+                                    <ul class="qty">
+                                        {% for item in cart_items %}
+                                        {% set product = item.product %}
+                                        <li>{{ product.getTranslation(app.request.locale).name ?? product.getTranslation(default_locale).name }} × {{ item.quantity }} 
+                                            <span>{{ item.totalPrice|currency(app.request.locale) }}</span>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                    <ul class="sub-total">
+                                        <li>{{ 'checkout.subtotal'|trans }} <span class="count">{{ cart_subtotal|currency(app.request.locale) }}</span></li>
+                                        <li id="shipping-cost-display" style="display: none;">{{ 'checkout.shipping'|trans }} <span class="count" id="shipping-cost-amount">{{ '0'|currency(app.request.locale) }}</span></li>
+                                        <li id="tax-display" style="display: none;">{{ 'checkout.tax'|trans }} <span class="count" id="tax-amount">{{ '0'|currency(app.request.locale) }}</span></li>
+                                    </ul>
+                                    <ul class="total">
+                                        <li>{{ 'checkout.total'|trans }} <span class="count" id="final-total">{{ cart_total|currency(app.request.locale) }}</span></li>
+                                    </ul>
+                                </div>
+
+                                <!-- Shipping Methods -->
+                                <div class="payment-box">
+                                    <div class="upper-box">
+                                        <div class="payment-options">
+                                            <h4>{{ 'checkout.shipping_method'|trans }}</h4>
+                                            {% if shipping_methods is defined and shipping_methods|length > 0 %}
+                                                {% for method in shipping_methods %}
+                                                <div class="form-check">
+                                                    <input class="form-check-input shipping-method" type="radio" name="shipping_method" 
+                                                           id="shipping-{{ method.id }}" value="{{ method.id }}" 
+                                                           data-price="{{ method.price }}" {% if loop.first %}checked{% endif %}>
+                                                    <label class="form-check-label" for="shipping-{{ method.id }}">
+                                                        {{ method.getTranslation(app.request.locale).name ?? method.getTranslation(default_locale).name }}
+                                                        {% if method.price > 0 %}
+                                                            ({{ method.price|currency(app.request.locale) }})
+                                                        {% else %}
+                                                            ({{ 'checkout.free'|trans }})
+                                                        {% endif %}
+                                                    </label>
+                                                    <p>{{ method.getTranslation(app.request.locale).description ?? method.getTranslation(default_locale).description }}</p>
+                                                </div>
+                                                {% endfor %}
+                                            {% else %}
+                                            <div class="form-check">
+                                                <input class="form-check-input shipping-method" type="radio" name="shipping_method" 
+                                                       id="shipping-standard" value="standard" data-price="0" checked>
+                                                <label class="form-check-label" for="shipping-standard">
+                                                    {{ 'checkout.standard_shipping'|trans }} ({{ 'checkout.free'|trans }})
+                                                </label>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Payment Methods -->
+                                    <div class="payment-box">
+                                        <div class="upper-box">
+                                            <div class="payment-options">
+                                                <h4>{{ 'checkout.payment_method'|trans }}</h4>
+                                                {% if payment_methods is defined and payment_methods|length > 0 %}
+                                                    {% for method in payment_methods %}
+                                                    <div class="form-check">
+                                                        <input class="form-check-input payment-method" type="radio" name="payment_method" 
+                                                               id="payment-{{ method.id }}" value="{{ method.id }}" {% if loop.first %}checked{% endif %}>
+                                                        <label class="form-check-label" for="payment-{{ method.id }}">
+                                                            {{ method.getTranslation(app.request.locale).name ?? method.getTranslation(default_locale).name }}
+                                                        </label>
+                                                        <p>{{ method.getTranslation(app.request.locale).description ?? method.getTranslation(default_locale).description }}</p>
+                                                    </div>
+                                                    {% endfor %}
+                                                {% else %}
+                                                <div class="form-check">
+                                                    <input class="form-check-input payment-method" type="radio" name="payment_method" 
+                                                           id="payment-cod" value="cod" checked>
+                                                    <label class="form-check-label" for="payment-cod">
+                                                        {{ 'payment.cash_on_delivery'|trans }}
+                                                    </label>
+                                                    <p>{{ 'payment.cod_description'|trans }}</p>
+                                                </div>
+                                                <div class="form-check">
+                                                    <input class="form-check-input payment-method" type="radio" name="payment_method" 
+                                                           id="payment-bank" value="bank_transfer">
+                                                    <label class="form-check-label" for="payment-bank">
+                                                        {{ 'payment.bank_transfer'|trans }}
+                                                    </label>
+                                                    <p>{{ 'payment.bank_description'|trans }}</p>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Order Notes -->
+                                <div class="order-notes">
+                                    <h4>{{ 'checkout.order_notes'|trans }}</h4>
+                                    <textarea name="order_notes" class="form-control" rows="3" 
+                                              placeholder="{{ 'checkout.order_notes_placeholder'|trans }}"></textarea>
+                                </div>
+
+                                <!-- Terms and Conditions -->
+                                <div class="terms-conditions">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="1" id="terms" name="accept_terms" required>
+                                        <label class="form-check-label" for="terms">
+                                            {{ 'checkout.accept_terms'|trans }} <a href="{{ path('page_show', {'slug': 'terms-conditions', '_locale': app.request.locale}) }}" target="_blank">{{ 'checkout.terms_conditions'|trans }}</a>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Place Order Button -->
+                                <div class="order-button">
+                                    <button type="submit" class="btn btn-solid btn-lg">{{ 'checkout.place_order'|trans }}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+<!-- section end -->
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        $(document).ready(function() {
+            let cartSubtotal = {{ cart_subtotal }};
+            let currentShippingCost = 0;
+            let currentTax = 0;
+
+            // Toggle shipping address fields
+            $('#different-shipping').on('change', function() {
+                const shippingDiv = $('#shipping-address');
+                if ($(this).is(':checked')) {
+                    shippingDiv.show();
+                    shippingDiv.find('input, select').attr('required', true);
+                } else {
+                    shippingDiv.hide();
+                    shippingDiv.find('input, select').removeAttr('required');
+                }
+            });
+
+            // Toggle create account fields
+            $('#create-account').on('change', function() {
+                const passwordFields = $('#password-fields');
+                if ($(this).is(':checked')) {
+                    passwordFields.show();
+                    passwordFields.find('input').attr('required', true);
+                } else {
+                    passwordFields.hide();
+                    passwordFields.find('input').removeAttr('required');
+                }
+            });
+
+            // Shipping method change
+            $('.shipping-method').on('change', function() {
+                const shippingCost = parseFloat($(this).data('price')) || 0;
+                currentShippingCost = shippingCost;
+                updateTotals();
+                
+                if (shippingCost > 0) {
+                    $('#shipping-cost-display').show();
+                    $('#shipping-cost-amount').text(formatCurrency(shippingCost));
+                } else {
+                    $('#shipping-cost-display').hide();
+                }
+            });
+
+            // Update totals
+            function updateTotals() {
+                const total = cartSubtotal + currentShippingCost + currentTax;
+                $('#final-total').text(formatCurrency(total));
+            }
+
+            // Format currency (simplified)
+            function formatCurrency(amount) {
+                return new Intl.NumberFormat('{{ app.request.locale }}', {
+                    style: 'currency',
+                    currency: '{{ app.request.locale == "fr" ? "EUR" : "USD" }}'
+                }).format(amount);
+            }
+
+            // Form validation and submission
+            $('#checkout-form').on('submit', function(e) {
+                e.preventDefault();
+                
+                // Validate required fields
+                let isValid = true;
+                $(this).find('input[required], select[required]').each(function() {
+                    if (!$(this).val()) {
+                        isValid = false;
+                        $(this).addClass('is-invalid');
+                    } else {
+                        $(this).removeClass('is-invalid');
+                    }
+                });
+
+                // Check password confirmation if account creation is enabled
+                if ($('#create-account').is(':checked')) {
+                    const password = $('input[name="password"]').val();
+                    const confirmPassword = $('input[name="password_confirm"]').val();
+                    if (password !== confirmPassword) {
+                        isValid = false;
+                        $('input[name="password_confirm"]').addClass('is-invalid');
+                        toastr.error('{{ 'auth.password_mismatch'|trans }}');
+                    }
+                }
+
+                if (!isValid) {
+                    toastr.error('{{ 'checkout.fill_required_fields'|trans }}');
+                    return;
+                }
+
+                // Show loading state
+                const submitBtn = $(this).find('button[type="submit"]');
+                const originalText = submitBtn.text();
+                submitBtn.prop('disabled', true).text('{{ 'checkout.processing'|trans }}...');
+
+                // Submit form
+                $.ajax({
+                    url: $(this).attr('action'),
+                    method: 'POST',
+                    data: $(this).serialize(),
+                    success: function(data) {
+                        if (data.success) {
+                            if (data.redirect_url) {
+                                window.location.href = data.redirect_url;
+                            } else {
+                                toastr.success('{{ 'checkout.order_placed'|trans }}');
+                                // Redirect to order confirmation
+                                window.location.href = '{{ path('checkout_success', {'_locale': app.request.locale}) }}';
+                            }
+                        } else {
+                            toastr.error(data.message || '{{ 'error.generic'|trans }}');
+                            submitBtn.prop('disabled', false).text(originalText);
+                        }
+                    },
+                    error: function() {
+                        toastr.error('{{ 'error.generic'|trans }}');
+                        submitBtn.prop('disabled', false).text(originalText);
+                    }
+                });
+            });
+
+            // Auto-calculate shipping cost based on country/postal code
+            $('select[name="billing[country]"], input[name="billing[postal_code]"]').on('change', function() {
+                calculateShipping();
+            });
+
+            function calculateShipping() {
+                const country = $('select[name="billing[country]"]').val();
+                const postalCode = $('input[name="billing[postal_code]"]').val();
+                
+                if (country) {
+                    $.ajax({
+                        url: '{{ path('checkout_calculate_shipping', {'_locale': app.request.locale}) }}',
+                        method: 'POST',
+                        data: {
+                            country: country,
+                            postal_code: postalCode
+                        },
+                        success: function(data) {
+                            if (data.tax_rate) {
+                                currentTax = cartSubtotal * data.tax_rate;
+                                $('#tax-display').show();
+                                $('#tax-amount').text(formatCurrency(currentTax));
+                            }
+                            updateTotals();
+                        }
+                    });
+                }
+            }
+        });
+    </script>
+{% endblock %}
