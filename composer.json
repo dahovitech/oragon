@@ -12,6 +12,8 @@
         "doctrine/doctrine-migrations-bundle": "^3.4",
         "doctrine/orm": "^3.5",
         "inspector-apm/neuron-ai": "*",
+        "lexik/jwt-authentication-bundle": "^3.1",
+        "nelmio/api-doc-bundle": "^5.6",
         "phpdocumentor/reflection-docblock": "^5.6",
         "phpstan/phpdoc-parser": "^2.3",
         "stripe/stripe-php": "^17.6",

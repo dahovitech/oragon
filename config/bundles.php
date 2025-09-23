@@ -23,4 +23,5 @@ return [
     App\Bundle\EcommerceBundle\EcommerceBundle::class => ['all' => true],
     App\Bundle\ThemeBundle\ThemeBundle::class => ['all' => true],
     App\Bundle\ApiBundle\ApiBundle::class => ['all' => true],
+    Lexik\Bundle\JWTAuthenticationBundle\LexikJWTAuthenticationBundle::class => ['all' => true],
 ];

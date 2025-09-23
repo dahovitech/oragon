@@ -15,6 +15,12 @@
         <ini name="error_reporting" value="-1" />
         <server name="APP_ENV" value="test" force="true" />
         <server name="SHELL_VERBOSITY" value="-1" />
+
+        <!-- ###+ lexik/jwt-authentication-bundle ### -->
+        <env name="JWT_SECRET_KEY" value="%kernel.project_dir%/config/jwt/private.pem"/>
+        <env name="JWT_PUBLIC_KEY" value="%kernel.project_dir%/config/jwt/public.pem"/>
+        <env name="JWT_PASSPHRASE" value="dbdf5e09002c910b8380a802b0f000ee973975a06c1869ba70ec52b0f92d4915"/>
+        <!-- ###- lexik/jwt-authentication-bundle ### -->
     </php>
 
     <testsuites>
