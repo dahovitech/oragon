@@ -10,3 +10,14 @@ admin:
     resource: ../src/Controller/Admin/
     type: attribute
     prefix: /admin
+
+# Blog Bundle Routes
+blog:
+    resource: '../src/Bundle/BlogBundle/Controller/Frontend/'
+    type: attribute
+
+# Bundle Admin Controllers
+bundles_admin:
+    resource: '../src/Bundle/*/Controller/Admin/'
+    type: attribute
+    prefix: /admin

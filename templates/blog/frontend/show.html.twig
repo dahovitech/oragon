@@ -1,0 +1,286 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ post.metaTitle ?? post.title }} - {{ parent() }}{% endblock %}
+
+{% block meta %}
+    {% if post.metaDescription %}
+    <meta name="description" content="{{ post.metaDescription }}">
+    {% endif %}
+    <meta property="og:title" content="{{ post.title }}">
+    <meta property="og:type" content="article">
+    {% if post.featuredImage %}
+    <meta property="og:image" content="{{ absolute_url(asset('uploads/media/' ~ post.featuredImage.fileName)) }}">
+    {% endif %}
+    {% if post.excerpt %}
+    <meta property="og:description" content="{{ post.excerpt }}">
+    {% endif %}
+    <meta property="article:published_time" content="{{ post.publishedAt|date('c') }}">
+    <meta property="article:author" content="{{ post.author.fullName ?? post.author.email }}">
+    {% if post.category %}
+    <meta property="article:section" content="{{ post.category.name }}">
+    {% endif %}
+    {% for tag in post.tags %}
+    <meta property="article:tag" content="{{ tag.name }}">
+    {% endfor %}
+{% endblock %}
+
+{% block body %}
+<article class="container-fluid py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Article Header -->
+            <header class="mb-5">
+                <!-- Breadcrumb -->
+                <nav aria-label="breadcrumb" class="mb-3">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ path('app_homepage') }}">Accueil</a></li>
+                        <li class="breadcrumb-item"><a href="{{ path('blog_index') }}">Blog</a></li>
+                        {% if post.category %}
+                        <li class="breadcrumb-item">
+                            <a href="{{ path('blog_category', {slug: post.category.slug}) }}">{{ post.category.name }}</a>
+                        </li>
+                        {% endif %}
+                        <li class="breadcrumb-item active" aria-current="page">{{ post.title }}</li>
+                    </ol>
+                </nav>
+
+                <!-- Categories and Tags -->
+                <div class="mb-3">
+                    {% if post.category %}
+                    <a href="{{ path('blog_category', {slug: post.category.slug}) }}" 
+                       class="badge me-2 text-decoration-none" 
+                       style="background-color: {{ post.category.color ?? '#6c757d' }}">
+                        {{ post.category.name }}
+                    </a>
+                    {% endif %}
+                    {% for tag in post.tags %}
+                    <a href="{{ path('blog_tag', {slug: tag.slug}) }}" 
+                       class="badge bg-secondary me-1 text-decoration-none">
+                        {{ tag.name }}
+                    </a>
+                    {% endfor %}
+                </div>
+
+                <h1 class="display-4 mb-3">{{ post.title }}</h1>
+                
+                {% if post.excerpt %}
+                <p class="lead text-muted mb-4">{{ post.excerpt }}</p>
+                {% endif %}
+
+                <!-- Article Meta -->
+                <div class="d-flex flex-wrap align-items-center text-muted mb-4">
+                    <div class="me-4">
+                        <i class="bi bi-person-circle me-1"></i>
+                        <span>{{ post.author.fullName ?? post.author.email }}</span>
+                    </div>
+                    <div class="me-4">
+                        <i class="bi bi-calendar3 me-1"></i>
+                        <time datetime="{{ post.publishedAt|date('c') }}">{{ post.publishedAt|date('d F Y') }}</time>
+                    </div>
+                    <div class="me-4">
+                        <i class="bi bi-eye me-1"></i>
+                        <span>{{ post.viewCount }} vues</span>
+                    </div>
+                    {% if post.allowComments %}
+                    <div class="me-4">
+                        <i class="bi bi-chat me-1"></i>
+                        <span>{{ post.publishedComments|length }} commentaires</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Featured Image -->
+                {% if post.featuredImage %}
+                <div class="mb-4">
+                    <img src="{{ asset('uploads/media/' ~ post.featuredImage.fileName) }}" 
+                         class="img-fluid rounded shadow" 
+                         alt="{{ post.featuredImage.alt ?? post.title }}">
+                </div>
+                {% endif %}
+            </header>
+
+            <!-- Article Content -->
+            <div class="article-content mb-5">
+                {{ post.content|raw }}
+            </div>
+
+            <!-- Share Buttons -->
+            <div class="border-top border-bottom py-4 mb-5">
+                <h5 class="mb-3">Partager cet article</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="https://twitter.com/intent/tweet?text={{ post.title|url_encode }}&url={{ absolute_url(path('blog_post_show', {slug: post.slug}))|url_encode }}" 
+                       target="_blank" 
+                       class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-twitter"></i> Twitter
+                    </a>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ absolute_url(path('blog_post_show', {slug: post.slug}))|url_encode }}" 
+                       target="_blank" 
+                       class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-facebook"></i> Facebook
+                    </a>
+                    <a href="https://www.linkedin.com/sharing/share-offsite/?url={{ absolute_url(path('blog_post_show', {slug: post.slug}))|url_encode }}" 
+                       target="_blank" 
+                       class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-linkedin"></i> LinkedIn
+                    </a>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="copyToClipboard()">
+                        <i class="bi bi-link-45deg"></i> Copier le lien
+                    </button>
+                </div>
+            </div>
+
+            <!-- Comments Section -->
+            {% if post.allowComments %}
+            <section class="mb-5">
+                <h3 class="mb-4">Commentaires ({{ post.publishedComments|length }})</h3>
+                
+                {% if post.publishedComments %}
+                    {% for comment in post.publishedComments %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="mb-0">{{ comment.authorName }}</h6>
+                                <small class="text-muted">{{ comment.createdAt|date('d/m/Y à H:i') }}</small>
+                            </div>
+                            <p class="mb-0">{{ comment.content|nl2br }}</p>
+                            
+                            <!-- Replies -->
+                            {% if comment.replies %}
+                            <div class="mt-3 ps-3 border-start">
+                                {% for reply in comment.replies %}
+                                    {% if reply.isApproved %}
+                                    <div class="mb-2">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <h6 class="mb-0 small">{{ reply.authorName }}</h6>
+                                            <small class="text-muted">{{ reply.createdAt|date('d/m/Y à H:i') }}</small>
+                                        </div>
+                                        <p class="mb-0 small">{{ reply.content|nl2br }}</p>
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">Aucun commentaire pour le moment. Soyez le premier à commenter !</p>
+                {% endif %}
+
+                <!-- Comment Form -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Laisser un commentaire</h5>
+                    </div>
+                    <div class="card-body">
+                        <form>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="comment_name" class="form-label">Nom *</label>
+                                    <input type="text" class="form-control" id="comment_name" name="name" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="comment_email" class="form-label">Email *</label>
+                                    <input type="email" class="form-control" id="comment_email" name="email" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="comment_content" class="form-label">Commentaire *</label>
+                                <textarea class="form-control" id="comment_content" name="content" rows="4" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="comment_terms" required>
+                                    <label class="form-check-label" for="comment_terms">
+                                        J'accepte que mon commentaire soit publié et que mes données soient stockées pour modération.
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Publier le commentaire</button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="sticky-top" style="top: 2rem;">
+                <!-- Related Posts -->
+                {% if related_posts %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Articles similaires</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for relatedPost in related_posts %}
+                        <div class="d-flex mb-3">
+                            {% if relatedPost.featuredImage %}
+                            <img src="{{ asset('uploads/media/' ~ relatedPost.featuredImage.fileName) }}" 
+                                 class="rounded me-3" 
+                                 style="width: 60px; height: 60px; object-fit: cover;"
+                                 alt="{{ relatedPost.title }}">
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">
+                                    <a href="{{ path('blog_post_show', {slug: relatedPost.slug}) }}" 
+                                       class="text-decoration-none">
+                                        {{ relatedPost.title|slice(0, 50) }}{% if relatedPost.title|length > 50 %}...{% endif %}
+                                    </a>
+                                </h6>
+                                <small class="text-muted">{{ relatedPost.publishedAt|date('d/m/Y') }}</small>
+                            </div>
+                        </div>
+                        {% if not loop.last %}<hr class="my-2">{% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Recent Posts -->
+                {% if recent_posts %}
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Articles récents</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for recentPost in recent_posts %}
+                        {% if recentPost.id != post.id %}
+                        <div class="d-flex mb-3">
+                            {% if recentPost.featuredImage %}
+                            <img src="{{ asset('uploads/media/' ~ recentPost.featuredImage.fileName) }}" 
+                                 class="rounded me-3" 
+                                 style="width: 60px; height: 60px; object-fit: cover;"
+                                 alt="{{ recentPost.title }}">
+                            {% endif %}
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">
+                                    <a href="{{ path('blog_post_show', {slug: recentPost.slug}) }}" 
+                                       class="text-decoration-none">
+                                        {{ recentPost.title|slice(0, 50) }}{% if recentPost.title|length > 50 %}...{% endif %}
+                                    </a>
+                                </h6>
+                                <small class="text-muted">{{ recentPost.publishedAt|date('d/m/Y') }}</small>
+                            </div>
+                        </div>
+                        {% if not loop.last %}<hr class="my-2">{% endif %}
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</article>
+
+<script>
+function copyToClipboard() {
+    navigator.clipboard.writeText(window.location.href).then(function() {
+        // Optionally show a toast or alert
+        alert('Lien copié dans le presse-papiers !');
+    });
+}
+</script>
+{% endblock %}
