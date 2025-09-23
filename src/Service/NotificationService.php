@@ -2,326 +2,354 @@
 
 namespace App\Service;
 
-use App\Entity\AccountVerification;
 use App\Entity\LoanApplication;
+use App\Entity\LoanContract;
 use App\Entity\User;
-use App\Enum\VerificationStatus;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Twig\Environment;
+use Psr\Log\LoggerInterface;
 
 class NotificationService
 {
     public function __construct(
         private MailerInterface $mailer,
         private Environment $twig,
-        private string $fromEmail = 'noreply@edgeloan.com'
+        private LoggerInterface $logger
     ) {}
 
-    public function sendVerificationSubmitted(AccountVerification $verification): void
+    public function sendContractGenerated(LoanContract $contract): void
     {
-        $user = $verification->getUser();
+        $user = $contract->getLoanApplication()->getUser();
         
-        $email = (new Email())
-            ->from($this->fromEmail)
-            ->to($user->getEmail())
-            ->subject('EdgeLoan - Demande de vérification reçue')
-            ->html($this->twig->render('emails/verification_submitted.html.twig', [
-                'user' => $user,
-                'verification' => $verification
-            ]));
+        try {
+            $email = (new Email())
+                ->from('noreply@edgeloan.fr')
+                ->to($user->getEmail())
+                ->subject('Votre contrat de prêt est prêt - EdgeLoan')
+                ->html($this->twig->render('emails/contract_generated.html.twig', [
+                    'user' => $user,
+                    'contract' => $contract,
+                    'application' => $contract->getLoanApplication()
+                ]));
 
-        $this->mailer->send($email);
-    }
-
-    public function sendVerificationStatusUpdate(AccountVerification $verification): void
-    {
-        $user = $verification->getUser();
-        
-        $subject = match($verification->getStatus()) {
-            VerificationStatus::VERIFIED => 'EdgeLoan - Vérification approuvée ✅',
-            VerificationStatus::REJECTED => 'EdgeLoan - Vérification rejetée ❌',
-            default => 'EdgeLoan - Mise à jour de votre vérification'
-        };
-        
-        $email = (new Email())
-            ->from($this->fromEmail)
-            ->to($user->getEmail())
-            ->subject($subject)
-            ->html($this->twig->render('emails/verification_status_update.html.twig', [
-                'user' => $user,
-                'verification' => $verification
-            ]));
-
-        $this->mailer->send($email);
-    }
-
-    public function sendAccountFullyVerified(User $user): void
-    {
-        $email = (new Email())
-            ->from($this->fromEmail)
-            ->to($user->getEmail())
-            ->subject('🎉 EdgeLoan - Votre compte est maintenant vérifié!')
-            ->html($this->twig->render('emails/account_fully_verified.html.twig', [
-                'user' => $user
-            ]));
-
-        $this->mailer->send($email);
-    }
-
-    public function sendLoanApplicationSubmitted(LoanApplication $application): void
-    {
-        $user = $application->getUser();
-        
-        $email = (new Email())
-            ->from($this->fromEmail)
-            ->to($user->getEmail())
-            ->subject('EdgeLoan - Votre demande de prêt a été reçue')
-            ->html($this->twig->render('emails/loan_application_submitted.html.twig', [
-                'user' => $user,
-                'application' => $application
-            ]));
-
-        $this->mailer->send($email);
-    }
-
-    public function sendLoanApplicationStatusUpdate(LoanApplication $application): void
-    {
-        $user = $application->getUser();
-        
-        $subject = match($application->getStatus()->value) {
-            'APPROVED' => 'EdgeLoan - Félicitations! Votre prêt est approuvé 🎉',
-            'REJECTED' => 'EdgeLoan - Décision concernant votre demande de prêt',
-            'UNDER_REVIEW' => 'EdgeLoan - Votre demande est en cours d\'étude',
-            default => 'EdgeLoan - Mise à jour de votre demande de prêt'
-        };
-        
-        $email = (new Email())
-            ->from($this->fromEmail)
-            ->to($user->getEmail())
-            ->subject($subject)
-            ->html($this->twig->render('emails/loan_application_status_update.html.twig', [
-                'user' => $user,
-                'application' => $application
-            ]));
-
-        $this->mailer->send($email);
-    }
-
-    public function sendPaymentReminder(User $user, $payment): void
-    {
-        $email = (new Email())
-            ->from($this->fromEmail)
-            ->to($user->getEmail())
-            ->subject('EdgeLoan - Rappel d\'échéance de paiement')
-            ->html($this->twig->render('emails/payment_reminder.html.twig', [
-                'user' => $user,
-                'payment' => $payment
-            ]));
-
-        $this->mailer->send($email);
-    }
-
-    public function sendPaymentConfirmation(User $user, $payment): void
-    {
-        $email = (new Email())
-            ->from($this->fromEmail)
-            ->to($user->getEmail())
-            ->subject('EdgeLoan - Confirmation de paiement')
-            ->html($this->twig->render('emails/payment_confirmation.html.twig', [
-                'user' => $user,
-                'payment' => $payment
-            ]));
-
-        $this->mailer->send($email);
-    }
-
-    public function sendWelcomeEmail(User $user): void
-    {
-        $email = (new Email())
-            ->from($this->fromEmail)
-            ->to($user->getEmail())
-            ->subject('Bienvenue sur EdgeLoan! 🚀')
-            ->html($this->twig->render('emails/welcome.html.twig', [
-                'user' => $user
-            ]));
-
-        $this->mailer->send($email);
-    }
-
-    public function sendPasswordResetEmail(User $user, string $resetToken): void
-    {
-        $email = (new Email())
-            ->from($this->fromEmail)
-            ->to($user->getEmail())
-            ->subject('EdgeLoan - Réinitialisation de votre mot de passe')
-            ->html($this->twig->render('emails/password_reset.html.twig', [
-                'user' => $user,
-                'resetToken' => $resetToken
-            ]));
-
-        $this->mailer->send($email);
-    }
-
-    // Nouvelles méthodes pour la Phase 4
-
-    public function sendLoanApplicationUnderReview(LoanApplication $application): void
-    {
-        $user = $application->getUser();
-        
-        $email = (new Email())
-            ->from($this->fromEmail)
-            ->to($user->getEmail())
-            ->subject('EdgeLoan - Votre demande est en cours d\'examen 👀')
-            ->html($this->twig->render('emails/loan_application_under_review.html.twig', [
-                'user' => $user,
-                'application' => $application
-            ]));
-
-        $this->mailer->send($email);
-    }
-
-    public function sendLoanApplicationApproved(LoanApplication $application): void
-    {
-        $user = $application->getUser();
-        
-        $email = (new Email())
-            ->from($this->fromEmail)
-            ->to($user->getEmail())
-            ->subject('EdgeLoan - Félicitations ! Votre prêt est approuvé ✅')
-            ->html($this->twig->render('emails/loan_application_approved.html.twig', [
-                'user' => $user,
-                'application' => $application
-            ]));
-
-        $this->mailer->send($email);
-    }
-
-    public function sendLoanApplicationRejected(LoanApplication $application): void
-    {
-        $user = $application->getUser();
-        
-        $email = (new Email())
-            ->from($this->fromEmail)
-            ->to($user->getEmail())
-            ->subject('EdgeLoan - Réponse à votre demande de prêt')
-            ->html($this->twig->render('emails/loan_application_rejected.html.twig', [
-                'user' => $user,
-                'application' => $application
-            ]));
-
-        $this->mailer->send($email);
-    }
-
-    public function sendLoanApplicationReminder(LoanApplication $application): void
-    {
-        $user = $application->getUser();
-        
-        $email = (new Email())
-            ->from($this->fromEmail)
-            ->to($user->getEmail())
-            ->subject('EdgeLoan - Rappel concernant votre demande de prêt')
-            ->html($this->twig->render('emails/loan_application_reminder.html.twig', [
-                'user' => $user,
-                'application' => $application
-            ]));
-
-        $this->mailer->send($email);
-    }
-
-    public function sendContractGenerated(LoanApplication $application): void
-    {
-        $user = $application->getUser();
-        
-        $email = (new Email())
-            ->from($this->fromEmail)
-            ->to($user->getEmail())
-            ->subject('EdgeLoan - Votre contrat de prêt est prêt 📄')
-            ->html($this->twig->render('emails/contract_generated.html.twig', [
-                'user' => $user,
-                'application' => $application
-            ]));
-
-        $this->mailer->send($email);
+            $this->mailer->send($email);
+            
+            $this->logger->info('Contract generated notification sent', [
+                'user_id' => $user->getId(),
+                'contract_number' => $contract->getContractNumber()
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to send contract generated notification', [
+                'user_id' => $user->getId(),
+                'contract_number' => $contract->getContractNumber(),
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     public function sendContractSigned(LoanApplication $application): void
     {
         $user = $application->getUser();
+        $contract = $application->getLoanContract();
         
-        $email = (new Email())
-            ->from($this->fromEmail)
-            ->to($user->getEmail())
-            ->subject('EdgeLoan - Contrat signé - Déblocage des fonds 💰')
-            ->html($this->twig->render('emails/contract_signed.html.twig', [
+        try {
+            $email = (new Email())
+                ->from('noreply@edgeloan.fr')
+                ->to($user->getEmail())
+                ->subject('Félicitations ! Votre contrat a été signé - EdgeLoan')
+                ->html($this->twig->render('emails/contract_signed.html.twig', [
+                    'user' => $user,
+                    'contract' => $contract,
+                    'application' => $application
+                ]));
+
+            $this->mailer->send($email);
+            
+            // Notification à l'équipe interne
+            $this->sendInternalNotification('contract_signed', [
                 'user' => $user,
+                'contract' => $contract,
                 'application' => $application
-            ]));
-
-        $this->mailer->send($email);
+            ]);
+            
+            $this->logger->info('Contract signed notification sent', [
+                'user_id' => $user->getId(),
+                'contract_number' => $contract->getContractNumber()
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to send contract signed notification', [
+                'user_id' => $user->getId(),
+                'contract_number' => $contract->getContractNumber(),
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
-    public function sendPaymentReminder(\App\Entity\Payment $payment): void
-    {
-        $user = $payment->getLoanContract()->getLoanApplication()->getUser();
-        
-        $email = (new Email())
-            ->from($this->fromEmail)
-            ->to($user->getEmail())
-            ->subject('EdgeLoan - Rappel d\'échéance de paiement 💳')
-            ->html($this->twig->render('emails/payment_reminder.html.twig', [
-                'user' => $user,
-                'payment' => $payment
-            ]));
-
-        $this->mailer->send($email);
-    }
-
-    public function sendPaymentReceived(\App\Entity\Payment $payment): void
-    {
-        $user = $payment->getLoanContract()->getLoanApplication()->getUser();
-        
-        $email = (new Email())
-            ->from($this->fromEmail)
-            ->to($user->getEmail())
-            ->subject('EdgeLoan - Paiement reçu ✅')
-            ->html($this->twig->render('emails/payment_received.html.twig', [
-                'user' => $user,
-                'payment' => $payment
-            ]));
-
-        $this->mailer->send($email);
-    }
-
-    public function sendPaymentOverdue(\App\Entity\Payment $payment): void
-    {
-        $user = $payment->getLoanContract()->getLoanApplication()->getUser();
-        
-        $email = (new Email())
-            ->from($this->fromEmail)
-            ->to($user->getEmail())
-            ->subject('EdgeLoan - URGENT : Paiement en retard ⚠️')
-            ->html($this->twig->render('emails/payment_overdue.html.twig', [
-                'user' => $user,
-                'payment' => $payment
-            ]));
-
-        $this->mailer->send($email);
-    }
-
-    public function sendLoanCompleted(\App\Entity\LoanContract $contract): void
+    public function sendPaymentReminder(LoanContract $contract, array $overduePayments): void
     {
         $user = $contract->getLoanApplication()->getUser();
         
-        $email = (new Email())
-            ->from($this->fromEmail)
-            ->to($user->getEmail())
-            ->subject('EdgeLoan - Félicitations ! Votre prêt est entièrement remboursé 🎉')
-            ->html($this->twig->render('emails/loan_completed.html.twig', [
-                'user' => $user,
-                'contract' => $contract
-            ]));
+        try {
+            $email = (new Email())
+                ->from('noreply@edgeloan.fr')
+                ->to($user->getEmail())
+                ->subject('Rappel d\'échéance - EdgeLoan')
+                ->html($this->twig->render('emails/payment_reminder.html.twig', [
+                    'user' => $user,
+                    'contract' => $contract,
+                    'overduePayments' => $overduePayments
+                ]));
 
-        $this->mailer->send($email);
+            $this->mailer->send($email);
+            
+            $this->logger->info('Payment reminder sent', [
+                'user_id' => $user->getId(),
+                'contract_number' => $contract->getContractNumber(),
+                'overdue_count' => count($overduePayments)
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to send payment reminder', [
+                'user_id' => $user->getId(),
+                'contract_number' => $contract->getContractNumber(),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function sendPaymentConfirmation(LoanContract $contract, array $payment): void
+    {
+        $user = $contract->getLoanApplication()->getUser();
+        
+        try {
+            $email = (new Email())
+                ->from('noreply@edgeloan.fr')
+                ->to($user->getEmail())
+                ->subject('Confirmation de paiement - EdgeLoan')
+                ->html($this->twig->render('emails/payment_confirmation.html.twig', [
+                    'user' => $user,
+                    'contract' => $contract,
+                    'payment' => $payment
+                ]));
+
+            $this->mailer->send($email);
+            
+            $this->logger->info('Payment confirmation sent', [
+                'user_id' => $user->getId(),
+                'contract_number' => $contract->getContractNumber(),
+                'payment_amount' => $payment['amount']
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to send payment confirmation', [
+                'user_id' => $user->getId(),
+                'contract_number' => $contract->getContractNumber(),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function sendLoanFullyRepaid(LoanContract $contract): void
+    {
+        $user = $contract->getLoanApplication()->getUser();
+        
+        try {
+            $email = (new Email())
+                ->from('noreply@edgeloan.fr')
+                ->to($user->getEmail())
+                ->subject('Félicitations ! Votre prêt est soldé - EdgeLoan')
+                ->html($this->twig->render('emails/loan_fully_repaid.html.twig', [
+                    'user' => $user,
+                    'contract' => $contract
+                ]));
+
+            $this->mailer->send($email);
+            
+            $this->logger->info('Loan fully repaid notification sent', [
+                'user_id' => $user->getId(),
+                'contract_number' => $contract->getContractNumber()
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to send loan fully repaid notification', [
+                'user_id' => $user->getId(),
+                'contract_number' => $contract->getContractNumber(),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function sendEarlyRepaymentConfirmation(LoanContract $contract, float $amount): void
+    {
+        $user = $contract->getLoanApplication()->getUser();
+        
+        try {
+            $email = (new Email())
+                ->from('noreply@edgeloan.fr')
+                ->to($user->getEmail())
+                ->subject('Confirmation de remboursement anticipé - EdgeLoan')
+                ->html($this->twig->render('emails/early_repayment_confirmation.html.twig', [
+                    'user' => $user,
+                    'contract' => $contract,
+                    'repaymentAmount' => $amount
+                ]));
+
+            $this->mailer->send($email);
+            
+            $this->logger->info('Early repayment confirmation sent', [
+                'user_id' => $user->getId(),
+                'contract_number' => $contract->getContractNumber(),
+                'amount' => $amount
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to send early repayment confirmation', [
+                'user_id' => $user->getId(),
+                'contract_number' => $contract->getContractNumber(),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function sendApplicationStatusUpdate(LoanApplication $application, string $newStatus): void
+    {
+        $user = $application->getUser();
+        
+        try {
+            $email = (new Email())
+                ->from('noreply@edgeloan.fr')
+                ->to($user->getEmail())
+                ->subject('Mise à jour de votre demande de prêt - EdgeLoan')
+                ->html($this->twig->render('emails/application_status_update.html.twig', [
+                    'user' => $user,
+                    'application' => $application,
+                    'newStatus' => $newStatus
+                ]));
+
+            $this->mailer->send($email);
+            
+            $this->logger->info('Application status update sent', [
+                'user_id' => $user->getId(),
+                'application_id' => $application->getId(),
+                'new_status' => $newStatus
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to send application status update', [
+                'user_id' => $user->getId(),
+                'application_id' => $application->getId(),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function sendWelcomeEmail(User $user): void
+    {
+        try {
+            $email = (new Email())
+                ->from('noreply@edgeloan.fr')
+                ->to($user->getEmail())
+                ->subject('Bienvenue chez EdgeLoan !')
+                ->html($this->twig->render('emails/welcome.html.twig', [
+                    'user' => $user
+                ]));
+
+            $this->mailer->send($email);
+            
+            $this->logger->info('Welcome email sent', [
+                'user_id' => $user->getId()
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to send welcome email', [
+                'user_id' => $user->getId(),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function sendPasswordResetEmail(User $user, string $resetToken): void
+    {
+        try {
+            $email = (new Email())
+                ->from('noreply@edgeloan.fr')
+                ->to($user->getEmail())
+                ->subject('Réinitialisation de votre mot de passe - EdgeLoan')
+                ->html($this->twig->render('emails/password_reset.html.twig', [
+                    'user' => $user,
+                    'resetToken' => $resetToken
+                ]));
+
+            $this->mailer->send($email);
+            
+            $this->logger->info('Password reset email sent', [
+                'user_id' => $user->getId()
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to send password reset email', [
+                'user_id' => $user->getId(),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    private function sendInternalNotification(string $type, array $data): void
+    {
+        try {
+            $email = (new Email())
+                ->from('noreply@edgeloan.fr')
+                ->to('team@edgeloan.fr')
+                ->subject("Notification interne : {$type}")
+                ->html($this->twig->render('emails/internal_notification.html.twig', [
+                    'type' => $type,
+                    'data' => $data,
+                    'timestamp' => new \DateTime()
+                ]));
+
+            $this->mailer->send($email);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to send internal notification', [
+                'type' => $type,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function sendBulkNotification(array $users, string $subject, string $template, array $data = []): int
+    {
+        $sentCount = 0;
+        
+        foreach ($users as $user) {
+            try {
+                $email = (new Email())
+                    ->from('noreply@edgeloan.fr')
+                    ->to($user->getEmail())
+                    ->subject($subject)
+                    ->html($this->twig->render($template, array_merge($data, ['user' => $user])));
+
+                $this->mailer->send($email);
+                $sentCount++;
+                
+            } catch (\Exception $e) {
+                $this->logger->error('Failed to send bulk notification', [
+                    'user_id' => $user->getId(),
+                    'template' => $template,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+        
+        $this->logger->info('Bulk notification completed', [
+            'template' => $template,
+            'total_users' => count($users),
+            'sent_count' => $sentCount
+        ]);
+        
+        return $sentCount;
     }
 }

@@ -1,0 +1,575 @@
+{% extends 'frontend/base.html.twig' %}
+
+{% block title %}Signature du Contrat #{{ contract.contractNumber }} - EdgeLoan{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .signature-canvas {
+            border: 2px dashed #dee2e6;
+            border-radius: 10px;
+            cursor: crosshair;
+            background-color: #fafafa;
+        }
+        .signature-canvas.active {
+            border-color: #007bff;
+            background-color: white;
+        }
+        .contract-preview {
+            background: #f8f9fa;
+            border-radius: 10px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .terms-box {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            background: white;
+        }
+        .signature-pad {
+            position: relative;
+        }
+        .signature-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+        }
+        .step-indicator {
+            counter-reset: step;
+        }
+        .step-indicator li {
+            counter-increment: step;
+            position: relative;
+        }
+        .step-indicator li::before {
+            content: counter(step);
+            position: absolute;
+            left: -40px;
+            top: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #6c757d;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .step-indicator li.completed::before {
+            background: #28a745;
+        }
+        .step-indicator li.active::before {
+            background: #007bff;
+        }
+        .contract-section {
+            display: none;
+        }
+        .contract-section.active {
+            display: block;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="page-content">
+    <!-- Header -->
+    <section class="page-header page-header-modern page-header-sm">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 align-self-center p-static order-2">
+                    <h1 class="text-dark font-weight-bold text-7">Signature Électronique</h1>
+                    <span class="sub-title text-dark">Contrat #{{ contract.contractNumber }}</span>
+                </div>
+                <div class="col-md-4 text-end order-1">
+                    <a href="{{ path('app_contracts_detail', {'id': contract.id}) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Retour au contrat
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container py-5">
+        {% for message in app.flashes('success') %}
+            <div class="alert alert-success alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+        
+        {% for message in app.flashes('error') %}
+            <div class="alert alert-danger alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+
+        <!-- Processus de signature -->
+        <div class="row">
+            <div class="col-lg-3">
+                <!-- Navigation par étapes -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-list-ol me-2"></i>Étapes de signature</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled step-indicator" style="padding-left: 40px;">
+                            <li class="mb-3 completed" data-step="1">
+                                <strong>Révision du contrat</strong>
+                                <small class="d-block text-muted">Vérification des termes</small>
+                            </li>
+                            <li class="mb-3 active" data-step="2">
+                                <strong>Conditions générales</strong>
+                                <small class="d-block text-muted">Acceptation des CGV</small>
+                            </li>
+                            <li class="mb-3" data-step="3">
+                                <strong>Signature électronique</strong>
+                                <small class="d-block text-muted">Apposition de la signature</small>
+                            </li>
+                            <li class="mb-0" data-step="4">
+                                <strong>Validation finale</strong>
+                                <small class="d-block text-muted">Confirmation et envoi</small>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Résumé du contrat -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Résumé</h6>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td class="text-muted">Type :</td>
+                                <td>{{ contract.loanApplication.loanType.name }}</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Montant :</td>
+                                <td class="fw-bold">{{ contract.originalAmount|number_format(0, ',', ' ') }}€</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Taux :</td>
+                                <td>{{ contract.interestRate }}%</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Durée :</td>
+                                <td>{{ contract.duration }} mois</td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Mensualité :</td>
+                                <td class="fw-bold text-primary">{{ contract.monthlyPayment|number_format(2, ',', ' ') }}€</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-9">
+                <form method="post" id="signatureForm">
+                    <!-- Étape 1: Révision du contrat -->
+                    <div class="contract-section" id="step1">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-file-contract me-2"></i>Révision du contrat</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="contract-preview p-4">
+                                    <div class="text-center mb-4">
+                                        <h4>CONTRAT DE PRÊT PERSONNEL</h4>
+                                        <p class="text-muted">Numéro : {{ contract.contractNumber }}</p>
+                                    </div>
+
+                                    <div class="row mb-4">
+                                        <div class="col-md-6">
+                                            <h6>PRÊTEUR</h6>
+                                            <p>
+                                                <strong>EdgeLoan SAS</strong><br>
+                                                123 Avenue de la Finance<br>
+                                                75001 Paris, France<br>
+                                                RCS Paris : 123 456 789<br>
+                                                Tel: +33 1 23 45 67 89
+                                            </p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <h6>EMPRUNTEUR</h6>
+                                            <p>
+                                                <strong>{{ app.user.firstName }} {{ app.user.lastName }}</strong><br>
+                                                {{ app.user.address }}<br>
+                                                {{ app.user.postalCode }} {{ app.user.city }}<br>
+                                                Email: {{ app.user.email }}<br>
+                                                Tel: {{ app.user.phoneNumber }}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <h6>OBJET DU CONTRAT</h6>
+                                    <p>Le prêteur consent à l'emprunteur un prêt personnel d'un montant de <strong>{{ contract.originalAmount|number_format(0, ',', ' ') }}€</strong> aux conditions suivantes :</p>
+
+                                    <table class="table table-bordered">
+                                        <tr>
+                                            <td><strong>Montant du prêt</strong></td>
+                                            <td>{{ contract.originalAmount|number_format(2, ',', ' ') }}€</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Taux d'intérêt nominal</strong></td>
+                                            <td>{{ contract.interestRate }}% annuel</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>TAEG</strong></td>
+                                            <td>{{ contract.taeg }}%</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Durée de remboursement</strong></td>
+                                            <td>{{ contract.duration }} mois</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Montant des mensualités</strong></td>
+                                            <td>{{ contract.monthlyPayment|number_format(2, ',', ' ') }}€</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Coût total du crédit</strong></td>
+                                            <td>{{ ((contract.monthlyPayment * contract.duration) - contract.originalAmount)|number_format(2, ',', ' ') }}€</td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Montant total à rembourser</strong></td>
+                                            <td>{{ (contract.monthlyPayment * contract.duration)|number_format(2, ',', ' ') }}€</td>
+                                        </tr>
+                                    </table>
+
+                                    <h6>MODALITÉS DE REMBOURSEMENT</h6>
+                                    <p>Le remboursement s'effectue par mensualités constantes de {{ contract.monthlyPayment|number_format(2, ',', ' ') }}€, prélevées le {{ contract.paymentDay }} de chaque mois pendant {{ contract.duration }} mois.</p>
+
+                                    <h6>REMBOURSEMENT ANTICIPÉ</h6>
+                                    <p>L'emprunteur peut à tout moment rembourser par anticipation, en totalité ou partiellement, le capital restant dû. Aucune indemnité de remboursement anticipé ne sera perçue.</p>
+                                </div>
+
+                                <div class="text-center mt-4">
+                                    <button type="button" class="btn btn-primary" onclick="nextStep(2)">
+                                        J'ai lu le contrat <i class="fas fa-arrow-right ms-2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Étape 2: Conditions générales -->
+                    <div class="contract-section" id="step2">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Conditions générales</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="terms-box p-3 mb-4">
+                                    <h6>CONDITIONS GÉNÉRALES DE VENTE ET D'UTILISATION</h6>
+                                    
+                                    <h6 class="mt-4">Article 1 - Objet</h6>
+                                    <p>Les présentes conditions générales ont pour objet de définir les modalités et conditions d'utilisation des services proposés par EdgeLoan, ainsi que de définir les droits et obligations des parties dans ce cadre.</p>
+
+                                    <h6>Article 2 - Acceptation des conditions</h6>
+                                    <p>L'utilisation des services implique l'acceptation pleine et entière des présentes conditions générales. Ces conditions s'appliquent à l'exclusion de toutes autres conditions.</p>
+
+                                    <h6>Article 3 - Protection des données</h6>
+                                    <p>EdgeLoan s'engage à protéger la confidentialité de vos données personnelles conformément au RGPD. Vos données sont utilisées uniquement dans le cadre de l'exécution du contrat de prêt.</p>
+
+                                    <h6>Article 4 - Obligations de l'emprunteur</h6>
+                                    <p>L'emprunteur s'engage à :</p>
+                                    <ul>
+                                        <li>Fournir des informations exactes et sincères</li>
+                                        <li>Respecter les échéances de remboursement</li>
+                                        <li>Informer EdgeLoan de tout changement de situation</li>
+                                        <li>Utiliser les fonds conformément à l'objet du prêt</li>
+                                    </ul>
+
+                                    <h6>Article 5 - Droit de rétractation</h6>
+                                    <p>Conformément aux dispositions légales, vous disposez d'un délai de 14 jours calendaires pour exercer votre droit de rétractation à compter de la signature du contrat.</p>
+
+                                    <h6>Article 6 - Réclamations</h6>
+                                    <p>Toute réclamation peut être adressée au service client d'EdgeLoan par courrier recommandé ou par email à reclamations@edgeloan.fr</p>
+
+                                    <h6>Article 7 - Loi applicable</h6>
+                                    <p>Les présentes conditions générales sont soumises au droit français. Tout litige sera de la compétence exclusive des tribunaux français.</p>
+                                </div>
+
+                                <div class="form-check mb-4">
+                                    <input class="form-check-input" type="checkbox" id="acceptTerms" name="accept_terms" required>
+                                    <label class="form-check-label" for="acceptTerms">
+                                        <strong>J'ai lu et j'accepte les conditions générales d'utilisation</strong>
+                                    </label>
+                                </div>
+
+                                <div class="d-flex justify-content-between">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="prevStep(1)">
+                                        <i class="fas fa-arrow-left me-2"></i>Retour
+                                    </button>
+                                    <button type="button" class="btn btn-primary" onclick="nextStep(3)" id="acceptTermsBtn" disabled>
+                                        Continuer <i class="fas fa-arrow-right ms-2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Étape 3: Signature électronique -->
+                    <div class="contract-section" id="step3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-pen me-2"></i>Signature électronique</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Veuillez signer dans la zone ci-dessous avec votre souris ou votre doigt (écran tactile).
+                                </div>
+
+                                <div class="signature-pad mb-4">
+                                    <div class="signature-controls">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearSignature()">
+                                            <i class="fas fa-eraser me-1"></i>Effacer
+                                        </button>
+                                    </div>
+                                    <canvas id="signatureCanvas" class="signature-canvas" width="600" height="200"></canvas>
+                                </div>
+
+                                <input type="hidden" name="signature" id="signatureData">
+
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <strong>Important :</strong> En signant électroniquement ce contrat, vous vous engagez juridiquement au même titre qu'une signature manuscrite.
+                                </div>
+
+                                <div class="d-flex justify-content-between">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="prevStep(2)">
+                                        <i class="fas fa-arrow-left me-2"></i>Retour
+                                    </button>
+                                    <button type="button" class="btn btn-primary" onclick="nextStep(4)" id="signatureBtn" disabled>
+                                        Valider la signature <i class="fas fa-arrow-right ms-2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Étape 4: Validation finale -->
+                    <div class="contract-section" id="step4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-check-circle me-2"></i>Validation finale</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-success">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    Votre signature a été validée avec succès.
+                                </div>
+
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <h6>Récapitulatif de votre engagement :</h6>
+                                        <ul class="list-unstyled">
+                                            <li><i class="fas fa-check text-success me-2"></i>Contrat lu et approuvé</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Conditions générales acceptées</li>
+                                            <li><i class="fas fa-check text-success me-2"></i>Signature électronique apposée</li>
+                                        </ul>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Prochaines étapes :</h6>
+                                        <ul class="list-unstyled">
+                                            <li><i class="fas fa-clock text-warning me-2"></i>Vérification de la signature (immédiat)</li>
+                                            <li><i class="fas fa-clock text-warning me-2"></i>Activation du contrat (24h)</li>
+                                            <li><i class="fas fa-clock text-warning me-2"></i>Déblocage des fonds (48h)</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle me-2"></i>Informations importantes :</h6>
+                                    <ul class="mb-0">
+                                        <li>Vous recevrez une copie du contrat signé par email</li>
+                                        <li>Le premier prélèvement aura lieu le {{ contract.firstPaymentDate|date('d/m/Y') }}</li>
+                                        <li>Vous pouvez exercer votre droit de rétractation pendant 14 jours</li>
+                                        <li>Notre service client reste à votre disposition</li>
+                                    </ul>
+                                </div>
+
+                                <div class="d-flex justify-content-between">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="prevStep(3)">
+                                        <i class="fas fa-arrow-left me-2"></i>Retour
+                                    </button>
+                                    <button type="submit" class="btn btn-success btn-lg">
+                                        <i class="fas fa-check me-2"></i>Finaliser la signature
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Gestion des étapes
+let currentStep = 1;
+
+function showStep(step) {
+    // Masquer toutes les sections
+    document.querySelectorAll('.contract-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    
+    // Afficher la section demandée
+    document.getElementById(`step${step}`).classList.add('active');
+    
+    // Mettre à jour les indicateurs
+    document.querySelectorAll('.step-indicator li').forEach((li, index) => {
+        li.classList.remove('active', 'completed');
+        if (index + 1 < step) {
+            li.classList.add('completed');
+        } else if (index + 1 === step) {
+            li.classList.add('active');
+        }
+    });
+    
+    currentStep = step;
+}
+
+function nextStep(step) {
+    if (validateCurrentStep()) {
+        showStep(step);
+    }
+}
+
+function prevStep(step) {
+    showStep(step);
+}
+
+function validateCurrentStep() {
+    if (currentStep === 2) {
+        return document.getElementById('acceptTerms').checked;
+    }
+    if (currentStep === 3) {
+        return signaturePad.isEmpty() === false;
+    }
+    return true;
+}
+
+// Gestion des conditions générales
+document.getElementById('acceptTerms').addEventListener('change', function() {
+    document.getElementById('acceptTermsBtn').disabled = !this.checked;
+});
+
+// Gestion de la signature électronique
+const canvas = document.getElementById('signatureCanvas');
+const ctx = canvas.getContext('2d');
+let isDrawing = false;
+let lastX = 0;
+let lastY = 0;
+
+const signaturePad = {
+    isEmpty: function() {
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        return !imageData.data.some(channel => channel !== 0);
+    },
+    clear: function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        updateSignatureButtons();
+    },
+    toDataURL: function() {
+        return canvas.toDataURL();
+    }
+};
+
+function startDrawing(e) {
+    isDrawing = true;
+    canvas.classList.add('active');
+    [lastX, lastY] = getMousePos(e);
+}
+
+function draw(e) {
+    if (!isDrawing) return;
+    
+    const [currentX, currentY] = getMousePos(e);
+    
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+    ctx.lineTo(currentX, currentY);
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+    
+    [lastX, lastY] = [currentX, currentY];
+    updateSignatureButtons();
+}
+
+function stopDrawing() {
+    if (!isDrawing) return;
+    isDrawing = false;
+    updateSignatureButtons();
+}
+
+function getMousePos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    
+    let clientX, clientY;
+    if (e.type.includes('touch')) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+    } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+    }
+    
+    return [
+        (clientX - rect.left) * scaleX,
+        (clientY - rect.top) * scaleY
+    ];
+}
+
+function clearSignature() {
+    signaturePad.clear();
+}
+
+function updateSignatureButtons() {
+    const isEmpty = signaturePad.isEmpty();
+    document.getElementById('signatureBtn').disabled = isEmpty;
+    
+    if (!isEmpty) {
+        document.getElementById('signatureData').value = signaturePad.toDataURL();
+    }
+}
+
+// Event listeners pour la signature
+canvas.addEventListener('mousedown', startDrawing);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', stopDrawing);
+canvas.addEventListener('mouseout', stopDrawing);
+
+// Support tactile
+canvas.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    startDrawing(e);
+});
+canvas.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+    draw(e);
+});
+canvas.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    stopDrawing();
+});
+
+// Initialisation
+showStep(1);
+</script>
+{% endblock %}

@@ -1,0 +1,470 @@
+{% extends 'frontend/base.html.twig' %}
+
+{% block title %}Échéancier - Contrat #{{ contract.contractNumber }} - EdgeLoan{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .payment-table {
+            font-size: 0.9rem;
+        }
+        .payment-row.paid {
+            background-color: #d4edda;
+        }
+        .payment-row.overdue {
+            background-color: #f8d7da;
+        }
+        .payment-row.due-soon {
+            background-color: #fff3cd;
+        }
+        .payment-status {
+            width: 100px;
+        }
+        .payment-amount {
+            text-align: right;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #e9ecef;
+        }
+        .summary-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .print-mode {
+            display: none;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .print-mode {
+                display: block !important;
+            }
+            .container {
+                max-width: none !important;
+            }
+            .payment-table {
+                font-size: 0.8rem;
+            }
+        }
+        .progress-bar-custom {
+            height: 25px;
+            border-radius: 15px;
+        }
+        .payment-calendar {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+        }
+        .month-indicator {
+            position: relative;
+            padding: 0.5rem 1rem;
+            margin: 0.25rem 0;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        .month-indicator.current {
+            background: #007bff;
+            color: white;
+        }
+        .month-indicator.completed {
+            background: #28a745;
+            color: white;
+        }
+        .month-indicator.future {
+            background: #e9ecef;
+            color: #6c757d;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="page-content">
+    <!-- Header -->
+    <section class="page-header page-header-modern page-header-sm no-print">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 align-self-center p-static order-2">
+                    <h1 class="text-dark font-weight-bold text-7">Échéancier de Remboursement</h1>
+                    <span class="sub-title text-dark">Contrat #{{ contract.contractNumber }}</span>
+                </div>
+                <div class="col-md-4 text-end order-1">
+                    <div class="btn-group">
+                        <a href="{{ path('app_contracts_detail', {'id': contract.id}) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Retour
+                        </a>
+                        <button onclick="window.print()" class="btn btn-outline-primary">
+                            <i class="fas fa-print me-2"></i>Imprimer
+                        </button>
+                        <button onclick="exportToPDF()" class="btn btn-outline-success">
+                            <i class="fas fa-file-pdf me-2"></i>PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- En-tête pour impression -->
+    <div class="print-mode">
+        <div class="text-center mb-4">
+            <h2>ÉCHÉANCIER DE REMBOURSEMENT</h2>
+            <h4>EdgeLoan - Contrat #{{ contract.contractNumber }}</h4>
+            <p>Généré le {{ "now"|date('d/m/Y à H:i') }}</p>
+        </div>
+    </div>
+
+    <div class="container py-5">
+        <!-- Résumé du contrat -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="card summary-card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-file-contract me-2"></i>Informations du contrat</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-borderless mb-0">
+                                    <tr>
+                                        <td class="text-muted">Emprunteur :</td>
+                                        <td class="fw-bold">{{ contract.loanApplication.user.firstName }} {{ contract.loanApplication.user.lastName }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Type de prêt :</td>
+                                        <td>{{ contract.loanApplication.loanType.name }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Montant emprunté :</td>
+                                        <td class="fw-bold">{{ contract.originalAmount|number_format(2, ',', ' ') }}€</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Taux d'intérêt :</td>
+                                        <td>{{ contract.interestRate }}%</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-borderless mb-0">
+                                    <tr>
+                                        <td class="text-muted">Durée :</td>
+                                        <td>{{ contract.duration }} mois</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Mensualité :</td>
+                                        <td class="fw-bold">{{ contract.monthlyPayment|number_format(2, ',', ' ') }}€</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Coût total :</td>
+                                        <td>{{ ((contract.monthlyPayment * contract.duration) - contract.originalAmount)|number_format(2, ',', ' ') }}€</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-muted">Total à rembourser :</td>
+                                        <td class="fw-bold">{{ (contract.monthlyPayment * contract.duration)|number_format(2, ',', ' ') }}€</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Progression -->
+                <div class="card summary-card">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Progression</h6>
+                    </div>
+                    <div class="card-body text-center">
+                        {% set paidPayments = payments|filter(p => p.isPaid)|length %}
+                        {% set totalPayments = payments|length %}
+                        {% set progressPercentage = totalPayments > 0 ? (paidPayments / totalPayments * 100) : 0 %}
+                        
+                        <div class="mb-3">
+                            <div class="h2 text-success">{{ progressPercentage|round(1) }}%</div>
+                            <small class="text-muted">du prêt remboursé</small>
+                        </div>
+                        
+                        <div class="progress progress-bar-custom mb-3">
+                            <div class="progress-bar bg-success" style="width: {{ progressPercentage }}%"></div>
+                        </div>
+                        
+                        <div class="small">
+                            <div>{{ paidPayments }} / {{ totalPayments }} mensualités payées</div>
+                            <div class="text-muted">{{ (totalPayments - paidPayments) }} mensualités restantes</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calendrier visuel -->
+                <div class="card summary-card mt-3 no-print">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-calendar me-2"></i>Calendrier</h6>
+                    </div>
+                    <div class="card-body p-2">
+                        <div class="payment-calendar">
+                            {% set currentMonth = "now"|date('Y-m') %}
+                            {% set monthsShown = {} %}
+                            {% for payment in payments %}
+                                {% set paymentMonth = payment.dueDate|date('Y-m') %}
+                                {% if paymentMonth not in monthsShown %}
+                                    {% set monthsShown = monthsShown|merge({(paymentMonth): true}) %}
+                                    <div class="month-indicator 
+                                        {% if paymentMonth < currentMonth %}completed
+                                        {% elseif paymentMonth == currentMonth %}current
+                                        {% else %}future{% endif %}">
+                                        {{ payment.dueDate|date('M Y') }}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau d'échéancier -->
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-table me-2"></i>Détail des échéances</h5>
+                    <div class="no-print">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary" onclick="showAllPayments()">
+                                Tout afficher
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="showPendingPayments()">
+                                À venir
+                            </button>
+                            <button class="btn btn-outline-success" onclick="showPaidPayments()">
+                                Payées
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover payment-table mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                <th>Date d'échéance</th>
+                                <th class="text-center">Statut</th>
+                                <th class="payment-amount">Capital</th>
+                                <th class="payment-amount">Intérêts</th>
+                                <th class="payment-amount">Mensualité</th>
+                                <th class="payment-amount">Capital restant</th>
+                                <th class="no-print text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set totalPaid = 0 %}
+                            {% set totalCapital = 0 %}
+                            {% set totalInterest = 0 %}
+                            
+                            {% for payment in payments %}
+                                {% set isPaid = payment.isPaid %}
+                                {% set isOverdue = payment.isOverdue %}
+                                {% set isDueSoon = payment.isDueSoon %}
+                                
+                                {% if isPaid %}
+                                    {% set totalPaid = totalPaid + payment.amount %}
+                                {% endif %}
+                                {% set totalCapital = totalCapital + payment.capitalAmount %}
+                                {% set totalInterest = totalInterest + payment.interestAmount %}
+                                
+                                <tr class="payment-row 
+                                    {% if isPaid %}paid
+                                    {% elseif isOverdue %}overdue
+                                    {% elseif isDueSoon %}due-soon{% endif %}" 
+                                    data-status="{% if isPaid %}paid{% else %}pending{% endif %}">
+                                    <td class="fw-bold">{{ payment.paymentNumber }}</td>
+                                    <td>{{ payment.dueDate|date('d/m/Y') }}</td>
+                                    <td class="text-center">
+                                        {% if isPaid %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>Payée
+                                            </span>
+                                        {% elseif isOverdue %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>En retard
+                                            </span>
+                                        {% elseif isDueSoon %}
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-clock me-1"></i>À payer
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">
+                                                <i class="fas fa-calendar me-1"></i>À venir
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="payment-amount">{{ payment.capitalAmount|number_format(2, ',', ' ') }}€</td>
+                                    <td class="payment-amount">{{ payment.interestAmount|number_format(2, ',', ' ') }}€</td>
+                                    <td class="payment-amount fw-bold">{{ payment.amount|number_format(2, ',', ' ') }}€</td>
+                                    <td class="payment-amount">{{ payment.remainingCapital|number_format(2, ',', ' ') }}€</td>
+                                    <td class="text-center no-print">
+                                        {% if isPaid %}
+                                            <button class="btn btn-sm btn-outline-success" title="Paiement effectué le {{ payment.paidAt|date('d/m/Y') }}">
+                                                <i class="fas fa-receipt"></i>
+                                            </button>
+                                        {% elseif isOverdue or isDueSoon %}
+                                            <button class="btn btn-sm btn-primary" onclick="payNow({{ payment.id }})">
+                                                <i class="fas fa-credit-card"></i>
+                                            </button>
+                                        {% else %}
+                                            <button class="btn btn-sm btn-outline-secondary" disabled>
+                                                <i class="fas fa-clock"></i>
+                                            </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-dark">
+                            <tr class="total-row">
+                                <td colspan="3" class="fw-bold">TOTAL</td>
+                                <td class="payment-amount fw-bold">{{ totalCapital|number_format(2, ',', ' ') }}€</td>
+                                <td class="payment-amount fw-bold">{{ totalInterest|number_format(2, ',', ' ') }}€</td>
+                                <td class="payment-amount fw-bold">{{ (totalCapital + totalInterest)|number_format(2, ',', ' ') }}€</td>
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations complémentaires -->
+        <div class="row mt-4">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations importantes</h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="fas fa-calendar-day text-primary me-2"></i>
+                                Les prélèvements s'effectuent le {{ contract.paymentDay }} de chaque mois
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-university text-primary me-2"></i>
+                                Compte débité : {{ contract.loanApplication.user.bankAccount ?? '****' }}
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-clock text-primary me-2"></i>
+                                En cas de prélèvement impossible, un nouveau prélèvement sera tenté sous 5 jours
+                            </li>
+                            <li class="mb-0">
+                                <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                Des frais de dossier peuvent s'appliquer en cas de rejet de prélèvement
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-calculator me-2"></i>Options de remboursement</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{{ path('app_contracts_early_repayment', {'id': contract.id}) }}" 
+                               class="btn btn-outline-primary">
+                                <i class="fas fa-fast-forward me-2"></i>Remboursement anticipé
+                            </a>
+                            <button class="btn btn-outline-info" onclick="simulatePayment()">
+                                <i class="fas fa-calculator me-2"></i>Simuler un paiement
+                            </button>
+                            <a href="{{ path('app_contracts_payment_history', {'id': contract.id}) }}" 
+                               class="btn btn-outline-success">
+                                <i class="fas fa-history me-2"></i>Historique des paiements
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Note légale -->
+        <div class="alert alert-light mt-4">
+            <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                <strong>Note :</strong> Cet échéancier est fourni à titre indicatif. En cas d'incident de paiement ou de modification contractuelle, 
+                les dates et montants peuvent être ajustés. Pour toute question, contactez notre service client au 01 23 45 67 89.
+            </small>
+        </div>
+    </div>
+</div>
+
+<script>
+function showAllPayments() {
+    const rows = document.querySelectorAll('.payment-row');
+    rows.forEach(row => row.style.display = '');
+}
+
+function showPendingPayments() {
+    const rows = document.querySelectorAll('.payment-row');
+    rows.forEach(row => {
+        if (row.dataset.status === 'pending') {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function showPaidPayments() {
+    const rows = document.querySelectorAll('.payment-row');
+    rows.forEach(row => {
+        if (row.dataset.status === 'paid') {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function payNow(paymentId) {
+    // Redirection vers le module de paiement
+    window.location.href = `/paiements/${paymentId}/payer`;
+}
+
+function simulatePayment() {
+    alert('Fonctionnalité de simulation à venir. Contactez notre service client pour plus d\'informations.');
+}
+
+function exportToPDF() {
+    // Masquer les éléments non imprimables
+    const noprint = document.querySelectorAll('.no-print');
+    noprint.forEach(el => el.style.display = 'none');
+    
+    // Afficher les éléments pour impression
+    const printMode = document.querySelectorAll('.print-mode');
+    printMode.forEach(el => el.style.display = 'block');
+    
+    // Déclencher l'impression
+    window.print();
+    
+    // Restaurer l'affichage normal après un délai
+    setTimeout(() => {
+        noprint.forEach(el => el.style.display = '');
+        printMode.forEach(el => el.style.display = 'none');
+    }, 1000);
+}
+
+// Mise en surbrillance de la ligne du paiement en cours
+document.addEventListener('DOMContentLoaded', function() {
+    const currentPayment = document.querySelector('.payment-row.due-soon');
+    if (currentPayment) {
+        currentPayment.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+});
+</script>
+{% endblock %}

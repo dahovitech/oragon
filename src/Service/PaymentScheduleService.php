@@ -13,272 +13,206 @@ class PaymentScheduleService
         private EntityManagerInterface $entityManager
     ) {}
 
-    public function generatePaymentSchedule(LoanContract $contract): void
+    public function calculateEarlyRepaymentAmount(LoanContract $contract, ?\DateTime $repaymentDate = null): array
     {
-        $paymentScheduleData = json_decode($contract->getPaymentSchedule(), true);
-        
-        if (empty($paymentScheduleData)) {
-            throw new \InvalidArgumentException('Échéancier de paiement invalide');
+        if ($repaymentDate === null) {
+            $repaymentDate = new \DateTime();
         }
 
-        // Supprimer les anciens paiements s'ils existent
-        $existingPayments = $this->entityManager->getRepository(Payment::class)
-            ->findBy(['loanContract' => $contract]);
+        $originalAmount = (float) $contract->getOriginalAmount();
+        $interestRate = $contract->getInterestRate() / 100;
+        $duration = $contract->getDuration();
+        $monthlyPayment = (float) $contract->getMonthlyPayment();
+
+        // Calcul du capital restant dû
+        $startDate = $contract->getStartDate() ?? $contract->getSignedAt();
+        $monthsElapsed = $this->calculateMonthsElapsed($startDate, $repaymentDate);
         
-        foreach ($existingPayments as $payment) {
-            $this->entityManager->remove($payment);
+        // Capital remboursé jusqu'à présent
+        $capitalPaid = 0;
+        $payments = $this->entityManager->getRepository(Payment::class)
+            ->findBy(['loanContract' => $contract, 'status' => PaymentStatus::PAID]);
+        
+        foreach ($payments as $payment) {
+            $capitalPaid += (float) $payment->getCapitalAmount();
         }
 
-        // Créer les nouveaux paiements
-        foreach ($paymentScheduleData as $scheduleItem) {
+        $remainingCapital = $originalAmount - $capitalPaid;
+
+        // Intérêts courus jusqu'à la date de remboursement
+        $daysSinceLastPayment = $this->calculateDaysSinceLastPayment($contract, $repaymentDate);
+        $dailyInterestRate = $interestRate / 365;
+        $accruedInterests = $remainingCapital * $dailyInterestRate * $daysSinceLastPayment;
+
+        // Montant total pour remboursement anticipé
+        $earlyRepaymentAmount = $remainingCapital + $accruedInterests;
+
+        // Calcul des économies
+        $remainingPayments = $this->getRemainingPayments($contract);
+        $remainingInterests = 0;
+        foreach ($remainingPayments as $payment) {
+            $remainingInterests += (float) $payment->getInterestAmount();
+        }
+
+        $interestSavings = max(0, $remainingInterests - $accruedInterests);
+        $monthsSaved = count($remainingPayments);
+
+        return [
+            'earlyRepaymentAmount' => round($earlyRepaymentAmount, 2),
+            'remainingCapital' => round($remainingCapital, 2),
+            'accruedInterests' => round($accruedInterests, 2),
+            'interestSavings' => round($interestSavings, 2),
+            'monthsSaved' => $monthsSaved,
+            'remainingMonths' => count($remainingPayments),
+            'remainingInterests' => round($remainingInterests, 2),
+            'normalTotalCost' => round($remainingCapital + $remainingInterests, 2),
+        ];
+    }
+
+    public function processEarlyRepayment(LoanContract $contract, float $amount): void
+    {
+        $this->entityManager->beginTransaction();
+
+        try {
+            // Marquer le contrat comme remboursé anticipativement
+            $contract->setEarlyRepaymentDate(new \DateTime());
+            $contract->setRemainingAmount('0.00');
+            $contract->setStatus('COMPLETED');
+
+            // Annuler tous les paiements futurs
+            $futurePayments = $this->entityManager->getRepository(Payment::class)
+                ->createQueryBuilder('p')
+                ->where('p.loanContract = :contract')
+                ->andWhere('p.status = :pending')
+                ->setParameter('contract', $contract)
+                ->setParameter('pending', PaymentStatus::PENDING)
+                ->getQuery()
+                ->getResult();
+
+            foreach ($futurePayments as $payment) {
+                $payment->setStatus(PaymentStatus::CANCELLED);
+            }
+
+            // Créer un paiement de remboursement anticipé
+            $earlyPayment = new Payment();
+            $earlyPayment->setLoanContract($contract);
+            $earlyPayment->setPaymentNumber(999); // Numéro spécial pour remboursement anticipé
+            $earlyPayment->setAmount((string) $amount);
+            $earlyPayment->setCapitalAmount((string) $contract->getRemainingAmount());
+            $earlyPayment->setInterestAmount((string) ($amount - (float) $contract->getRemainingAmount()));
+            $earlyPayment->setDueDate(new \DateTime());
+            $earlyPayment->setStatus(PaymentStatus::PAID);
+            $earlyPayment->setPaidAt(new \DateTime());
+            $earlyPayment->setPaymentMethod('EARLY_REPAYMENT');
+            $earlyPayment->setRemainingCapital('0.00');
+
+            $this->entityManager->persist($earlyPayment);
+            $this->entityManager->flush();
+            $this->entityManager->commit();
+
+        } catch (\Exception $e) {
+            $this->entityManager->rollback();
+            throw $e;
+        }
+    }
+
+    private function calculateMonthsElapsed(\DateTime $startDate, \DateTime $currentDate): int
+    {
+        $diff = $startDate->diff($currentDate);
+        return ($diff->y * 12) + $diff->m;
+    }
+
+    private function calculateDaysSinceLastPayment(LoanContract $contract, \DateTime $currentDate): int
+    {
+        $lastPayment = $this->entityManager->getRepository(Payment::class)
+            ->createQueryBuilder('p')
+            ->where('p.loanContract = :contract')
+            ->andWhere('p.status = :paid')
+            ->setParameter('contract', $contract)
+            ->setParameter('paid', PaymentStatus::PAID)
+            ->orderBy('p.paidAt', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+
+        if ($lastPayment) {
+            return $lastPayment->getPaidAt()->diff($currentDate)->days;
+        } else {
+            $startDate = $contract->getStartDate() ?? $contract->getSignedAt();
+            return $startDate->diff($currentDate)->days;
+        }
+    }
+
+    private function getRemainingPayments(LoanContract $contract): array
+    {
+        return $this->entityManager->getRepository(Payment::class)
+            ->createQueryBuilder('p')
+            ->where('p.loanContract = :contract')
+            ->andWhere('p.status = :pending')
+            ->setParameter('contract', $contract)
+            ->setParameter('pending', PaymentStatus::PENDING)
+            ->orderBy('p.paymentNumber', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function generatePaymentSchedule(LoanContract $contract): array
+    {
+        $payments = [];
+        $originalAmount = (float) $contract->getOriginalAmount();
+        $interestRate = $contract->getInterestRate() / 100;
+        $duration = $contract->getDuration();
+        $monthlyPayment = (float) $contract->getMonthlyPayment();
+        
+        $monthlyInterestRate = $interestRate / 12;
+        $remainingCapital = $originalAmount;
+        $startDate = $contract->getStartDate() ?? $contract->getSignedAt();
+
+        for ($i = 1; $i <= $duration; $i++) {
+            $interestAmount = $remainingCapital * $monthlyInterestRate;
+            $capitalAmount = $monthlyPayment - $interestAmount;
+            $remainingCapital -= $capitalAmount;
+
+            // Ajustement pour le dernier paiement
+            if ($i == $duration) {
+                $capitalAmount += $remainingCapital;
+                $remainingCapital = 0;
+            }
+
+            $dueDate = clone $startDate;
+            $dueDate->modify("+$i months");
+
+            $payments[] = [
+                'paymentNumber' => $i,
+                'dueDate' => $dueDate,
+                'amount' => $monthlyPayment,
+                'capitalAmount' => round($capitalAmount, 2),
+                'interestAmount' => round($interestAmount, 2),
+                'remainingCapital' => round(max(0, $remainingCapital), 2),
+            ];
+        }
+
+        return $payments;
+    }
+
+    public function createPaymentEntities(LoanContract $contract): void
+    {
+        $schedule = $this->generatePaymentSchedule($contract);
+
+        foreach ($schedule as $paymentData) {
             $payment = new Payment();
             $payment->setLoanContract($contract);
-            $payment->setPaymentNumber($scheduleItem['paymentNumber']);
-            $payment->setDueDate(new \DateTime($scheduleItem['dueDate']));
-            $payment->setAmount($scheduleItem['monthlyPayment']);
-            $payment->setPrincipalAmount($scheduleItem['principalAmount']);
-            $payment->setInterestAmount($scheduleItem['interestAmount']);
+            $payment->setPaymentNumber($paymentData['paymentNumber']);
+            $payment->setDueDate($paymentData['dueDate']);
+            $payment->setAmount((string) $paymentData['amount']);
+            $payment->setCapitalAmount((string) $paymentData['capitalAmount']);
+            $payment->setInterestAmount((string) $paymentData['interestAmount']);
+            $payment->setRemainingCapital((string) $paymentData['remainingCapital']);
             $payment->setStatus(PaymentStatus::PENDING);
 
             $this->entityManager->persist($payment);
         }
 
         $this->entityManager->flush();
-    }
-
-    public function recordPayment(Payment $payment, float $amount, string $paymentMethod = 'bank_transfer', \DateTime $paidAt = null): bool
-    {
-        if ($payment->getStatus() !== PaymentStatus::PENDING) {
-            throw new \InvalidArgumentException('Ce paiement ne peut pas être enregistré');
-        }
-
-        if ($amount <= 0) {
-            throw new \InvalidArgumentException('Le montant doit être positif');
-        }
-
-        $payment->setStatus(PaymentStatus::PAID);
-        $payment->setPaidAt($paidAt ?? new \DateTime());
-        $payment->setPaymentMethod($paymentMethod);
-        
-        // Si le montant payé est différent du montant dû, on peut l'ajuster
-        if ($amount !== $payment->getAmount()) {
-            $payment->setAmount($amount);
-        }
-
-        $this->entityManager->flush();
-
-        // Vérifier si le prêt est entièrement remboursé
-        $this->checkLoanCompletion($payment->getLoanContract());
-
-        return true;
-    }
-
-    public function markPaymentAsLate(Payment $payment): void
-    {
-        if ($payment->getStatus() === PaymentStatus::PENDING && 
-            $payment->getDueDate() < new \DateTime()) {
-            $payment->setStatus(PaymentStatus::LATE);
-            $this->entityManager->flush();
-        }
-    }
-
-    public function markPaymentAsMissed(Payment $payment): void
-    {
-        if (in_array($payment->getStatus(), [PaymentStatus::PENDING, PaymentStatus::LATE])) {
-            $payment->setStatus(PaymentStatus::MISSED);
-            $this->entityManager->flush();
-        }
-    }
-
-    public function getPaymentScheduleForContract(LoanContract $contract): array
-    {
-        return $this->entityManager->getRepository(Payment::class)
-            ->findBy(['loanContract' => $contract], ['paymentNumber' => 'ASC']);
-    }
-
-    public function getOverduePayments(): array
-    {
-        return $this->entityManager->getRepository(Payment::class)
-            ->createQueryBuilder('p')
-            ->where('p.status = :pending')
-            ->andWhere('p.dueDate < :today')
-            ->setParameter('pending', PaymentStatus::PENDING)
-            ->setParameter('today', new \DateTime())
-            ->orderBy('p.dueDate', 'ASC')
-            ->getQuery()
-            ->getResult();
-    }
-
-    public function getUpcomingPayments(int $days = 7): array
-    {
-        $endDate = new \DateTime();
-        $endDate->modify("+{$days} days");
-
-        return $this->entityManager->getRepository(Payment::class)
-            ->createQueryBuilder('p')
-            ->where('p.status = :pending')
-            ->andWhere('p.dueDate BETWEEN :today AND :endDate')
-            ->setParameter('pending', PaymentStatus::PENDING)
-            ->setParameter('today', new \DateTime())
-            ->setParameter('endDate', $endDate)
-            ->orderBy('p.dueDate', 'ASC')
-            ->getQuery()
-            ->getResult();
-    }
-
-    public function calculateEarlyRepaymentAmount(LoanContract $contract, \DateTime $repaymentDate = null): array
-    {
-        $repaymentDate = $repaymentDate ?? new \DateTime();
-        
-        $remainingPayments = $this->entityManager->getRepository(Payment::class)
-            ->createQueryBuilder('p')
-            ->where('p.loanContract = :contract')
-            ->andWhere('p.status = :pending')
-            ->andWhere('p.dueDate > :repaymentDate')
-            ->setParameter('contract', $contract)
-            ->setParameter('pending', PaymentStatus::PENDING)
-            ->setParameter('repaymentDate', $repaymentDate)
-            ->getQuery()
-            ->getResult();
-
-        $totalPrincipal = 0;
-        $totalInterest = 0;
-        $savedInterest = 0;
-
-        foreach ($remainingPayments as $payment) {
-            $totalPrincipal += $payment->getPrincipalAmount();
-            $totalInterest += $payment->getInterestAmount();
-        }
-
-        // Calculer les intérêts économisés (par exemple, 50% des intérêts futurs)
-        $savedInterest = $totalInterest * 0.5;
-        $earlyRepaymentAmount = $totalPrincipal + ($totalInterest - $savedInterest);
-
-        return [
-            'remainingPrincipal' => $totalPrincipal,
-            'futureInterest' => $totalInterest,
-            'savedInterest' => $savedInterest,
-            'earlyRepaymentAmount' => $earlyRepaymentAmount,
-            'totalSavings' => $savedInterest,
-            'remainingPayments' => count($remainingPayments)
-        ];
-    }
-
-    public function processEarlyRepayment(LoanContract $contract, float $amount, string $paymentMethod = 'bank_transfer'): bool
-    {
-        $earlyRepaymentData = $this->calculateEarlyRepaymentAmount($contract);
-        
-        if ($amount < $earlyRepaymentData['earlyRepaymentAmount']) {
-            throw new \InvalidArgumentException('Le montant est insuffisant pour le remboursement anticipé');
-        }
-
-        // Marquer tous les paiements restants comme payés
-        $remainingPayments = $this->entityManager->getRepository(Payment::class)
-            ->createQueryBuilder('p')
-            ->where('p.loanContract = :contract')
-            ->andWhere('p.status = :pending')
-            ->setParameter('contract', $contract)
-            ->setParameter('pending', PaymentStatus::PENDING)
-            ->getQuery()
-            ->getResult();
-
-        $now = new \DateTime();
-        foreach ($remainingPayments as $payment) {
-            $payment->setStatus(PaymentStatus::PAID);
-            $payment->setPaidAt($now);
-            $payment->setPaymentMethod($paymentMethod);
-            
-            // Ajuster le montant pour le dernier paiement (remboursement anticipé)
-            if ($payment === end($remainingPayments)) {
-                $payment->setAmount($earlyRepaymentData['earlyRepaymentAmount']);
-                $payment->setInterestAmount($payment->getInterestAmount() - $earlyRepaymentData['savedInterest']);
-            }
-        }
-
-        // Marquer le contrat comme terminé
-        $contract->setIsActive(false);
-        
-        $this->entityManager->flush();
-
-        return true;
-    }
-
-    public function getPaymentStatistics(LoanContract $contract): array
-    {
-        $payments = $this->getPaymentScheduleForContract($contract);
-        
-        $totalPayments = count($payments);
-        $paidPayments = count(array_filter($payments, fn($p) => $p->getStatus() === PaymentStatus::PAID));
-        $latePayments = count(array_filter($payments, fn($p) => $p->getStatus() === PaymentStatus::LATE));
-        $missedPayments = count(array_filter($payments, fn($p) => $p->getStatus() === PaymentStatus::MISSED));
-        
-        $totalPaid = array_sum(array_map(fn($p) => $p->getStatus() === PaymentStatus::PAID ? $p->getAmount() : 0, $payments));
-        $totalDue = array_sum(array_map(fn($p) => $p->getAmount(), $payments));
-        
-        return [
-            'totalPayments' => $totalPayments,
-            'paidPayments' => $paidPayments,
-            'pendingPayments' => $totalPayments - $paidPayments - $latePayments - $missedPayments,
-            'latePayments' => $latePayments,
-            'missedPayments' => $missedPayments,
-            'completionPercentage' => $totalPayments > 0 ? round(($paidPayments / $totalPayments) * 100, 2) : 0,
-            'totalPaid' => $totalPaid,
-            'totalDue' => $totalDue,
-            'remainingBalance' => $totalDue - $totalPaid,
-            'nextPaymentDue' => $this->getNextPaymentDue($contract)
-        ];
-    }
-
-    private function getNextPaymentDue(LoanContract $contract): ?Payment
-    {
-        return $this->entityManager->getRepository(Payment::class)
-            ->createQueryBuilder('p')
-            ->where('p.loanContract = :contract')
-            ->andWhere('p.status = :pending')
-            ->setParameter('contract', $contract)
-            ->setParameter('pending', PaymentStatus::PENDING)
-            ->orderBy('p.dueDate', 'ASC')
-            ->setMaxResults(1)
-            ->getQuery()
-            ->getOneOrNullResult();
-    }
-
-    private function checkLoanCompletion(LoanContract $contract): void
-    {
-        $pendingPayments = $this->entityManager->getRepository(Payment::class)
-            ->count([
-                'loanContract' => $contract,
-                'status' => PaymentStatus::PENDING
-            ]);
-
-        if ($pendingPayments === 0) {
-            $contract->setIsActive(false);
-            
-            // Mettre à jour le statut de la demande de prêt
-            $application = $contract->getLoanApplication();
-            $application->setStatus(\App\Enum\LoanApplicationStatus::DISBURSED);
-            
-            $this->entityManager->flush();
-        }
-    }
-
-    public function updateOverduePayments(): int
-    {
-        $updated = 0;
-        $overduePayments = $this->getOverduePayments();
-        
-        foreach ($overduePayments as $payment) {
-            $daysPastDue = $payment->getDueDate()->diff(new \DateTime())->days;
-            
-            if ($daysPastDue <= 30) {
-                $this->markPaymentAsLate($payment);
-            } else {
-                $this->markPaymentAsMissed($payment);
-            }
-            
-            $updated++;
-        }
-
-        return $updated;
     }
 }

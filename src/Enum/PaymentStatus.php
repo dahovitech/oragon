@@ -6,36 +6,59 @@ enum PaymentStatus: string
 {
     case PENDING = 'PENDING';
     case PAID = 'PAID';
-    case LATE = 'LATE';
-    case MISSED = 'MISSED';
+    case OVERDUE = 'OVERDUE';
+    case CANCELLED = 'CANCELLED';
+    case FAILED = 'FAILED';
+    case REFUNDED = 'REFUNDED';
 
-    public function label(): string
+    public function getLabel(): string
     {
         return match($this) {
             self::PENDING => 'En attente',
             self::PAID => 'Payé',
-            self::LATE => 'En retard',
-            self::MISSED => 'Manqué',
+            self::OVERDUE => 'En retard',
+            self::CANCELLED => 'Annulé',
+            self::FAILED => 'Échec',
+            self::REFUNDED => 'Remboursé',
         };
     }
 
-    public function color(): string
+    public function getColor(): string
     {
         return match($this) {
             self::PENDING => 'warning',
             self::PAID => 'success',
-            self::LATE => 'danger',
-            self::MISSED => 'dark',
+            self::OVERDUE => 'danger',
+            self::CANCELLED => 'secondary',
+            self::FAILED => 'danger',
+            self::REFUNDED => 'info',
         };
     }
 
-    public function icon(): string
+    public function getIcon(): string
     {
         return match($this) {
-            self::PENDING => 'fas fa-clock',
-            self::PAID => 'fas fa-check-circle',
-            self::LATE => 'fas fa-exclamation-triangle',
-            self::MISSED => 'fas fa-times-circle',
+            self::PENDING => 'clock',
+            self::PAID => 'check-circle',
+            self::OVERDUE => 'exclamation-triangle',
+            self::CANCELLED => 'times-circle',
+            self::FAILED => 'times',
+            self::REFUNDED => 'undo',
         };
+    }
+
+    public static function getActiveStatuses(): array
+    {
+        return [self::PENDING, self::OVERDUE];
+    }
+
+    public static function getCompletedStatuses(): array
+    {
+        return [self::PAID, self::REFUNDED];
+    }
+
+    public static function getFailedStatuses(): array
+    {
+        return [self::CANCELLED, self::FAILED];
     }
 }

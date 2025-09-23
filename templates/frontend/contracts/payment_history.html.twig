@@ -1,0 +1,553 @@
+{% extends 'frontend/base.html.twig' %}
+
+{% block title %}Historique des Paiements - Contrat #{{ contract.contractNumber }} - EdgeLoan{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .payment-timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+        .payment-timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, #28a745, #20c997);
+        }
+        .payment-item {
+            position: relative;
+            padding-bottom: 2rem;
+            background: white;
+            border-radius: 15px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+        .payment-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .payment-item::before {
+            content: '';
+            position: absolute;
+            left: -1.8rem;
+            top: 1.5rem;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #28a745;
+            border: 3px solid white;
+            box-shadow: 0 0 0 3px #28a745;
+        }
+        .payment-amount {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+        .payment-method {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: #e9ecef;
+            border-radius: 15px;
+            font-size: 0.875rem;
+        }
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+        }
+        .stat-box {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: block;
+        }
+        .filter-card {
+            background: #f8f9fa;
+            border: none;
+            border-radius: 15px;
+        }
+        .export-btn {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            transition: transform 0.2s ease;
+        }
+        .export-btn:hover {
+            transform: scale(1.05);
+            color: white;
+        }
+        .receipt-icon {
+            font-size: 2rem;
+            opacity: 0.3;
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+        .payment-details {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="page-content">
+    <!-- Header -->
+    <section class="page-header page-header-modern page-header-sm">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 align-self-center p-static order-2">
+                    <h1 class="text-dark font-weight-bold text-7">Historique des Paiements</h1>
+                    <span class="sub-title text-dark">Contrat #{{ contract.contractNumber }}</span>
+                </div>
+                <div class="col-md-4 text-end order-1">
+                    <div class="btn-group">
+                        <a href="{{ path('app_contracts_detail', {'id': contract.id}) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Retour
+                        </a>
+                        <button onclick="exportHistory()" class="btn export-btn">
+                            <i class="fas fa-download me-2"></i>Exporter
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container py-5">
+        <!-- Résumé des paiements -->
+        <div class="card summary-card mb-4">
+            <div class="card-body">
+                <h4 class="text-center mb-4">
+                    <i class="fas fa-chart-line me-2"></i>Résumé de vos paiements
+                </h4>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="stat-box">
+                            <span class="stat-value">{{ payments|length }}</span>
+                            <small>Paiements effectués</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-box">
+                            {% set totalPaid = 0 %}
+                            {% for payment in payments %}
+                                {% set totalPaid = totalPaid + payment.amount %}
+                            {% endfor %}
+                            <span class="stat-value">{{ totalPaid|number_format(0, ',', ' ') }}€</span>
+                            <small>Total remboursé</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-box">
+                            {% set avgAmount = payments|length > 0 ? (totalPaid / payments|length) : 0 %}
+                            <span class="stat-value">{{ avgAmount|number_format(0, ',', ' ') }}€</span>
+                            <small>Paiement moyen</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-box">
+                            {% set remainingPayments = contract.duration - payments|length %}
+                            <span class="stat-value">{{ remainingPayments }}</span>
+                            <small>Paiements restants</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Timeline des paiements -->
+                {% if payments is empty %}
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="empty-state">
+                                <i class="fas fa-receipt fa-4x mb-4"></i>
+                                <h5>Aucun paiement effectué</h5>
+                                <p>
+                                    Vous n'avez pas encore effectué de paiement pour ce contrat.<br>
+                                    Le premier prélèvement aura lieu le {{ contract.firstPaymentDate|date('d/m/Y') }}.
+                                </p>
+                                <a href="{{ path('app_contracts_payment_schedule', {'id': contract.id}) }}" 
+                                   class="btn btn-outline-primary">
+                                    <i class="fas fa-calendar-alt me-2"></i>Voir l'échéancier
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="payment-timeline">
+                        {% for payment in payments %}
+                            <div class="payment-item">
+                                <div class="card-body position-relative">
+                                    <i class="fas fa-receipt receipt-icon"></i>
+                                    
+                                    <div class="row align-items-center">
+                                        <div class="col-md-8">
+                                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                                <div>
+                                                    <h6 class="mb-1">
+                                                        Paiement #{{ payment.paymentNumber }}
+                                                        {% if payment.isEarlyPayment %}
+                                                            <span class="badge bg-info ms-2">Anticipé</span>
+                                                        {% endif %}
+                                                    </h6>
+                                                    <div class="payment-amount">{{ payment.amount|number_format(2, ',', ' ') }}€</div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="payment-details">
+                                                <div class="row">
+                                                    <div class="col-6">
+                                                        <i class="fas fa-calendar me-1"></i>
+                                                        {{ payment.paidAt|date('d/m/Y à H:i') }}
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <i class="fas fa-credit-card me-1"></i>
+                                                        <span class="payment-method">{{ payment.paymentMethod }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="row mt-2">
+                                                    <div class="col-6">
+                                                        <small>Capital : {{ payment.capitalAmount|number_format(2, ',', ' ') }}€</small>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <small>Intérêts : {{ payment.interestAmount|number_format(2, ',', ' ') }}€</small>
+                                                    </div>
+                                                </div>
+                                                {% if payment.fees > 0 %}
+                                                    <div class="mt-1">
+                                                        <small class="text-warning">
+                                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                                            Frais : {{ payment.fees|number_format(2, ',', ' ') }}€
+                                                        </small>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-md-4 text-end">
+                                            <div class="mb-2">
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check me-1"></i>Payé
+                                                </span>
+                                            </div>
+                                            
+                                            {% if payment.transactionId %}
+                                                <div class="mb-2">
+                                                    <small class="text-muted">
+                                                        ID: {{ payment.transactionId }}
+                                                    </small>
+                                                </div>
+                                            {% endif %}
+                                            
+                                            <div class="btn-group-vertical btn-group-sm">
+                                                <button class="btn btn-outline-primary" 
+                                                        onclick="viewReceipt({{ payment.id }})"
+                                                        title="Voir le reçu">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="btn btn-outline-secondary" 
+                                                        onclick="downloadReceipt({{ payment.id }})"
+                                                        title="Télécharger le reçu">
+                                                    <i class="fas fa-download"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {% if payment.notes %}
+                                        <div class="mt-3 p-2 bg-light rounded">
+                                            <small>
+                                                <i class="fas fa-sticky-note me-1"></i>
+                                                {{ payment.notes }}
+                                            </small>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if payments|length >= 10 %}
+                        <div class="d-flex justify-content-center mt-4">
+                            <button class="btn btn-outline-primary" onclick="loadMorePayments()">
+                                <i class="fas fa-chevron-down me-2"></i>Charger plus
+                            </button>
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Filtres -->
+                <div class="card filter-card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-filter me-2"></i>Filtres</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Période :</label>
+                            <select class="form-select form-select-sm" id="periodFilter" onchange="filterPayments()">
+                                <option value="all">Toute la période</option>
+                                <option value="last-month">Dernier mois</option>
+                                <option value="last-3-months">3 derniers mois</option>
+                                <option value="last-6-months">6 derniers mois</option>
+                                <option value="last-year">Dernière année</option>
+                                <option value="custom">Période personnalisée</option>
+                            </select>
+                        </div>
+                        
+                        <div id="customPeriod" style="display: none;">
+                            <div class="row">
+                                <div class="col-6">
+                                    <label class="form-label">Du :</label>
+                                    <input type="date" class="form-control form-control-sm" id="startDate">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Au :</label>
+                                    <input type="date" class="form-control form-control-sm" id="endDate">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Montant :</label>
+                            <select class="form-select form-select-sm" id="amountFilter" onchange="filterPayments()">
+                                <option value="all">Tous les montants</option>
+                                <option value="normal">Paiements normaux</option>
+                                <option value="early">Paiements anticipés</option>
+                                <option value="late">Paiements en retard</option>
+                            </select>
+                        </div>
+
+                        <button class="btn btn-primary btn-sm w-100" onclick="applyFilters()">
+                            <i class="fas fa-search me-2"></i>Appliquer
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm w-100 mt-2" onclick="resetFilters()">
+                            <i class="fas fa-undo me-2"></i>Réinitialiser
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Statistiques détaillées -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Répartition</h6>
+                    </div>
+                    <div class="card-body">
+                        {% set totalCapital = 0 %}
+                        {% set totalInterest = 0 %}
+                        {% set totalFees = 0 %}
+                        {% for payment in payments %}
+                            {% set totalCapital = totalCapital + payment.capitalAmount %}
+                            {% set totalInterest = totalInterest + payment.interestAmount %}
+                            {% set totalFees = totalFees + payment.fees %}
+                        {% endfor %}
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Capital remboursé :</span>
+                                <strong>{{ totalCapital|number_format(2, ',', ' ') }}€</strong>
+                            </div>
+                            <div class="progress mb-1" style="height: 6px;">
+                                <div class="progress-bar bg-primary" 
+                                     style="width: {{ totalPaid > 0 ? (totalCapital / totalPaid * 100) : 0 }}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Intérêts payés :</span>
+                                <strong>{{ totalInterest|number_format(2, ',', ' ') }}€</strong>
+                            </div>
+                            <div class="progress mb-1" style="height: 6px;">
+                                <div class="progress-bar bg-info" 
+                                     style="width: {{ totalPaid > 0 ? (totalInterest / totalPaid * 100) : 0 }}%"></div>
+                            </div>
+                        </div>
+
+                        {% if totalFees > 0 %}
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between">
+                                    <span>Frais :</span>
+                                    <strong class="text-warning">{{ totalFees|number_format(2, ',', ' ') }}€</strong>
+                                </div>
+                                <div class="progress mb-1" style="height: 6px;">
+                                    <div class="progress-bar bg-warning" 
+                                         style="width: {{ totalPaid > 0 ? (totalFees / totalPaid * 100) : 0 }}%"></div>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <hr>
+                        
+                        <div class="d-flex justify-content-between">
+                            <strong>Total payé :</strong>
+                            <strong class="text-success">{{ totalPaid|number_format(2, ',', ' ') }}€</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions rapides -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-bolt me-2"></i>Actions rapides</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-grid gap-2">
+                            <a href="{{ path('app_contracts_payment_schedule', {'id': contract.id}) }}" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-calendar-alt me-2"></i>Échéancier complet
+                            </a>
+                            <button onclick="generateReport()" class="btn btn-outline-success btn-sm">
+                                <i class="fas fa-file-alt me-2"></i>Rapport annuel
+                            </button>
+                            <a href="{{ path('app_contact') }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-headset me-2"></i>Contacter le support
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour le reçu -->
+<div class="modal fade" id="receiptModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-receipt me-2"></i>Reçu de paiement
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="receiptContent">
+                <!-- Contenu du reçu chargé dynamiquement -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                <button type="button" class="btn btn-primary" onclick="printReceipt()">
+                    <i class="fas fa-print me-2"></i>Imprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterPayments() {
+    const period = document.getElementById('periodFilter').value;
+    const customPeriod = document.getElementById('customPeriod');
+    
+    if (period === 'custom') {
+        customPeriod.style.display = 'block';
+    } else {
+        customPeriod.style.display = 'none';
+    }
+}
+
+function applyFilters() {
+    const period = document.getElementById('periodFilter').value;
+    const amount = document.getElementById('amountFilter').value;
+    
+    // Logique de filtrage côté client ou appel AJAX
+    console.log('Filtres appliqués:', { period, amount });
+    
+    // Recharger la page avec les paramètres de filtre
+    const params = new URLSearchParams(window.location.search);
+    params.set('period', period);
+    params.set('amount', amount);
+    
+    if (period === 'custom') {
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        if (startDate) params.set('start_date', startDate);
+        if (endDate) params.set('end_date', endDate);
+    }
+    
+    window.location.search = params.toString();
+}
+
+function resetFilters() {
+    window.location.href = window.location.pathname;
+}
+
+function viewReceipt(paymentId) {
+    fetch(`/api/payments/${paymentId}/receipt`)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('receiptContent').innerHTML = html;
+            const modal = new bootstrap.Modal(document.getElementById('receiptModal'));
+            modal.show();
+        })
+        .catch(error => {
+            alert('Erreur lors du chargement du reçu');
+        });
+}
+
+function downloadReceipt(paymentId) {
+    window.open(`/api/payments/${paymentId}/receipt/download`, '_blank');
+}
+
+function printReceipt() {
+    const content = document.getElementById('receiptContent').innerHTML;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Reçu de paiement</title>
+                <style>
+                    body { font-family: Arial, sans-serif; }
+                    .receipt { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { text-align: center; border-bottom: 2px solid #007bff; padding-bottom: 10px; }
+                </style>
+            </head>
+            <body>
+                <div class="receipt">${content}</div>
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
+
+function exportHistory() {
+    const params = new URLSearchParams(window.location.search);
+    params.set('export', 'excel');
+    window.location.href = window.location.pathname + '?' + params.toString();
+}
+
+function generateReport() {
+    window.open(`/contrats/{{ contract.id }}/rapport-annuel`, '_blank');
+}
+
+function loadMorePayments() {
+    // Implémentation du chargement progressif
+    alert('Fonctionnalité de chargement progressif à implémenter');
+}
+</script>
+{% endblock %}

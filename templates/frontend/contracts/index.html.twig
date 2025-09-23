@@ -1,0 +1,336 @@
+{% extends 'frontend/base.html.twig' %}
+
+{% block title %}Mes Contrats - EdgeLoan{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .contract-card {
+            transition: transform 0.2s ease;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .contract-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .contract-status {
+            position: relative;
+        }
+        .contract-status::before {
+            content: '';
+            position: absolute;
+            left: -15px;
+            top: 50%;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            transform: translateY(-50%);
+        }
+        .contract-status.active::before {
+            background: #28a745;
+        }
+        .contract-status.signed::before {
+            background: #007bff;
+        }
+        .contract-status.completed::before {
+            background: #6c757d;
+        }
+        .contract-status.pending::before {
+            background: #ffc107;
+        }
+        .progress-circular {
+            position: relative;
+            width: 60px;
+            height: 60px;
+        }
+        .progress-circular svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+        .progress-value {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+            font-weight: bold;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="page-content">
+    <!-- Header Section -->
+    <section class="page-header page-header-modern page-header-sm">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 align-self-center p-static order-2">
+                    <h1 class="text-dark font-weight-bold text-7">Mes Contrats</h1>
+                    <span class="sub-title text-dark">Gestion et suivi de vos prêts actifs</span>
+                </div>
+                <div class="col-md-4 text-end order-1">
+                    <a href="{{ path('app_dashboard_index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Retour au dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container py-5">
+        {% for message in app.flashes('success') %}
+            <div class="alert alert-success alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+        
+        {% for message in app.flashes('error') %}
+            <div class="alert alert-danger alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4>{{ contracts|length }} contrat(s) au total</h4>
+            <div>
+                <a href="{{ path('app_loan_catalog') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Nouvelle demande de prêt
+                </a>
+            </div>
+        </div>
+
+        {% if contracts is empty %}
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-file-contract fa-4x text-muted mb-4"></i>
+                    <h5>Aucun contrat de prêt</h5>
+                    <p class="text-muted mb-4">Vous n'avez pas encore de contrat de prêt signé.</p>
+                    <a href="{{ path('app_loan_application_index') }}" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-eye me-2"></i>Voir mes demandes
+                    </a>
+                    <a href="{{ path('app_loan_catalog') }}" class="btn btn-primary">
+                        <i class="fas fa-search me-2"></i>Parcourir le catalogue
+                    </a>
+                </div>
+            </div>
+        {% else %}
+            <div class="row">
+                {% for contract in contracts %}
+                    <div class="col-lg-6 col-xl-4 mb-4">
+                        <div class="card contract-card h-100">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">{{ contract.loanApplication.loanType.name }}</h6>
+                                <div class="contract-status {{ contract.isActive ? 'active' : 'completed' }}">
+                                    {% if not contract.isSigned %}
+                                        <span class="badge bg-warning">En attente de signature</span>
+                                    {% elseif contract.isActive %}
+                                        <span class="badge bg-success">Actif</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Terminé</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">N° Contrat</small>
+                                        <strong>{{ contract.contractNumber }}</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">Montant</small>
+                                        <strong class="text-primary">{{ contract.originalAmount|number_format(0, ',', ' ') }}€</strong>
+                                    </div>
+                                </div>
+
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">Mensualité</small>
+                                        <strong>{{ contract.monthlyPayment|number_format(2, ',', ' ') }}€</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted d-block">Durée</small>
+                                        <strong>{{ contract.duration }} mois</strong>
+                                    </div>
+                                </div>
+
+                                {% if contract.isSigned %}
+                                    <!-- Progression du remboursement -->
+                                    <div class="row mb-3">
+                                        <div class="col-8">
+                                            <small class="text-muted d-block">Progression</small>
+                                            {% set completion = contract.completionPercentage %}
+                                            <div class="progress mt-1">
+                                                <div class="progress-bar bg-success" style="width: {{ completion }}%"></div>
+                                            </div>
+                                            <small class="text-muted">{{ completion|round(1) }}% remboursé</small>
+                                        </div>
+                                        <div class="col-4 text-center">
+                                            <div class="progress-circular">
+                                                <svg>
+                                                    <circle cx="30" cy="30" r="25" fill="none" stroke="#e9ecef" stroke-width="4"></circle>
+                                                    <circle cx="30" cy="30" r="25" fill="none" stroke="#28a745" stroke-width="4" 
+                                                            stroke-dasharray="{{ (completion * 157 / 100)|round }} 157" 
+                                                            stroke-linecap="round"></circle>
+                                                </svg>
+                                                <div class="progress-value text-success">{{ completion|round }}%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <small class="text-muted d-block">Capital restant</small>
+                                        <strong class="text-warning">{{ contract.remainingAmount|number_format(2, ',', ' ') }}€</strong>
+                                    </div>
+                                {% endif %}
+
+                                <div class="mb-3">
+                                    <small class="text-muted d-block">
+                                        {% if contract.isSigned %}
+                                            Signé le
+                                        {% else %}
+                                            Généré le
+                                        {% endif %}
+                                    </small>
+                                    <span>
+                                        {% if contract.isSigned %}
+                                            {{ contract.signedAt|date('d/m/Y à H:i') }}
+                                        {% else %}
+                                            {{ contract.createdAt|date('d/m/Y à H:i') }}
+                                        {% endif %}
+                                    </span>
+                                </div>
+
+                                {% if contract.isSigned and contract.isActive %}
+                                    <!-- Prochain paiement -->
+                                    {% set nextPayment = contract.nextPaymentDue %}
+                                    {% if nextPayment %}
+                                        <div class="alert alert-light border-primary">
+                                            <small class="text-muted d-block">Prochain paiement</small>
+                                            <strong class="text-primary">{{ nextPayment.amount|number_format(2, ',', ' ') }}€</strong>
+                                            <br>
+                                            <small class="text-muted">{{ nextPayment.dueDate|date('d/m/Y') }}</small>
+                                            {% if nextPayment.isOverdue %}
+                                                <span class="badge bg-danger ms-2">En retard</span>
+                                            {% elseif nextPayment.isDue %}
+                                                <span class="badge bg-warning ms-2">À payer</span>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                            
+                            <div class="card-footer bg-transparent">
+                                <div class="d-grid gap-2">
+                                    <a href="{{ path('app_contracts_detail', {'id': contract.id}) }}" 
+                                       class="btn btn-outline-primary">
+                                        <i class="fas fa-eye me-1"></i>Voir détails
+                                    </a>
+                                    
+                                    {% if not contract.isSigned %}
+                                        <a href="{{ path('app_contracts_sign', {'id': contract.id}) }}" 
+                                           class="btn btn-primary">
+                                            <i class="fas fa-pen me-1"></i>Signer le contrat
+                                        </a>
+                                    {% else %}
+                                        <div class="btn-group w-100">
+                                            <a href="{{ path('app_contracts_download', {'id': contract.id}) }}" 
+                                               class="btn btn-outline-secondary">
+                                                <i class="fas fa-download me-1"></i>PDF
+                                            </a>
+                                            <a href="{{ path('app_contracts_payment_schedule', {'id': contract.id}) }}" 
+                                               class="btn btn-outline-info">
+                                                <i class="fas fa-calendar me-1"></i>Échéancier
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Actions rapides -->
+            <div class="row mt-5">
+                <div class="col-lg-4">
+                    <div class="card border-info">
+                        <div class="card-body text-center">
+                            <i class="fas fa-calculator fa-3x text-info mb-3"></i>
+                            <h5>Simuler un remboursement anticipé</h5>
+                            <p class="text-muted">
+                                Calculez les économies possibles avec un remboursement anticipé.
+                            </p>
+                            <a href="{{ path('app_loan_calculator') }}" class="btn btn-outline-info">
+                                Calculer
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card border-success">
+                        <div class="card-body text-center">
+                            <i class="fas fa-history fa-3x text-success mb-3"></i>
+                            <h5>Historique des paiements</h5>
+                            <p class="text-muted">
+                                Consultez l'historique complet de vos remboursements.
+                            </p>
+                            {% if contracts|length > 0 %}
+                                <a href="{{ path('app_contracts_payment_history', {'id': contracts[0].id}) }}" 
+                                   class="btn btn-outline-success">
+                                    Voir l'historique
+                                </a>
+                            {% else %}
+                                <button class="btn btn-outline-success" disabled>
+                                    Aucun contrat
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card border-primary">
+                        <div class="card-body text-center">
+                            <i class="fas fa-headset fa-3x text-primary mb-3"></i>
+                            <h5>Besoin d'aide ?</h5>
+                            <p class="text-muted">
+                                Notre équipe de support est là pour vous accompagner.
+                            </p>
+                            <a href="{{ path('app_contact') }}" class="btn btn-outline-primary">
+                                Nous contacter
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Auto-refresh pour les contrats actifs
+        {% if contracts|filter(c => c.isActive)|length > 0 %}
+            setInterval(function() {
+                // Vous pouvez ajouter ici un appel AJAX pour rafraîchir les informations
+                // sans recharger toute la page
+            }, 300000); // 5 minutes
+        {% endif %}
+
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+{% endblock %}

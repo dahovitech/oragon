@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contrat de Prêt #{{ contract.contractNumber }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .contract-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 20px 0;
+            text-transform: uppercase;
+        }
+        .contract-number {
+            font-size: 14px;
+            color: #666;
+        }
+        .parties {
+            display: flex;
+            justify-content: space-between;
+            margin: 30px 0;
+        }
+        .party {
+            width: 45%;
+        }
+        .party h3 {
+            color: #007bff;
+            border-bottom: 1px solid #007bff;
+            padding-bottom: 5px;
+        }
+        .terms-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .terms-table th,
+        .terms-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .terms-table th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        .amount {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .section {
+            margin: 25px 0;
+        }
+        .section h4 {
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+        .conditions {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .footer {
+            margin-top: 50px;
+            border-top: 2px solid #007bff;
+            padding-top: 20px;
+        }
+        .signatures {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        .signature-box {
+            width: 45%;
+            border: 1px dashed #999;
+            padding: 30px;
+            text-align: center;
+            min-height: 80px;
+        }
+        .signature-box h5 {
+            margin-bottom: 20px;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+        .watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 48px;
+            color: rgba(0, 123, 255, 0.1);
+            z-index: -1;
+            font-weight: bold;
+        }
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="watermark">EDGELOAN</div>
+    
+    <!-- En-tête -->
+    <div class="header">
+        <div class="logo">EdgeLoan</div>
+        <div class="contract-title">Contrat de Prêt Personnel</div>
+        <div class="contract-number">Numéro : {{ contract.contractNumber }}</div>
+        <div style="margin-top: 10px; font-size: 12px; color: #666;">
+            Généré le {{ generatedAt|date('d/m/Y à H:i') }}
+        </div>
+    </div>
+
+    <!-- Parties contractantes -->
+    <div class="parties">
+        <div class="party">
+            <h3>LE PRÊTEUR</h3>
+            <p>
+                <strong>EdgeLoan SAS</strong><br>
+                Société par Actions Simplifiée<br>
+                Capital social : 500 000 €<br>
+                RCS Paris : 123 456 789<br>
+                SIRET : 123 456 789 00012<br>
+                <br>
+                Siège social :<br>
+                123 Avenue de la Finance<br>
+                75001 Paris, France<br>
+                <br>
+                Tél : +33 1 23 45 67 89<br>
+                Email : contact@edgeloan.fr<br>
+                Site web : www.edgeloan.fr
+            </p>
+        </div>
+        
+        <div class="party">
+            <h3>L'EMPRUNTEUR</h3>
+            <p>
+                <strong>{{ user.firstName }} {{ user.lastName }}</strong><br>
+                {% if user.dateOfBirth %}
+                    Né(e) le {{ user.dateOfBirth|date('d/m/Y') }}<br>
+                {% endif %}
+                {% if user.nationalId %}
+                    Pièce d'identité : {{ user.nationalId }}<br>
+                {% endif %}
+                <br>
+                Adresse :<br>
+                {{ user.address }}<br>
+                {{ user.postalCode }} {{ user.city }}<br>
+                {% if user.country %}{{ user.country }}<br>{% endif %}
+                <br>
+                Tél : {{ user.phoneNumber }}<br>
+                Email : {{ user.email }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Objet du contrat -->
+    <div class="section">
+        <h4>OBJET DU CONTRAT</h4>
+        <p>
+            Le prêteur consent à l'emprunteur un prêt personnel d'un montant de 
+            <span class="amount">{{ contract.originalAmount|number_format(2, ',', ' ') }}€</span>
+            ({{ contract.originalAmount|number_format(2, ',', ' ') }} euros) destiné à financer un projet personnel.
+        </p>
+        <p>
+            Ce prêt est accordé selon les modalités définies ci-après et dans le respect des dispositions 
+            du Code de la consommation relatives au crédit à la consommation.
+        </p>
+    </div>
+
+    <!-- Conditions financières -->
+    <div class="section">
+        <h4>CONDITIONS FINANCIÈRES</h4>
+        <table class="terms-table">
+            <tr>
+                <th>Montant du prêt</th>
+                <td class="amount">{{ contract.originalAmount|number_format(2, ',', ' ') }}€</td>
+            </tr>
+            <tr>
+                <th>Taux d'intérêt nominal annuel</th>
+                <td>{{ contract.interestRate }}%</td>
+            </tr>
+            <tr>
+                <th>TAEG (Taux Annuel Effectif Global)</th>
+                <td>{{ contract.taeg }}%</td>
+            </tr>
+            <tr>
+                <th>Durée de remboursement</th>
+                <td>{{ contract.duration }} mois</td>
+            </tr>
+            <tr>
+                <th>Nombre de mensualités</th>
+                <td>{{ contract.duration }}</td>
+            </tr>
+            <tr>
+                <th>Montant de chaque mensualité</th>
+                <td class="amount">{{ contract.monthlyPayment|number_format(2, ',', ' ') }}€</td>
+            </tr>
+            <tr>
+                <th>Coût total du crédit</th>
+                <td class="amount">{{ ((contract.monthlyPayment * contract.duration) - contract.originalAmount)|number_format(2, ',', ' ') }}€</td>
+            </tr>
+            <tr>
+                <th>Montant total à rembourser</th>
+                <td class="amount">{{ (contract.monthlyPayment * contract.duration)|number_format(2, ',', ' ') }}€</td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- Modalités de remboursement -->
+    <div class="section">
+        <h4>MODALITÉS DE REMBOURSEMENT</h4>
+        <p>
+            Le remboursement s'effectue par mensualités constantes de 
+            <span class="amount">{{ contract.monthlyPayment|number_format(2, ',', ' ') }}€</span>
+            prélevées automatiquement sur le compte bancaire de l'emprunteur le 
+            <strong>{{ contract.paymentDay }}</strong> de chaque mois.
+        </p>
+        <p>
+            Le premier prélèvement aura lieu le <strong>{{ contract.firstPaymentDate|date('d/m/Y') }}</strong> 
+            et le dernier le <strong>{{ contract.endDate|date('d/m/Y') }}</strong>.
+        </p>
+        <p>
+            En cas d'incident de paiement, des frais de rejet de prélèvement de 20€ pourront être appliqués.
+        </p>
+    </div>
+
+    <!-- Conditions particulières -->
+    <div class="conditions">
+        <h4>CONDITIONS PARTICULIÈRES</h4>
+        
+        <h5>1. Remboursement anticipé</h5>
+        <p>
+            L'emprunteur peut, à tout moment, rembourser par anticipation, en totalité ou partiellement, 
+            le capital restant dû. Aucune indemnité de remboursement anticipé ne sera perçue conformément 
+            à l'article L. 311-29 du Code de la consommation.
+        </p>
+        
+        <h5>2. Droit de rétractation</h5>
+        <p>
+            L'emprunteur dispose d'un délai de 14 jours calendaires révolus pour exercer son droit de 
+            rétractation à compter de la signature du présent contrat, sans avoir à justifier de motifs 
+            ni à payer de pénalité.
+        </p>
+        
+        <h5>3. Assurance</h5>
+        <p>
+            {% if application.hasInsurance %}
+                L'emprunteur a souscrit une assurance décès-invalidité pour ce prêt.
+            {% else %}
+                L'emprunteur a décliné la souscription à une assurance pour ce prêt.
+            {% endif %}
+        </p>
+        
+        <h5>4. Défaillance</h5>
+        <p>
+            En cas de non-paiement d'une échéance, l'ensemble des sommes restant dues devient immédiatement 
+            exigible. Des intérêts de retard au taux de {{ contract.interestRate + 2 }}% l'an pourront être appliqués.
+        </p>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- Informations légales -->
+    <div class="section">
+        <h4>INFORMATIONS LÉGALES</h4>
+        
+        <h5>Protection des données personnelles</h5>
+        <p>
+            Les informations recueillies font l'objet d'un traitement informatique destiné à la gestion 
+            de votre dossier de crédit. Le responsable de traitement est EdgeLoan SAS. 
+            Conformément au Règlement Général sur la Protection des Données (RGPD), vous bénéficiez 
+            d'un droit d'accès, de rectification, de portabilité et d'effacement de vos données.
+        </p>
+        
+        <h5>Réclamations</h5>
+        <p>
+            Toute réclamation peut être adressée au Service Clientèle EdgeLoan, 123 Avenue de la Finance, 
+            75001 Paris ou par email à reclamations@edgeloan.fr. En cas de différend persistant, 
+            vous pouvez saisir le médiateur de l'AMF.
+        </p>
+        
+        <h5>Loi applicable</h5>
+        <p>
+            Le présent contrat est soumis au droit français. Tout litige relève de la compétence 
+            des tribunaux français.
+        </p>
+    </div>
+
+    <!-- Signatures -->
+    <div class="footer">
+        <p style="text-align: center; font-weight: bold; margin-bottom: 30px;">
+            SIGNATURES
+        </p>
+        
+        <div class="signatures">
+            <div class="signature-box">
+                <h5>L'EMPRUNTEUR</h5>
+                <p>{{ user.firstName }} {{ user.lastName }}</p>
+                <p style="margin-top: 30px;">
+                    Fait le : ___/___/______<br>
+                    À : ________________
+                </p>
+                <p style="margin-top: 20px; font-size: 12px;">
+                    "Bon pour accord"<br>
+                    Lu et approuvé
+                </p>
+            </div>
+            
+            <div class="signature-box">
+                <h5>LE PRÊTEUR</h5>
+                <p>EdgeLoan SAS</p>
+                <p>Représentée par son Directeur Général</p>
+                <p style="margin-top: 30px;">
+                    Fait le {{ generatedAt|date('d/m/Y') }}<br>
+                    À Paris
+                </p>
+            </div>
+        </div>
+        
+        <div style="margin-top: 30px; text-align: center; font-size: 12px; color: #666;">
+            <p>
+                Ce contrat a été généré électroniquement par EdgeLoan le {{ generatedAt|date('d/m/Y à H:i') }}<br>
+                Référence : {{ contract.contractNumber }}
+            </p>
+        </div>
+    </div>
+</body>
+</html>

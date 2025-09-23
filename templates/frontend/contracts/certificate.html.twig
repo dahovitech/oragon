@@ -1,0 +1,445 @@
+{% extends 'frontend/base.html.twig' %}
+
+{% block title %}Attestation de Fin de Prêt - Contrat #{{ contract.contractNumber }} - EdgeLoan{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .certificate-container {
+            background: white;
+            border: 2px solid #007bff;
+            border-radius: 15px;
+            padding: 3rem;
+            margin: 2rem 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .certificate-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(0, 123, 255, 0.05) 10px,
+                rgba(0, 123, 255, 0.05) 20px
+            );
+            z-index: 0;
+            pointer-events: none;
+        }
+        .certificate-content {
+            position: relative;
+            z-index: 1;
+        }
+        .certificate-header {
+            text-align: center;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 2rem;
+            margin-bottom: 2rem;
+        }
+        .certificate-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #007bff;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+        }
+        .certificate-subtitle {
+            font-size: 1.2rem;
+            color: #6c757d;
+            font-style: italic;
+        }
+        .certificate-body {
+            line-height: 1.8;
+            font-size: 1.1rem;
+            text-align: justify;
+        }
+        .certificate-details {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border-left: 5px solid #007bff;
+        }
+        .certificate-footer {
+            margin-top: 3rem;
+            border-top: 2px solid #007bff;
+            padding-top: 2rem;
+        }
+        .signature-area {
+            border: 1px dashed #dee2e6;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            background: #f8f9fa;
+        }
+        .official-seal {
+            width: 100px;
+            height: 100px;
+            border: 3px solid #007bff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            margin: 0 auto 1rem;
+            position: relative;
+        }
+        .official-seal::before {
+            content: '✓';
+            font-size: 3rem;
+            color: #007bff;
+            font-weight: bold;
+        }
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 4rem;
+            color: rgba(0, 123, 255, 0.1);
+            font-weight: bold;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .print-only {
+            display: none;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            .certificate-container {
+                border: 2px solid #000;
+                box-shadow: none;
+                margin: 0;
+                page-break-inside: avoid;
+            }
+            body {
+                background: white !important;
+            }
+            .container {
+                max-width: none !important;
+                padding: 0 !important;
+            }
+        }
+        .qr-code {
+            width: 80px;
+            height: 80px;
+            border: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            text-align: center;
+            background: white;
+        }
+        .certificate-number {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #007bff;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="page-content">
+    <!-- Header -->
+    <section class="page-header page-header-modern page-header-sm no-print">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 align-self-center p-static order-2">
+                    <h1 class="text-dark font-weight-bold text-7">Attestation de Fin de Prêt</h1>
+                    <span class="sub-title text-dark">Contrat #{{ contract.contractNumber }}</span>
+                </div>
+                <div class="col-md-4 text-end order-1">
+                    <div class="btn-group">
+                        <a href="{{ path('app_contracts_detail', {'id': contract.id}) }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Retour
+                        </a>
+                        <button onclick="window.print()" class="btn btn-primary">
+                            <i class="fas fa-print me-2"></i>Imprimer
+                        </button>
+                        <button onclick="downloadPDF()" class="btn btn-success">
+                            <i class="fas fa-download me-2"></i>PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container py-5">
+        <!-- Instructions pour l'utilisateur -->
+        <div class="alert alert-info no-print">
+            <h5><i class="fas fa-info-circle me-2"></i>Votre attestation de fin de prêt</h5>
+            <p class="mb-0">
+                Cette attestation certifie que vous avez remboursé intégralement votre prêt. 
+                Elle peut vous être demandée par des organismes financiers ou administratifs. 
+                Conservez-la précieusement dans vos documents importants.
+            </p>
+        </div>
+
+        <!-- Certificat officiel -->
+        <div class="certificate-container">
+            <div class="watermark">PAYÉ</div>
+            <div class="certificate-number">
+                N° {{ contract.contractNumber }}-CERT-{{ "now"|date('Y') }}
+            </div>
+            
+            <div class="certificate-content">
+                <!-- En-tête -->
+                <div class="certificate-header">
+                    <div class="official-seal"></div>
+                    <div class="certificate-title">Attestation de Fin de Prêt</div>
+                    <div class="certificate-subtitle">Certificat de remboursement intégral</div>
+                </div>
+
+                <!-- Corps du certificat -->
+                <div class="certificate-body">
+                    <p class="text-center mb-4">
+                        <strong>La société EdgeLoan SAS</strong>, immatriculée au RCS de Paris sous le numéro 123 456 789, 
+                        ayant son siège social au 123 Avenue de la Finance, 75001 Paris, France,
+                    </p>
+
+                    <p class="text-center mb-4" style="font-size: 1.3rem;">
+                        <strong>ATTESTE PAR LES PRÉSENTES QUE :</strong>
+                    </p>
+
+                    <div class="certificate-details">
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <strong>Emprunteur :</strong><br>
+                                {{ contract.loanApplication.user.firstName }} {{ contract.loanApplication.user.lastName }}<br>
+                                {{ contract.loanApplication.user.address }}<br>
+                                {{ contract.loanApplication.user.postalCode }} {{ contract.loanApplication.user.city }}
+                            </div>
+                            <div class="col-6">
+                                <strong>Détails du contrat :</strong><br>
+                                Numéro : {{ contract.contractNumber }}<br>
+                                Type : {{ contract.loanApplication.loanType.name }}<br>
+                                Date de signature : {{ contract.signedAt|date('d/m/Y') }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <strong>Montant initial :</strong><br>
+                                {{ contract.originalAmount|number_format(2, ',', ' ') }}€
+                            </div>
+                            <div class="col-6">
+                                <strong>Durée contractuelle :</strong><br>
+                                {{ contract.duration }} mois
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-center mb-4" style="font-size: 1.2rem;">
+                        Le contrat de prêt personnel susmentionné a été <strong>INTÉGRALEMENT REMBOURSÉ</strong> 
+                        le <strong>{{ contract.fullRepaymentDate|date('d/m/Y') }}</strong>.
+                    </p>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h6>Montant total remboursé</h6>
+                                <div class="h4 text-success">{{ contract.totalAmountPaid|number_format(2, ',', ' ') }}€</div>
+                                <small class="text-muted">Capital + Intérêts + Frais</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-center p-3 bg-light rounded">
+                                <h6>Durée effective</h6>
+                                <div class="h4 text-primary">{{ contract.effectiveDuration }} mois</div>
+                                <small class="text-muted">
+                                    {% if contract.effectiveDuration < contract.duration %}
+                                        Remboursement anticipé
+                                    {% else %}
+                                        Remboursement normal
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-center mb-4">
+                        Aucune somme n'est plus due par l'emprunteur au titre de ce contrat. 
+                        La présente attestation est délivrée pour valoir ce que de droit.
+                    </p>
+
+                    <div class="alert alert-success text-center">
+                        <i class="fas fa-check-circle fa-2x mb-2"></i><br>
+                        <strong>PRÊT SOLDÉ - AUCUNE DETTE RESTANTE</strong>
+                    </div>
+                </div>
+
+                <!-- Pied du certificat -->
+                <div class="certificate-footer">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="qr-code">
+                                <small>QR Code<br>Vérification</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <p class="mb-2">Délivré le {{ "now"|date('d/m/Y') }}</p>
+                            <p class="mb-2">à Paris, France</p>
+                            <div class="signature-area">
+                                <strong>EdgeLoan SAS</strong><br>
+                                Service Juridique et Contentieux<br>
+                                <br>
+                                <em>Signature électronique valide</em><br>
+                                <small class="text-muted">Certificat N° {{ contract.contractNumber }}-{{ "now"|date('Ymd-His') }}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div style="writing-mode: vertical-rl; text-orientation: mixed;">
+                                <small class="text-muted">
+                                    Document généré électroniquement - {{ "now"|date('d/m/Y H:i') }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Informations complémentaires -->
+        <div class="row mt-4 no-print">
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informations importantes</h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="fas fa-shield-alt text-success me-2"></i>
+                                Cette attestation a valeur légale et constitue une preuve officielle du remboursement intégral
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-archive text-info me-2"></i>
+                                Conservez ce document pendant au moins 5 ans après la fin de votre prêt
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-university text-primary me-2"></i>
+                                Ce document peut être demandé par d'autres établissements financiers
+                            </li>
+                            <li class="mb-0">
+                                <i class="fas fa-stamp text-warning me-2"></i>
+                                L'authenticité peut être vérifiée via le QR code ou notre service client
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-handshake me-2"></i>Merci pour votre confiance</h6>
+                    </div>
+                    <div class="card-body">
+                        <p>
+                            <strong>Félicitations !</strong> Vous avez honoré tous vos engagements financiers. 
+                            Cette réussite témoigne de votre sérieux et de votre capacité de remboursement.
+                        </p>
+                        
+                        <div class="alert alert-light">
+                            <h6><i class="fas fa-gift me-2 text-primary"></i>EdgeLoan vous accompagne encore</h6>
+                            <p class="mb-2">En tant qu'ancien client fidèle, vous bénéficiez :</p>
+                            <ul class="mb-0">
+                                <li>D'un accès privilégié à nos nouvelles offres</li>
+                                <li>De conditions préférentielles sur vos futurs prêts</li>
+                                <li>D'un service client dédié</li>
+                            </ul>
+                        </div>
+
+                        <div class="text-center">
+                            <a href="{{ path('app_loan_catalog') }}" class="btn btn-outline-primary me-2">
+                                <i class="fas fa-search me-2"></i>Découvrir nos offres
+                            </a>
+                            <a href="{{ path('app_contact') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-headset me-2"></i>Nous contacter
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vérification et sécurité -->
+        <div class="alert alert-light mt-4 no-print">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h6><i class="fas fa-security me-2"></i>Vérification d'authenticité</h6>
+                    <p class="mb-0">
+                        Pour vérifier l'authenticité de cette attestation, contactez notre service client au 
+                        <strong>01 23 45 67 89</strong> en mentionnant le numéro de certificat : 
+                        <code>{{ contract.contractNumber }}-CERT-{{ "now"|date('Y') }}</code>
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button class="btn btn-outline-info" onclick="verifyDocument()">
+                        <i class="fas fa-search-plus me-2"></i>Vérifier en ligne
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function downloadPDF() {
+    // Masquer les éléments non imprimables
+    const noprint = document.querySelectorAll('.no-print');
+    noprint.forEach(el => el.style.display = 'none');
+    
+    // Déclencher l'impression (ou redirection vers generation PDF)
+    window.print();
+    
+    // Restaurer l'affichage après un délai
+    setTimeout(() => {
+        noprint.forEach(el => el.style.display = '');
+    }, 1000);
+}
+
+function verifyDocument() {
+    const certificateNumber = '{{ contract.contractNumber }}-CERT-{{ "now"|date("Y") }}';
+    
+    // Redirection vers le service de vérification
+    const verifyUrl = `{{ path('app_verify_certificate') }}?number=${encodeURIComponent(certificateNumber)}`;
+    window.open(verifyUrl, '_blank');
+}
+
+// Prévenir la modification du document
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('selectstart', function(e) {
+        if (e.target.closest('.certificate-container')) {
+            e.preventDefault();
+        }
+    });
+    
+    document.addEventListener('contextmenu', function(e) {
+        if (e.target.closest('.certificate-container')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

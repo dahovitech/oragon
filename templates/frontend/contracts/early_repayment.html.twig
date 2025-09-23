@@ -1,0 +1,433 @@
+{% extends 'frontend/base.html.twig' %}
+
+{% block title %}Remboursement Anticipé - Contrat #{{ contract.contractNumber }} - EdgeLoan{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .simulation-card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .savings-amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        .calculation-step {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid #007bff;
+        }
+        .comparison-table th {
+            background: #e9ecef;
+        }
+        .highlight-savings {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            font-weight: bold;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+        .confirmation-box {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 10px;
+            padding: 1.5rem;
+        }
+        .amount-input {
+            font-size: 1.2rem;
+            text-align: center;
+            border: 2px solid #007bff;
+            border-radius: 10px;
+        }
+        .amount-input:focus {
+            border-color: #0056b3;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="page-content">
+    <!-- Header -->
+    <section class="page-header page-header-modern page-header-sm">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 align-self-center p-static order-2">
+                    <h1 class="text-dark font-weight-bold text-7">Remboursement Anticipé</h1>
+                    <span class="sub-title text-dark">Contrat #{{ contract.contractNumber }}</span>
+                </div>
+                <div class="col-md-4 text-end order-1">
+                    <a href="{{ path('app_contracts_detail', {'id': contract.id}) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Retour au contrat
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="container py-5">
+        {% for message in app.flashes('success') %}
+            <div class="alert alert-success alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+        
+        {% for message in app.flashes('error') %}
+            <div class="alert alert-danger alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+
+        <!-- Résumé des économies -->
+        <div class="card simulation-card mb-4">
+            <div class="card-body text-center">
+                <h3 class="mb-3">💰 Économisez sur votre prêt !</h3>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="savings-amount">{{ earlyRepaymentData.interestSavings|number_format(2, ',', ' ') }}€</div>
+                        <p class="mb-0">Économie d'intérêts</p>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="savings-amount">{{ earlyRepaymentData.monthsSaved }}</div>
+                        <p class="mb-0">Mois gagnés</p>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="savings-amount">{{ earlyRepaymentData.earlyRepaymentAmount|number_format(0, ',', ' ') }}€</div>
+                        <p class="mb-0">Montant à payer</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Simulateur de remboursement -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-calculator me-2"></i>Simulateur de remboursement anticipé</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Date de remboursement :</label>
+                                <input type="date" class="form-control" id="repaymentDate" 
+                                       value="{{ "now"|date('Y-m-d') }}" 
+                                       min="{{ "now"|date('Y-m-d') }}"
+                                       onchange="updateSimulation()">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Type de remboursement :</label>
+                                <select class="form-select" id="repaymentType" onchange="updateSimulation()">
+                                    <option value="total">Remboursement total</option>
+                                    <option value="partial">Remboursement partiel</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="partialAmountDiv" style="display: none;" class="mb-4">
+                            <label class="form-label">Montant du remboursement partiel :</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control amount-input" id="partialAmount" 
+                                       min="100" max="{{ contract.remainingAmount }}" step="100"
+                                       placeholder="Minimum 100€">
+                                <span class="input-group-text">€</span>
+                            </div>
+                            <small class="text-muted">
+                                Capital restant : {{ contract.remainingAmount|number_format(2, ',', ' ') }}€
+                            </small>
+                        </div>
+
+                        <button class="btn btn-primary" onclick="calculateRepayment()">
+                            <i class="fas fa-calculator me-2"></i>Recalculer
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Détails du calcul -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Détail du calcul</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="calculation-step">
+                            <h6><i class="fas fa-1 me-2"></i>Capital restant dû</h6>
+                            <p class="mb-0">
+                                Au {{ "now"|date('d/m/Y') }}, il vous reste à rembourser 
+                                <strong>{{ contract.remainingAmount|number_format(2, ',', ' ') }}€</strong> 
+                                de capital sur les {{ contract.originalAmount|number_format(0, ',', ' ') }}€ empruntés initialement.
+                            </p>
+                        </div>
+
+                        <div class="calculation-step">
+                            <h6><i class="fas fa-2 me-2"></i>Intérêts restants à payer</h6>
+                            <p class="mb-0">
+                                Sans remboursement anticipé, vous paieriez encore 
+                                <strong>{{ earlyRepaymentData.remainingInterests|number_format(2, ',', ' ') }}€</strong> 
+                                d'intérêts sur les {{ earlyRepaymentData.remainingMonths }} mois restants.
+                            </p>
+                        </div>
+
+                        <div class="calculation-step">
+                            <h6><i class="fas fa-3 me-2"></i>Économie réalisée</h6>
+                            <p class="mb-0">
+                                En remboursant aujourd'hui, vous économisez 
+                                <strong class="text-success">{{ earlyRepaymentData.interestSavings|number_format(2, ',', ' ') }}€</strong> 
+                                d'intérêts et gagnez {{ earlyRepaymentData.monthsSaved }} mois.
+                            </p>
+                        </div>
+
+                        <div class="calculation-step">
+                            <h6><i class="fas fa-4 me-2"></i>Montant total à payer</h6>
+                            <p class="mb-0">
+                                Pour solder votre prêt aujourd'hui, vous devez payer 
+                                <strong class="text-primary">{{ earlyRepaymentData.earlyRepaymentAmount|number_format(2, ',', ' ') }}€</strong>
+                                (capital restant + intérêts courus jusqu'à ce jour).
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tableau de comparaison -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-balance-scale me-2"></i>Comparaison des scénarios</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table comparison-table">
+                                <thead>
+                                    <tr>
+                                        <th>Scénario</th>
+                                        <th class="text-end">Montant à payer</th>
+                                        <th class="text-end">Durée restante</th>
+                                        <th class="text-end">Intérêts totaux</th>
+                                        <th class="text-end">Économie</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <i class="fas fa-calendar-alt me-2 text-muted"></i>
+                                            Remboursement normal
+                                        </td>
+                                        <td class="text-end">{{ earlyRepaymentData.normalTotalCost|number_format(2, ',', ' ') }}€</td>
+                                        <td class="text-end">{{ earlyRepaymentData.remainingMonths }} mois</td>
+                                        <td class="text-end">{{ earlyRepaymentData.remainingInterests|number_format(2, ',', ' ') }}€</td>
+                                        <td class="text-end">-</td>
+                                    </tr>
+                                    <tr class="highlight-savings">
+                                        <td>
+                                            <i class="fas fa-fast-forward me-2"></i>
+                                            Remboursement anticipé
+                                        </td>
+                                        <td class="text-end">{{ earlyRepaymentData.earlyRepaymentAmount|number_format(2, ',', ' ') }}€</td>
+                                        <td class="text-end">0 mois</td>
+                                        <td class="text-end">{{ earlyRepaymentData.accruedInterests|number_format(2, ',', ' ') }}€</td>
+                                        <td class="text-end">
+                                            <strong>-{{ earlyRepaymentData.interestSavings|number_format(2, ',', ' ') }}€</strong>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Informations importantes -->
+                <div class="warning-box mb-4">
+                    <h6><i class="fas fa-exclamation-triangle me-2 text-warning"></i>Points importants</h6>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            Aucune pénalité de remboursement anticipé
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-clock text-info me-2"></i>
+                            Traitement sous 24h ouvrées
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-shield-alt text-primary me-2"></i>
+                            Transaction sécurisée et garantie
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-file-alt text-secondary me-2"></i>
+                            Attestation de remboursement fournie
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Modalités de paiement -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-credit-card me-2"></i>Modalités de paiement</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-check-label">
+                                <input type="radio" class="form-check-input me-2" name="paymentMethod" value="transfer" checked>
+                                Virement bancaire
+                            </label>
+                            <small class="d-block text-muted">Délai : 1-2 jours ouvrés</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-check-label">
+                                <input type="radio" class="form-check-input me-2" name="paymentMethod" value="card">
+                                Carte bancaire
+                            </label>
+                            <small class="d-block text-muted">Traitement immédiat</small>
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-check-label">
+                                <input type="radio" class="form-check-input me-2" name="paymentMethod" value="sepa">
+                                Prélèvement SEPA
+                            </label>
+                            <small class="d-block text-muted">Délai : 2-3 jours ouvrés</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact -->
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-headset fa-2x text-primary mb-3"></i>
+                        <h6>Questions ?</h6>
+                        <p class="text-muted mb-3">
+                            Notre équipe est là pour vous conseiller sur votre remboursement anticipé.
+                        </p>
+                        <a href="tel:+33123456789" class="btn btn-outline-primary btn-sm me-2">
+                            <i class="fas fa-phone me-1"></i>Appeler
+                        </a>
+                        <a href="{{ path('app_contact') }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-envelope me-1"></i>Email
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirmation de remboursement -->
+        <div class="confirmation-box mt-5">
+            <h5><i class="fas fa-handshake me-2 text-info"></i>Procéder au remboursement anticipé</h5>
+            <p class="mb-4">
+                Vous êtes sur le point de rembourser votre prêt par anticipation. Cette action est définitive et 
+                mettra fin à votre contrat de prêt.
+            </p>
+
+            <form method="post" onsubmit="return confirmRepayment()">
+                <div class="row align-items-end">
+                    <div class="col-md-8">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="confirmTerms" required>
+                            <label class="form-check-label" for="confirmTerms">
+                                Je confirme vouloir procéder au remboursement anticipé total de mon prêt pour un montant de 
+                                <strong>{{ earlyRepaymentData.earlyRepaymentAmount|number_format(2, ',', ' ') }}€</strong>
+                            </label>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="confirmUnderstanding" required>
+                            <label class="form-check-label" for="confirmUnderstanding">
+                                Je comprends que cette action est définitive et mettra fin à mon contrat de prêt
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="hidden" name="confirm_repayment" value="1">
+                        <button type="submit" class="btn btn-success btn-lg w-100" id="confirmBtn" disabled>
+                            <i class="fas fa-check me-2"></i>Confirmer le remboursement
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Informations légales -->
+        <div class="alert alert-light mt-4">
+            <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                <strong>Information légale :</strong> Conformément à l'article L. 311-29 du Code de la consommation, 
+                aucune indemnité ne peut être réclamée en cas de remboursement anticipé volontaire d'un crédit à la consommation. 
+                Le montant calculé correspond au capital restant dû majoré des intérêts courus jusqu'à la date de remboursement.
+            </small>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateSimulation() {
+    const repaymentType = document.getElementById('repaymentType').value;
+    const partialDiv = document.getElementById('partialAmountDiv');
+    
+    if (repaymentType === 'partial') {
+        partialDiv.style.display = 'block';
+    } else {
+        partialDiv.style.display = 'none';
+    }
+}
+
+function calculateRepayment() {
+    const date = document.getElementById('repaymentDate').value;
+    const type = document.getElementById('repaymentType').value;
+    const amount = document.getElementById('partialAmount').value;
+    
+    let url = `{{ path('app_contracts_repayment_simulation', {'id': contract.id}) }}?date=${date}&type=${type}`;
+    if (type === 'partial' && amount) {
+        url += `&amount=${amount}`;
+    }
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            // Mettre à jour l'affichage avec les nouvelles données
+            updateDisplay(data);
+        })
+        .catch(error => {
+            console.error('Erreur lors du calcul:', error);
+            alert('Erreur lors du calcul. Veuillez réessayer.');
+        });
+}
+
+function updateDisplay(data) {
+    // Mise à jour des montants affichés
+    // Implementation à compléter selon la structure des données retournées
+    console.log('Nouvelles données:', data);
+}
+
+function confirmRepayment() {
+    const amount = '{{ earlyRepaymentData.earlyRepaymentAmount|number_format(2, ",", " ") }}€';
+    
+    return confirm(
+        `Êtes-vous sûr de vouloir procéder au remboursement anticipé de votre prêt ?\n\n` +
+        `Montant à payer : ${amount}\n` +
+        `Cette action est définitive et mettra fin à votre contrat.`
+    );
+}
+
+// Activation du bouton de confirmation
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmTerms = document.getElementById('confirmTerms');
+    const confirmUnderstanding = document.getElementById('confirmUnderstanding');
+    const confirmBtn = document.getElementById('confirmBtn');
+    
+    function updateButtonState() {
+        confirmBtn.disabled = !(confirmTerms.checked && confirmUnderstanding.checked);
+    }
+    
+    confirmTerms.addEventListener('change', updateButtonState);
+    confirmUnderstanding.addEventListener('change', updateButtonState);
+});
+</script>
+{% endblock %}
