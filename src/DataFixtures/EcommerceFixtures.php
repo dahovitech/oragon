@@ -62,16 +62,25 @@ class EcommerceFixtures extends Fixture
 
         $languages = [];
         foreach ($languagesData as [$code, $name, $nativeName, $isActive, $isDefault, $sortOrder]) {
-            $language = new Language();
-            $language->setCode($code)
-                ->setName($name)
-                ->setNativeName($nativeName)
-                ->setIsActive($isActive)
-                ->setIsDefault($isDefault)
-                ->setSortOrder($sortOrder);
+            // Vérifier si la langue existe déjà
+            $existingLanguage = $manager->getRepository(Language::class)->findOneBy(['code' => $code]);
+            
+            if ($existingLanguage) {
+                // La langue existe déjà, l'utiliser
+                $languages[$code] = $existingLanguage;
+            } else {
+                // La langue n'existe pas, la créer
+                $language = new Language();
+                $language->setCode($code)
+                    ->setName($name)
+                    ->setNativeName($nativeName)
+                    ->setIsActive($isActive)
+                    ->setIsDefault($isDefault)
+                    ->setSortOrder($sortOrder);
 
-            $manager->persist($language);
-            $languages[$code] = $language;
+                $manager->persist($language);
+                $languages[$code] = $language;
+            }
         }
 
         return $languages;
@@ -79,6 +88,13 @@ class EcommerceFixtures extends Fixture
 
     private function createAdminUser(ObjectManager $manager): User
     {
+        // Vérifier si l'utilisateur admin existe déjà
+        $existingUser = $manager->getRepository(User::class)->findOneBy(['email' => 'admin@viva-shop.com']);
+        
+        if ($existingUser) {
+            return $existingUser;
+        }
+
         $user = new User();
         $user->setEmail('admin@viva-shop.com')
             ->setFirstName('Admin')
