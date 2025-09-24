@@ -1,0 +1,418 @@
+{% extends 'auth_base.html.twig' %}
+
+{% block title %}Mes demandes de prêt{% endblock %}
+
+{% block body %}
+<!-- Page Header -->
+<section class="page-header" style="background-image: url({{ asset('css/images/backgrounds/page-header-bg-1-1.jpg') }});">
+    <div class="page-header__bg" style="background-image: url({{ asset('css/images/shapes/page-header-bg-1-1.png') }});"></div>
+    <div class="page-header__overlay" style="background-image: url({{ asset('css/images/shapes/page-header-overlay-1-1.png') }});"></div>
+    <div class="container">
+        <h2 class="page-header__title">Mes demandes de prêt</h2>
+        <ul class="easilon-breadcrumb list-unstyled">
+            <li><a href="{{ path('user_dashboard') }}">Tableau de bord</a></li>
+            <li><span>Demandes de prêt</span></li>
+        </ul>
+    </div>
+    <div class="page-header__border-box">
+        <div class="page-header__border page-header__border--1"></div>
+        <div class="page-header__border page-header__border--2"></div>
+        <div class="page-header__border page-header__border--3"></div>
+        <div class="page-header__border page-header__border--4"></div>
+        <div class="page-header__border page-header__border--5"></div>
+    </div>
+</section>
+
+<!-- Applications List Section -->
+<section class="loan-applications section-space">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <!-- Header with Action Button -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3>
+                        <i class="icon-loan-1 text-primary"></i>
+                        Vos demandes de prêt
+                    </h3>
+                    <a href="{{ path('loan_application_new') }}" class="easilon-btn">
+                        <span>Nouvelle demande</span>
+                        <span class="easilon-btn__icon">
+                            <i class="icon-plus"></i>
+                        </span>
+                    </a>
+                </div>
+
+                {% if applications|length > 0 %}
+                    <!-- Applications Grid -->
+                    <div class="loan-applications__grid">
+                        {% for application in applications %}
+                            <div class="loan-application__card">
+                                <div class="card h-100 shadow-sm">
+                                    <div class="card-header bg-light border-bottom-0">
+                                        <div class="row align-items-center">
+                                            <div class="col">
+                                                <h5 class="card-title mb-0">
+                                                    <i class="icon-document text-primary"></i>
+                                                    {{ application.applicationNumber }}
+                                                </h5>
+                                                <small class="text-muted">
+                                                    {{ application.loanType.translations.first.name ?? 'Type de prêt' }}
+                                                </small>
+                                            </div>
+                                            <div class="col-auto">
+                                                <span class="badge badge-{{ application.status.color }} px-3 py-2">
+                                                    <i class="icon-{{ application.status.icon }}"></i>
+                                                    {{ application.status.label }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-6">
+                                                <div class="loan-detail">
+                                                    <h6 class="text-muted mb-1">Montant demandé</h6>
+                                                    <h4 class="text-primary mb-0">{{ application.requestedAmount|number_format(2, ',', ' ') }}€</h4>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="loan-detail">
+                                                    <h6 class="text-muted mb-1">Durée</h6>
+                                                    <h4 class="text-info mb-0">{{ application.duration }} mois</h4>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {% if application.monthlyPayment %}
+                                            <div class="row mb-3">
+                                                <div class="col-6">
+                                                    <div class="loan-detail">
+                                                        <h6 class="text-muted mb-1">Paiement mensuel</h6>
+                                                        <h5 class="text-success mb-0">{{ application.monthlyPayment|number_format(2, ',', ' ') }}€</h5>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="loan-detail">
+                                                        <h6 class="text-muted mb-1">Taux d'intérêt</h6>
+                                                        <h5 class="text-secondary mb-0">{{ application.interestRate }}%</h5>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+
+                                        <div class="application-meta">
+                                            <div class="row text-center">
+                                                <div class="col-6">
+                                                    <small class="text-muted">
+                                                        <i class="icon-calendar"></i>
+                                                        Créée le {{ application.createdAt|date('d/m/Y') }}
+                                                    </small>
+                                                </div>
+                                                {% if application.submittedAt %}
+                                                    <div class="col-6">
+                                                        <small class="text-muted">
+                                                            <i class="icon-paper-plane"></i>
+                                                            Soumise le {{ application.submittedAt|date('d/m/Y') }}
+                                                        </small>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        {% if application.purpose %}
+                                            <div class="application-purpose mt-3">
+                                                <h6 class="text-muted mb-1">Objectif</h6>
+                                                <p class="small mb-0">{{ application.purpose|slice(0, 100) }}{% if application.purpose|length > 100 %}...{% endif %}</p>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="card-footer bg-transparent border-top-0">
+                                        <div class="row">
+                                            <div class="col">
+                                                <a href="{{ path('loan_application_show', {id: application.id}) }}" 
+                                                   class="btn btn-outline-primary btn-sm w-100">
+                                                    <i class="icon-eye"></i>
+                                                    Voir détails
+                                                </a>
+                                            </div>
+                                            {% if application.status.isEditable %}
+                                                <div class="col">
+                                                    <a href="{{ path('loan_application_edit', {id: application.id}) }}" 
+                                                       class="btn btn-primary btn-sm w-100">
+                                                        <i class="icon-edit"></i>
+                                                        Modifier
+                                                    </a>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        {% if application.status.isEditable %}
+                                            <div class="row mt-2">
+                                                <div class="col">
+                                                    <form method="post" 
+                                                          action="{{ path('loan_application_submit', {id: application.id}) }}" 
+                                                          onsubmit="return confirm('Êtes-vous sûr de vouloir soumettre cette demande ? Elle ne pourra plus être modifiée après soumission.');">
+                                                        <button type="submit" class="btn btn-success btn-sm w-100">
+                                                            <i class="icon-paper-plane"></i>
+                                                            Soumettre
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                                <div class="col">
+                                                    <form method="post" 
+                                                          action="{{ path('loan_application_delete', {id: application.id}) }}" 
+                                                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette demande ? Cette action est irréversible.');">
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm w-100">
+                                                            <i class="icon-trash"></i>
+                                                            Supprimer
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Status Filter -->
+                    <div class="applications-filter mt-5">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="icon-filter"></i>
+                                    Filtrer par statut
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="btn-group flex-wrap" role="group">
+                                    <button type="button" class="btn btn-outline-primary active" data-filter="all">
+                                        Toutes ({{ applications|length }})
+                                    </button>
+                                    {% set statusCounts = {} %}
+                                    {% for application in applications %}
+                                        {% set status = application.status.value %}
+                                        {% set statusCounts = statusCounts|merge({(status): (statusCounts[status] ?? 0) + 1}) %}
+                                    {% endfor %}
+                                    
+                                    {% for status, count in statusCounts %}
+                                        <button type="button" class="btn btn-outline-primary" data-filter="{{ status }}">
+                                            {{ constant('App\\Enum\\LoanApplicationStatus::' ~ status).label }} ({{ count }})
+                                        </button>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                {% else %}
+                    <!-- Empty State -->
+                    <div class="empty-state text-center py-5">
+                        <div class="empty-state__icon mb-4">
+                            <i class="icon-loan-1" style="font-size: 4rem; color: #e0e6ed;"></i>
+                        </div>
+                        <h3 class="empty-state__title">Aucune demande de prêt</h3>
+                        <p class="empty-state__description mb-4">
+                            Vous n'avez pas encore créé de demande de prêt. <br>
+                            Commencez dès maintenant pour obtenir le financement dont vous avez besoin.
+                        </p>
+                        <a href="{{ path('loan_application_new') }}" class="easilon-btn">
+                            <span>Créer ma première demande</span>
+                            <span class="easilon-btn__icon">
+                                <i class="icon-plus"></i>
+                            </span>
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Stats Section -->
+{% if applications|length > 0 %}
+<section class="loan-stats section-space-two">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12">
+                <h3 class="text-center mb-5">
+                    <i class="icon-chart text-primary"></i>
+                    Résumé de vos demandes
+                </h3>
+            </div>
+        </div>
+        <div class="row">
+            {% set totalRequested = 0 %}
+            {% set totalApproved = 0 %}
+            {% set pendingCount = 0 %}
+            {% set approvedCount = 0 %}
+            
+            {% for application in applications %}
+                {% set totalRequested = totalRequested + application.requestedAmount %}
+                {% if application.status.value == 'APPROVED' %}
+                    {% set totalApproved = totalApproved + application.requestedAmount %}
+                    {% set approvedCount = approvedCount + 1 %}
+                {% endif %}
+                {% if application.status.value in ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'DOCUMENTS_REQUESTED'] %}
+                    {% set pendingCount = pendingCount + 1 %}
+                {% endif %}
+            {% endfor %}
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card text-center">
+                    <div class="stat-card__icon">
+                        <i class="icon-document text-primary"></i>
+                    </div>
+                    <h3 class="stat-card__number">{{ applications|length }}</h3>
+                    <p class="stat-card__label">Demandes totales</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card text-center">
+                    <div class="stat-card__icon">
+                        <i class="icon-clock text-warning"></i>
+                    </div>
+                    <h3 class="stat-card__number">{{ pendingCount }}</h3>
+                    <p class="stat-card__label">En attente</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card text-center">
+                    <div class="stat-card__icon">
+                        <i class="icon-check-circle text-success"></i>
+                    </div>
+                    <h3 class="stat-card__number">{{ approvedCount }}</h3>
+                    <p class="stat-card__label">Approuvées</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card text-center">
+                    <div class="stat-card__icon">
+                        <i class="icon-money-1 text-info"></i>
+                    </div>
+                    <h3 class="stat-card__number">{{ totalRequested|number_format(0, ',', ' ') }}€</h3>
+                    <p class="stat-card__label">Montant total demandé</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+.loan-applications__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.loan-application__card .card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid #e3e6f0;
+}
+
+.loan-application__card .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.loan-detail h4, .loan-detail h5 {
+    font-weight: 600;
+}
+
+.badge {
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+}
+
+.badge-secondary { background-color: #6c757d; }
+.badge-info { background-color: #17a2b8; }
+.badge-warning { background-color: #ffc107; color: #212529; }
+.badge-success { background-color: #28a745; }
+.badge-danger { background-color: #dc3545; }
+.badge-primary { background-color: #007bff; }
+.badge-dark { background-color: #343a40; }
+
+.empty-state {
+    padding: 4rem 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+    transition: transform 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+}
+
+.stat-card__icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.stat-card__number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.stat-card__label {
+    color: #7f8c8d;
+    margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+    .loan-applications__grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .stat-card {
+        padding: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+$(document).ready(function() {
+    // Status filter functionality
+    $('[data-filter]').click(function() {
+        const filter = $(this).data('filter');
+        
+        // Update active button
+        $('[data-filter]').removeClass('active');
+        $(this).addClass('active');
+        
+        // Filter applications
+        if (filter === 'all') {
+            $('.loan-application__card').show();
+        } else {
+            $('.loan-application__card').hide();
+            $(`.loan-application__card:has(.badge-${filter})`).show();
+        }
+    });
+    
+    // Auto-refresh every 30 seconds for status updates
+    setInterval(function() {
+        // Could implement AJAX refresh for real-time updates
+    }, 30000);
+});
+</script>
+{% endblock %}

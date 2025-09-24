@@ -1,0 +1,487 @@
+{% extends 'auth_base.html.twig' %}
+
+{% block title %}Nouvelle demande de prêt{% endblock %}
+
+{% block body %}
+<!-- Page Header -->
+<section class="page-header" style="background-image: url({{ asset('css/images/backgrounds/page-header-bg-1-1.jpg') }});">
+    <div class="page-header__bg" style="background-image: url({{ asset('css/images/shapes/page-header-bg-1-1.png') }});"></div>
+    <div class="page-header__overlay" style="background-image: url({{ asset('css/images/shapes/page-header-overlay-1-1.png') }});"></div>
+    <div class="container">
+        <h2 class="page-header__title">Demande de prêt</h2>
+        <ul class="easilon-breadcrumb list-unstyled">
+            <li><a href="{{ path('user_dashboard') }}">Tableau de bord</a></li>
+            <li><span>Nouvelle demande</span></li>
+        </ul>
+    </div>
+    <div class="page-header__border-box">
+        <div class="page-header__border page-header__border--1"></div>
+        <div class="page-header__border page-header__border--2"></div>
+        <div class="page-header__border page-header__border--3"></div>
+        <div class="page-header__border page-header__border--4"></div>
+        <div class="page-header__border page-header__border--5"></div>
+    </div>
+</section>
+
+<!-- Apply Loan Form Section -->
+<section class="apply-loan section-space">
+    <div class="container">
+        {{ form_start(form, {'attr': {'class': 'apply-loan__form', 'novalidate': 'novalidate'}}) }}
+        
+        <!-- Progress Indicator -->
+        <div class="apply-loan__progress mb-5">
+            <div class="row">
+                <div class="col-12">
+                    <ul class="apply-loan__steps">
+                        <li class="apply-loan__step active">
+                            <span class="apply-loan__step__number">1</span>
+                            <span class="apply-loan__step__title">Détails du prêt</span>
+                        </li>
+                        <li class="apply-loan__step">
+                            <span class="apply-loan__step__number">2</span>
+                            <span class="apply-loan__step__title">Informations personnelles</span>
+                        </li>
+                        <li class="apply-loan__step">
+                            <span class="apply-loan__step__number">3</span>
+                            <span class="apply-loan__step__title">Informations financières</span>
+                        </li>
+                        <li class="apply-loan__step">
+                            <span class="apply-loan__step__number">4</span>
+                            <span class="apply-loan__step__title">Garanties</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 1: Loan Details -->
+        <div class="apply-loan__details" data-step="1">
+            <h2 class="apply-loan__details__title">
+                <i class="icon-loan-1"></i>
+                Détails du prêt
+            </h2>
+            <div class="apply-loan__form__row row">
+                <div class="col-md-6">
+                    <div class="apply-loan__form__control">
+                        {{ form_label(form.loanType) }}
+                        {{ form_widget(form.loanType) }}
+                        {{ form_errors(form.loanType) }}
+                        <div class="loan-type-info mt-2" style="display: none;">
+                            <small class="text-muted">
+                                <strong>Montant:</strong> <span class="amount-range"></span><br>
+                                <strong>Durée:</strong> <span class="duration-range"></span><br>
+                                <strong>Taux:</strong> <span class="interest-rate"></span>%
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="apply-loan__form__control">
+                        {{ form_label(form.requestedAmount) }}
+                        {{ form_widget(form.requestedAmount) }}
+                        {{ form_errors(form.requestedAmount) }}
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="apply-loan__form__control">
+                        {{ form_label(form.duration) }}
+                        <div class="input-group">
+                            {{ form_widget(form.duration) }}
+                            <span class="input-group-text">mois</span>
+                        </div>
+                        {{ form_errors(form.duration) }}
+                        <small class="form-text text-muted">
+                            <span class="duration-years"></span>
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="apply-loan__form__control">
+                        {{ form_label(form.purpose) }}
+                        {{ form_widget(form.purpose) }}
+                        {{ form_errors(form.purpose) }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loan Calculator Preview -->
+            <div class="loan-calculator-preview mt-4" style="display: none;">
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="icon-calculator"></i> Estimation de votre prêt</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h6 class="text-muted">Paiement mensuel</h6>
+                                    <h4 class="text-primary monthly-payment">-</h4>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h6 class="text-muted">Montant total</h6>
+                                    <h4 class="text-info total-amount">-</h4>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h6 class="text-muted">Intérêts totaux</h6>
+                                    <h4 class="text-warning total-interest">-</h4>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h6 class="text-muted">Taux d'intérêt</h6>
+                                    <h4 class="text-secondary interest-rate">-</h4>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Personal Details -->
+        <div class="apply-loan__details" data-step="2" style="display: none;">
+            <h2 class="apply-loan__details__title">
+                <i class="icon-user-1"></i>
+                Informations personnelles
+            </h2>
+            <div class="apply-loan__form__row row">
+                {% for field in form.personalInfo %}
+                    {% if field.vars.name in ['full_name', 'email'] %}
+                        <div class="col-md-6">
+                            <div class="apply-loan__form__control">
+                                {{ form_label(field) }}
+                                {{ form_widget(field) }}
+                                {{ form_errors(field) }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                
+                {% for field in form.personalInfo %}
+                    {% if field.vars.name in ['phone', 'marital_status'] %}
+                        <div class="col-md-6">
+                            <div class="apply-loan__form__control">
+                                {{ form_label(field) }}
+                                {{ form_widget(field) }}
+                                {{ form_errors(field) }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                
+                {% for field in form.personalInfo %}
+                    {% if field.vars.name in ['birth_date', 'dependents'] %}
+                        <div class="col-md-6">
+                            <div class="apply-loan__form__control">
+                                {{ form_label(field) }}
+                                {% if field.vars.name == 'birth_date' %}
+                                    <div class="apply-loan__form__date">
+                                        {{ form_widget(field) }}
+                                        <span class="apply-loan__form__date__icon">
+                                            <i class="icon-calendar"></i>
+                                        </span>
+                                    </div>
+                                {% else %}
+                                    {{ form_widget(field) }}
+                                {% endif %}
+                                {{ form_errors(field) }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- Address Section -->
+            <h3 class="apply-loan__subsection__title mt-4">
+                <i class="icon-location"></i>
+                Adresse
+            </h3>
+            <div class="apply-loan__form__row row">
+                {% for field in form.personalInfo %}
+                    {% if field.vars.name starts with 'address_' %}
+                        <div class="col-md-6">
+                            <div class="apply-loan__form__control">
+                                {{ form_label(field) }}
+                                {{ form_widget(field) }}
+                                {{ form_errors(field) }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Section 3: Financial Details -->
+        <div class="apply-loan__details" data-step="3" style="display: none;">
+            <h2 class="apply-loan__details__title">
+                <i class="icon-money-1"></i>
+                Informations financières
+            </h2>
+            <div class="apply-loan__form__row row">
+                {% for field in form.financialInfo %}
+                    {% if field.vars.name in ['monthly_income', 'employment_type'] %}
+                        <div class="col-md-6">
+                            <div class="apply-loan__form__control">
+                                {{ form_label(field) }}
+                                {{ form_widget(field) }}
+                                {{ form_errors(field) }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                
+                {% for field in form.financialInfo %}
+                    {% if field.vars.name in ['employment_industry', 'employer_name'] %}
+                        <div class="col-md-6">
+                            <div class="apply-loan__form__control">
+                                {{ form_label(field) }}
+                                {{ form_widget(field) }}
+                                {{ form_errors(field) }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                
+                {% for field in form.financialInfo %}
+                    {% if field.vars.name in ['work_phone', 'monthly_expenses'] %}
+                        <div class="col-md-6">
+                            <div class="apply-loan__form__control">
+                                {{ form_label(field) }}
+                                {{ form_widget(field) }}
+                                {{ form_errors(field) }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                
+                <div class="col-md-6">
+                    <div class="apply-loan__form__control">
+                        {{ form_label(form.financialInfo.existing_loans) }}
+                        {{ form_widget(form.financialInfo.existing_loans) }}
+                        {{ form_errors(form.financialInfo.existing_loans) }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Summary -->
+            <div class="financial-summary mt-4" style="display: none;">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="icon-chart"></i> Analyse financière</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Capacité d'emprunt estimée:</strong> <span class="borrowing-capacity">-</span></p>
+                                <p><strong>Ratio d'endettement:</strong> <span class="debt-ratio">-</span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Revenus disponibles:</strong> <span class="available-income">-</span></p>
+                                <p><strong>Paiement maximum recommandé:</strong> <span class="max-payment">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: Guarantees -->
+        <div class="apply-loan__details" data-step="4" style="display: none;">
+            <h2 class="apply-loan__details__title">
+                <i class="icon-shield"></i>
+                Garanties (Optionnel)
+            </h2>
+            <div class="apply-loan__form__row row">
+                <div class="col-12">
+                    <div class="apply-loan__form__control">
+                        {{ form_label(form.guarantees) }}
+                        {{ form_widget(form.guarantees) }}
+                        {{ form_errors(form.guarantees) }}
+                        <small class="form-text text-muted">
+                            Les garanties peuvent améliorer vos chances d'approbation et réduire le taux d'intérêt.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="apply-loan__navigation mt-5">
+            <div class="row justify-content-between">
+                <div class="col-auto">
+                    <button type="button" class="btn btn-secondary btn-prev" style="display: none;">
+                        <i class="icon-arrow-left"></i>
+                        Précédent
+                    </button>
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-primary btn-next">
+                        Suivant
+                        <i class="icon-arrow-right"></i>
+                    </button>
+                    <button type="submit" class="apply-loan__form__btn easilon-btn btn-submit" style="display: none;">
+                        <span>Sauvegarder le brouillon</span>
+                        <span class="easilon-btn__icon">
+                            <i class="icon-save"></i>
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {{ form_end(form) }}
+    </div>
+</section>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+$(document).ready(function() {
+    let currentStep = 1;
+    const totalSteps = 4;
+
+    // Update step navigation
+    function updateStepNavigation() {
+        // Hide all sections
+        $('.apply-loan__details').hide();
+        
+        // Show current section
+        $('[data-step="' + currentStep + '"]').show();
+        
+        // Update progress indicators
+        $('.apply-loan__step').removeClass('active completed');
+        for (let i = 1; i <= currentStep; i++) {
+            if (i < currentStep) {
+                $('.apply-loan__step').eq(i - 1).addClass('completed');
+            } else if (i === currentStep) {
+                $('.apply-loan__step').eq(i - 1).addClass('active');
+            }
+        }
+        
+        // Update navigation buttons
+        $('.btn-prev').toggle(currentStep > 1);
+        $('.btn-next').toggle(currentStep < totalSteps);
+        $('.btn-submit').toggle(currentStep === totalSteps);
+    }
+
+    // Next button click
+    $('.btn-next').click(function() {
+        if (currentStep < totalSteps) {
+            currentStep++;
+            updateStepNavigation();
+        }
+    });
+
+    // Previous button click
+    $('.btn-prev').click(function() {
+        if (currentStep > 1) {
+            currentStep--;
+            updateStepNavigation();
+        }
+    });
+
+    // Loan type change handler
+    $('.loan-type-select').change(function() {
+        const selectedOption = $(this).find('option:selected');
+        const minAmount = selectedOption.data('min-amount');
+        const maxAmount = selectedOption.data('max-amount');
+        const minDuration = selectedOption.data('min-duration');
+        const maxDuration = selectedOption.data('max-duration');
+        const interestRate = selectedOption.data('interest-rate');
+
+        // Update form constraints
+        $('.loan-amount-input').attr('min', minAmount).attr('max', maxAmount);
+        $('.loan-duration-input').attr('min', minDuration).attr('max', maxDuration);
+
+        // Show loan type info
+        if (selectedOption.val()) {
+            $('.loan-type-info').show();
+            $('.amount-range').text(minAmount + '€ - ' + maxAmount + '€');
+            $('.duration-range').text(minDuration + ' - ' + maxDuration + ' mois');
+            $('.interest-rate').text(interestRate);
+        } else {
+            $('.loan-type-info').hide();
+        }
+
+        calculateLoan();
+    });
+
+    // Amount and duration change handlers
+    $('.loan-amount-input, .loan-duration-input').on('input', function() {
+        const duration = parseInt($('.loan-duration-input').val());
+        if (duration) {
+            $('.duration-years').text('(' + (duration / 12).toFixed(1) + ' années)');
+        }
+        calculateLoan();
+    });
+
+    // Financial information change handlers
+    $('[name*="financialInfo"]').on('input change', function() {
+        calculateFinancialSummary();
+    });
+
+    // Loan calculation function
+    function calculateLoan() {
+        const amount = parseFloat($('.loan-amount-input').val()) || 0;
+        const duration = parseInt($('.loan-duration-input').val()) || 0;
+        const loanTypeId = $('.loan-type-select').val();
+
+        if (amount && duration && loanTypeId) {
+            $.post('{{ path('loan_application_calculate_payment') }}', {
+                amount: amount,
+                duration: duration,
+                loan_type_id: loanTypeId
+            })
+            .done(function(data) {
+                $('.monthly-payment').text(data.monthly_payment + '€');
+                $('.total-amount').text(data.total_amount + '€');
+                $('.total-interest').text(data.total_interest + '€');
+                $('.interest-rate').text(data.interest_rate + '%');
+                $('.loan-calculator-preview').show();
+            })
+            .fail(function() {
+                $('.loan-calculator-preview').hide();
+            });
+        } else {
+            $('.loan-calculator-preview').hide();
+        }
+    }
+
+    // Financial summary calculation
+    function calculateFinancialSummary() {
+        const monthlyIncome = parseFloat($('[name*="monthly_income"]').val()) || 0;
+        const monthlyExpenses = parseFloat($('[name*="monthly_expenses"]').val()) || 0;
+        const existingLoans = parseFloat($('[name*="existing_loans"]').val()) || 0;
+
+        if (monthlyIncome) {
+            const availableIncome = monthlyIncome - monthlyExpenses - existingLoans;
+            const maxPayment = availableIncome * 0.35; // 35% debt-to-income ratio
+            const debtRatio = ((monthlyExpenses + existingLoans) / monthlyIncome * 100).toFixed(1);
+
+            $('.available-income').text(availableIncome.toFixed(2) + '€');
+            $('.max-payment').text(maxPayment.toFixed(2) + '€');
+            $('.debt-ratio').text(debtRatio + '%');
+            
+            // Estimate borrowing capacity (simplified)
+            const borrowingCapacity = maxPayment * 60; // Rough estimate for 5 years
+            $('.borrowing-capacity').text(borrowingCapacity.toFixed(0) + '€');
+            
+            $('.financial-summary').show();
+        } else {
+            $('.financial-summary').hide();
+        }
+    }
+
+    // Initialize
+    updateStepNavigation();
+});
+</script>
+{% endblock %}

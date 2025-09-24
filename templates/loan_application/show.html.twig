@@ -1,0 +1,659 @@
+{% extends 'auth_base.html.twig' %}
+
+{% block title %}Demande {{ loan_application.applicationNumber }}{% endblock %}
+
+{% block body %}
+<!-- Page Header -->
+<section class="page-header" style="background-image: url({{ asset('css/images/backgrounds/page-header-bg-1-1.jpg') }});">
+    <div class="page-header__bg" style="background-image: url({{ asset('css/images/shapes/page-header-bg-1-1.png') }});"></div>
+    <div class="page-header__overlay" style="background-image: url({{ asset('css/images/shapes/page-header-overlay-1-1.png') }});"></div>
+    <div class="container">
+        <h2 class="page-header__title">Demande {{ loan_application.applicationNumber }}</h2>
+        <ul class="easilon-breadcrumb list-unstyled">
+            <li><a href="{{ path('user_dashboard') }}">Tableau de bord</a></li>
+            <li><a href="{{ path('loan_application_index') }}">Mes demandes</a></li>
+            <li><span>{{ loan_application.applicationNumber }}</span></li>
+        </ul>
+    </div>
+    <div class="page-header__border-box">
+        <div class="page-header__border page-header__border--1"></div>
+        <div class="page-header__border page-header__border--2"></div>
+        <div class="page-header__border page-header__border--3"></div>
+        <div class="page-header__border page-header__border--4"></div>
+        <div class="page-header__border page-header__border--5"></div>
+    </div>
+</section>
+
+<!-- Application Details Section -->
+<section class="loan-application-details section-space">
+    <div class="container">
+        <!-- Status Header -->
+        <div class="application-status-header mb-5">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h3 class="mb-2">
+                                <i class="icon-document text-primary"></i>
+                                {{ loan_application.applicationNumber }}
+                            </h3>
+                            <p class="mb-2">
+                                <strong>Type de prêt:</strong> 
+                                {{ loan_application.loanType.translations.first.name ?? 'Type de prêt' }}
+                            </p>
+                            <p class="mb-0 text-muted">
+                                <i class="icon-calendar"></i>
+                                Créée le {{ loan_application.createdAt|date('d/m/Y à H:i') }}
+                                {% if loan_application.submittedAt %}
+                                    • Soumise le {{ loan_application.submittedAt|date('d/m/Y à H:i') }}
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <span class="badge badge-{{ loan_application.status.color }} badge-lg mb-3">
+                                <i class="icon-{{ loan_application.status.icon }}"></i>
+                                {{ loan_application.status.label }}
+                            </span>
+                            <div class="status-description">
+                                <small class="text-muted">{{ loan_application.status.description }}</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="application-actions mb-4">
+            <div class="btn-group flex-wrap" role="group">
+                {% if loan_application.status.isEditable %}
+                    <a href="{{ path('loan_application_edit', {id: loan_application.id}) }}" 
+                       class="btn btn-primary">
+                        <i class="icon-edit"></i>
+                        Modifier
+                    </a>
+                    <form method="post" 
+                          action="{{ path('loan_application_submit', {id: loan_application.id}) }}" 
+                          class="d-inline"
+                          onsubmit="return confirm('Êtes-vous sûr de vouloir soumettre cette demande ? Elle ne pourra plus être modifiée après soumission.');">
+                        <button type="submit" class="btn btn-success">
+                            <i class="icon-paper-plane"></i>
+                            Soumettre
+                        </button>
+                    </form>
+                {% endif %}
+                
+                <button class="btn btn-info" onclick="window.print()">
+                    <i class="icon-print"></i>
+                    Imprimer
+                </button>
+                
+                <a href="{{ path('loan_application_index') }}" class="btn btn-outline-secondary">
+                    <i class="icon-arrow-left"></i>
+                    Retour à la liste
+                </a>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                <!-- Loan Summary -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="icon-loan-1"></i>
+                            Résumé du prêt
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <h6 class="text-muted mb-1">Montant demandé</h6>
+                                <h3 class="text-primary">{{ loan_application.requestedAmount|number_format(2, ',', ' ') }}€</h3>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <h6 class="text-muted mb-1">Durée</h6>
+                                <h3 class="text-info">{{ loan_application.duration }} mois</h3>
+                                <small class="text-muted">({{ (loan_application.duration / 12)|round(1) }} années)</small>
+                            </div>
+                            {% if loan_application.monthlyPayment %}
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="text-muted mb-1">Paiement mensuel</h6>
+                                    <h3 class="text-success">{{ loan_application.monthlyPayment|number_format(2, ',', ' ') }}€</h3>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="text-muted mb-1">Taux d'intérêt</h6>
+                                    <h3 class="text-secondary">{{ loan_application.interestRate }}%</h3>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        {% if loan_application.totalAmount %}
+                            <div class="loan-calculation-details mt-4 pt-4 border-top">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="calculation-item">
+                                            <span class="label">Montant total à rembourser</span>
+                                            <span class="value text-warning">{{ loan_application.totalAmount|number_format(2, ',', ' ') }}€</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="calculation-item">
+                                            <span class="label">Intérêts totaux</span>
+                                            {% set totalInterest = loan_application.totalAmount - loan_application.requestedAmount %}
+                                            <span class="value text-orange">{{ totalInterest|number_format(2, ',', ' ') }}€</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="calculation-item">
+                                            <span class="label">TAEG estimé</span>
+                                            <span class="value text-secondary">{{ loan_application.interestRate }}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        {% if loan_application.purpose %}
+                            <div class="purpose-section mt-4 pt-4 border-top">
+                                <h6 class="text-muted mb-2">Objectif du prêt</h6>
+                                <p class="mb-0">{{ loan_application.purpose }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Personal Information -->
+                {% if loan_application.personalInfo %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="icon-user-1"></i>
+                                Informations personnelles
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% set personalInfo = loan_application.personalInfo %}
+                                
+                                {% if personalInfo.full_name %}
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-muted mb-1">Nom complet</h6>
+                                        <p class="mb-0">{{ personalInfo.full_name }}</p>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if personalInfo.email %}
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-muted mb-1">Email</h6>
+                                        <p class="mb-0">{{ personalInfo.email }}</p>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if personalInfo.phone %}
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-muted mb-1">Téléphone</h6>
+                                        <p class="mb-0">{{ personalInfo.phone }}</p>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if personalInfo.birth_date %}
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-muted mb-1">Date de naissance</h6>
+                                        <p class="mb-0">{{ personalInfo.birth_date|date('d/m/Y') }}</p>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if personalInfo.marital_status %}
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-muted mb-1">Situation familiale</h6>
+                                        <p class="mb-0">
+                                            {% if personalInfo.marital_status == 'single' %}Célibataire
+                                            {% elseif personalInfo.marital_status == 'married' %}Marié(e)
+                                            {% elseif personalInfo.marital_status == 'divorced' %}Divorcé(e)
+                                            {% elseif personalInfo.marital_status == 'widowed' %}Veuf/Veuve
+                                            {% elseif personalInfo.marital_status == 'civil_union' %}Pacsé(e)
+                                            {% else %}{{ personalInfo.marital_status }}
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if personalInfo.dependents is defined %}
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-muted mb-1">Personnes à charge</h6>
+                                        <p class="mb-0">{{ personalInfo.dependents }}</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Address Section -->
+                            {% if personalInfo.address_house or personalInfo.address_city %}
+                                <div class="address-section mt-4 pt-4 border-top">
+                                    <h6 class="text-primary mb-3">
+                                        <i class="icon-location"></i>
+                                        Adresse
+                                    </h6>
+                                    <div class="address-details">
+                                        {% if personalInfo.address_house %}
+                                            <p class="mb-1">{{ personalInfo.address_house }}</p>
+                                        {% endif %}
+                                        {% if personalInfo.address_street %}
+                                            <p class="mb-1">{{ personalInfo.address_street }}</p>
+                                        {% endif %}
+                                        {% if personalInfo.address_city or personalInfo.address_postal_code %}
+                                            <p class="mb-1">
+                                                {% if personalInfo.address_postal_code %}{{ personalInfo.address_postal_code }} {% endif %}
+                                                {% if personalInfo.address_city %}{{ personalInfo.address_city }}{% endif %}
+                                            </p>
+                                        {% endif %}
+                                        {% if personalInfo.address_country %}
+                                            <p class="mb-0">{{ personalInfo.address_country }}</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Financial Information -->
+                {% if loan_application.financialInfo %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="icon-money-1"></i>
+                                Informations financières
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% set financialInfo = loan_application.financialInfo %}
+                                
+                                {% if financialInfo.monthly_income %}
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-muted mb-1">Revenu mensuel net</h6>
+                                        <h5 class="text-success mb-0">{{ financialInfo.monthly_income|number_format(2, ',', ' ') }}€</h5>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if financialInfo.employment_type %}
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-muted mb-1">Type d'emploi</h6>
+                                        <p class="mb-0">
+                                            {% if financialInfo.employment_type == 'permanent' %}CDI
+                                            {% elseif financialInfo.employment_type == 'temporary' %}CDD
+                                            {% elseif financialInfo.employment_type == 'freelance' %}Freelance/Indépendant
+                                            {% elseif financialInfo.employment_type == 'civil_servant' %}Fonctionnaire
+                                            {% elseif financialInfo.employment_type == 'retired' %}Retraité
+                                            {% elseif financialInfo.employment_type == 'student' %}Étudiant
+                                            {% elseif financialInfo.employment_type == 'unemployed' %}Demandeur d'emploi
+                                            {% else %}{{ financialInfo.employment_type }}
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if financialInfo.employment_industry %}
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-muted mb-1">Secteur d'activité</h6>
+                                        <p class="mb-0">{{ financialInfo.employment_industry }}</p>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if financialInfo.employer_name %}
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-muted mb-1">Employeur</h6>
+                                        <p class="mb-0">{{ financialInfo.employer_name }}</p>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if financialInfo.work_phone %}
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-muted mb-1">Téléphone professionnel</h6>
+                                        <p class="mb-0">{{ financialInfo.work_phone }}</p>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if financialInfo.monthly_expenses %}
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-muted mb-1">Charges mensuelles</h6>
+                                        <p class="mb-0">{{ financialInfo.monthly_expenses|number_format(2, ',', ' ') }}€</p>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if financialInfo.existing_loans %}
+                                    <div class="col-md-6 mb-3">
+                                        <h6 class="text-muted mb-1">Prêts en cours</h6>
+                                        <p class="mb-0">{{ financialInfo.existing_loans|number_format(2, ',', ' ') }}€/mois</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Financial Analysis -->
+                            {% if financialInfo.monthly_income and loan_application.monthlyPayment %}
+                                <div class="financial-analysis mt-4 pt-4 border-top">
+                                    <h6 class="text-primary mb-3">
+                                        <i class="icon-chart"></i>
+                                        Analyse financière
+                                    </h6>
+                                    {% set monthlyCharges = (financialInfo.monthly_expenses ?? 0) + (financialInfo.existing_loans ?? 0) + loan_application.monthlyPayment %}
+                                    {% set debtRatio = (monthlyCharges / financialInfo.monthly_income * 100)|round(1) %}
+                                    {% set remainingIncome = financialInfo.monthly_income - monthlyCharges %}
+                                    
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="analysis-item">
+                                                <span class="label">Taux d'endettement</span>
+                                                <span class="value {{ debtRatio > 35 ? 'text-danger' : (debtRatio > 30 ? 'text-warning' : 'text-success') }}">
+                                                    {{ debtRatio }}%
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="analysis-item">
+                                                <span class="label">Charges totales</span>
+                                                <span class="value text-info">{{ monthlyCharges|number_format(2, ',', ' ') }}€</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="analysis-item">
+                                                <span class="label">Reste à vivre</span>
+                                                <span class="value {{ remainingIncome < 500 ? 'text-danger' : 'text-success' }}">
+                                                    {{ remainingIncome|number_format(2, ',', ' ') }}€
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Guarantees -->
+                {% if loan_application.guarantees %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="icon-shield"></i>
+                                Garanties proposées
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0">{{ loan_application.guarantees|nl2br }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Admin Notes (if any) -->
+                {% if loan_application.adminNotes %}
+                    <div class="card mb-4">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">
+                                <i class="icon-info"></i>
+                                Notes de l'administration
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0">{{ loan_application.adminNotes|nl2br }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Rejection Reason (if rejected) -->
+                {% if loan_application.rejectionReason %}
+                    <div class="card mb-4 border-danger">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0">
+                                <i class="icon-times-circle"></i>
+                                Motif de rejet
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-0">{{ loan_application.rejectionReason|nl2br }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Status Timeline -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="icon-clock"></i>
+                            Historique
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            <div class="timeline-item completed">
+                                <div class="timeline-marker">
+                                    <i class="icon-edit"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6>Demande créée</h6>
+                                    <small class="text-muted">{{ loan_application.createdAt|date('d/m/Y à H:i') }}</small>
+                                </div>
+                            </div>
+                            
+                            {% if loan_application.submittedAt %}
+                                <div class="timeline-item completed">
+                                    <div class="timeline-marker">
+                                        <i class="icon-paper-plane"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <h6>Demande soumise</h6>
+                                        <small class="text-muted">{{ loan_application.submittedAt|date('d/m/Y à H:i') }}</small>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            {% if loan_application.reviewedAt %}
+                                <div class="timeline-item completed">
+                                    <div class="timeline-marker">
+                                        <i class="icon-search"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <h6>Examen débuté</h6>
+                                        <small class="text-muted">{{ loan_application.reviewedAt|date('d/m/Y à H:i') }}</small>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            {% if loan_application.approvedAt %}
+                                <div class="timeline-item completed">
+                                    <div class="timeline-marker">
+                                        <i class="icon-check-circle"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <h6>Demande approuvée</h6>
+                                        <small class="text-muted">{{ loan_application.approvedAt|date('d/m/Y à H:i') }}</small>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            {% if loan_application.rejectedAt %}
+                                <div class="timeline-item completed rejected">
+                                    <div class="timeline-marker">
+                                        <i class="icon-times-circle"></i>
+                                    </div>
+                                    <div class="timeline-content">
+                                        <h6>Demande rejetée</h6>
+                                        <small class="text-muted">{{ loan_application.rejectedAt|date('d/m/Y à H:i') }}</small>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Support -->
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="icon-headset"></i>
+                            Besoin d'aide ?
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-3">Notre équipe est à votre disposition pour répondre à vos questions.</p>
+                        <div class="contact-methods">
+                            <p class="mb-2">
+                                <i class="icon-phone text-primary"></i>
+                                <strong>Téléphone:</strong> +33 1 23 45 67 89
+                            </p>
+                            <p class="mb-2">
+                                <i class="icon-mail-1 text-primary"></i>
+                                <strong>Email:</strong> support@easilon.com
+                            </p>
+                            <p class="mb-0">
+                                <i class="icon-clock text-primary"></i>
+                                <strong>Horaires:</strong> Lun-Ven 9h-18h
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                {% if loan_application.status.isEditable %}
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="icon-tools"></i>
+                                Actions rapides
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="{{ path('loan_application_edit', {id: loan_application.id}) }}" 
+                                   class="btn btn-primary">
+                                    <i class="icon-edit"></i>
+                                    Modifier la demande
+                                </a>
+                                <form method="post" 
+                                      action="{{ path('loan_application_delete', {id: loan_application.id}) }}" 
+                                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette demande ? Cette action est irréversible.');">
+                                    <button type="submit" class="btn btn-outline-danger w-100">
+                                        <i class="icon-trash"></i>
+                                        Supprimer
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+.badge-lg {
+    font-size: 1rem;
+    padding: 0.75rem 1.5rem;
+}
+
+.calculation-item,
+.analysis-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.calculation-item .label,
+.analysis-item .label {
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.calculation-item .value,
+.analysis-item .value {
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 30px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -22px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.timeline-item.completed .timeline-marker {
+    background: #28a745;
+    color: white;
+}
+
+.timeline-item.rejected .timeline-marker {
+    background: #dc3545;
+    color: white;
+}
+
+.timeline-content h6 {
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.contact-methods i {
+    width: 20px;
+}
+
+@media print {
+    .application-actions,
+    .card:last-child {
+        display: none !important;
+    }
+    
+    .section-space {
+        padding: 1rem 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .application-actions .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .application-actions .btn {
+        margin-bottom: 0.5rem;
+    }
+}
+</style>
+{% endblock %}

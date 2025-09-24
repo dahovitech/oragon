@@ -1,0 +1,520 @@
+{% extends 'loan_application/new.html.twig' %}
+
+{% block title %}Modifier la demande {{ loan_application.applicationNumber }}{% endblock %}
+
+{% block body %}
+<!-- Page Header -->
+<section class="page-header" style="background-image: url({{ asset('css/images/backgrounds/page-header-bg-1-1.jpg') }});">
+    <div class="page-header__bg" style="background-image: url({{ asset('css/images/shapes/page-header-bg-1-1.png') }});"></div>
+    <div class="page-header__overlay" style="background-image: url({{ asset('css/images/shapes/page-header-overlay-1-1.png') }});"></div>
+    <div class="container">
+        <h2 class="page-header__title">Modifier la demande {{ loan_application.applicationNumber }}</h2>
+        <ul class="easilon-breadcrumb list-unstyled">
+            <li><a href="{{ path('user_dashboard') }}">Tableau de bord</a></li>
+            <li><a href="{{ path('loan_application_index') }}">Mes demandes</a></li>
+            <li><a href="{{ path('loan_application_show', {id: loan_application.id}) }}">{{ loan_application.applicationNumber }}</a></li>
+            <li><span>Modifier</span></li>
+        </ul>
+    </div>
+    <div class="page-header__border-box">
+        <div class="page-header__border page-header__border--1"></div>
+        <div class="page-header__border page-header__border--2"></div>
+        <div class="page-header__border page-header__border--3"></div>
+        <div class="page-header__border page-header__border--4"></div>
+        <div class="page-header__border page-header__border--5"></div>
+    </div>
+</section>
+
+<!-- Edit Notice -->
+<div class="container mt-4">
+    <div class="alert alert-info" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="icon-info-circle me-3" style="font-size: 1.5rem;"></i>
+            <div>
+                <h5 class="alert-heading mb-1">Modification de votre demande</h5>
+                <p class="mb-0">
+                    Vous pouvez modifier votre demande tant qu'elle n'a pas été soumise. 
+                    Une fois soumise, elle ne pourra plus être modifiée et entrera en phase d'examen.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Apply Loan Form Section -->
+<section class="apply-loan section-space">
+    <div class="container">
+        {{ form_start(form, {'attr': {'class': 'apply-loan__form', 'novalidate': 'novalidate'}}) }}
+        
+        <!-- Progress Indicator -->
+        <div class="apply-loan__progress mb-5">
+            <div class="row">
+                <div class="col-12">
+                    <ul class="apply-loan__steps">
+                        <li class="apply-loan__step active">
+                            <span class="apply-loan__step__number">1</span>
+                            <span class="apply-loan__step__title">Détails du prêt</span>
+                        </li>
+                        <li class="apply-loan__step">
+                            <span class="apply-loan__step__number">2</span>
+                            <span class="apply-loan__step__title">Informations personnelles</span>
+                        </li>
+                        <li class="apply-loan__step">
+                            <span class="apply-loan__step__number">3</span>
+                            <span class="apply-loan__step__title">Informations financières</span>
+                        </li>
+                        <li class="apply-loan__step">
+                            <span class="apply-loan__step__number">4</span>
+                            <span class="apply-loan__step__title">Garanties</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Values Info -->
+        <div class="current-values-info mb-4">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="icon-info"></i>
+                        Valeurs actuelles de votre demande
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="current-value-item">
+                                <h6 class="text-muted mb-1">Type de prêt</h6>
+                                <p class="mb-0">{{ loan_application.loanType.translations.first.name ?? 'Type de prêt' }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="current-value-item">
+                                <h6 class="text-muted mb-1">Montant</h6>
+                                <p class="mb-0">{{ loan_application.requestedAmount|number_format(2, ',', ' ') }}€</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="current-value-item">
+                                <h6 class="text-muted mb-1">Durée</h6>
+                                <p class="mb-0">{{ loan_application.duration }} mois</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="current-value-item">
+                                <h6 class="text-muted mb-1">Statut</h6>
+                                <span class="badge badge-{{ loan_application.status.color }}">
+                                    {{ loan_application.status.label }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 1: Loan Details -->
+        <div class="apply-loan__details" data-step="1">
+            <h2 class="apply-loan__details__title">
+                <i class="icon-loan-1"></i>
+                Détails du prêt
+            </h2>
+            <div class="apply-loan__form__row row">
+                <div class="col-md-6">
+                    <div class="apply-loan__form__control">
+                        {{ form_label(form.loanType) }}
+                        {{ form_widget(form.loanType, {'attr': {'data-current-type': loan_application.loanType.id}}) }}
+                        {{ form_errors(form.loanType) }}
+                        <div class="loan-type-info mt-2" style="display: none;">
+                            <small class="text-muted">
+                                <strong>Montant:</strong> <span class="amount-range"></span><br>
+                                <strong>Durée:</strong> <span class="duration-range"></span><br>
+                                <strong>Taux:</strong> <span class="interest-rate"></span>%
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="apply-loan__form__control">
+                        {{ form_label(form.requestedAmount) }}
+                        {{ form_widget(form.requestedAmount) }}
+                        {{ form_errors(form.requestedAmount) }}
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="apply-loan__form__control">
+                        {{ form_label(form.duration) }}
+                        <div class="input-group">
+                            {{ form_widget(form.duration) }}
+                            <span class="input-group-text">mois</span>
+                        </div>
+                        {{ form_errors(form.duration) }}
+                        <small class="form-text text-muted">
+                            <span class="duration-years"></span>
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="apply-loan__form__control">
+                        {{ form_label(form.purpose) }}
+                        {{ form_widget(form.purpose) }}
+                        {{ form_errors(form.purpose) }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loan Calculator Preview -->
+            <div class="loan-calculator-preview mt-4" style="display: none;">
+                <div class="card border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="icon-calculator"></i> Estimation mise à jour de votre prêt</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h6 class="text-muted">Paiement mensuel</h6>
+                                    <h4 class="text-primary monthly-payment">-</h4>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h6 class="text-muted">Montant total</h6>
+                                    <h4 class="text-info total-amount">-</h4>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h6 class="text-muted">Intérêts totaux</h6>
+                                    <h4 class="text-warning total-interest">-</h4>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <h6 class="text-muted">Taux d'intérêt</h6>
+                                    <h4 class="text-secondary interest-rate">-</h4>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Comparison with current values -->
+                        {% if loan_application.monthlyPayment %}
+                            <div class="comparison-section mt-3 pt-3 border-top">
+                                <h6 class="text-muted mb-2">Comparaison avec les valeurs actuelles</h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <small class="text-muted">Paiement actuel: {{ loan_application.monthlyPayment|number_format(2, ',', ' ') }}€</small>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <small class="text-muted">Total actuel: {{ loan_application.totalAmount|number_format(2, ',', ' ') }}€</small>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <small class="text-muted">Taux actuel: {{ loan_application.interestRate }}%</small>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 2: Personal Details -->
+        <div class="apply-loan__details" data-step="2" style="display: none;">
+            <h2 class="apply-loan__details__title">
+                <i class="icon-user-1"></i>
+                Informations personnelles
+            </h2>
+            
+            <!-- Pre-filled Data Notice -->
+            {% if loan_application.personalInfo %}
+                <div class="alert alert-info mb-4">
+                    <i class="icon-info-circle"></i>
+                    <strong>Information:</strong> Vos données sont pré-remplies avec les informations précédemment saisies.
+                </div>
+            {% endif %}
+            
+            <div class="apply-loan__form__row row">
+                {% for field in form.personalInfo %}
+                    {% if field.vars.name in ['full_name', 'email'] %}
+                        <div class="col-md-6">
+                            <div class="apply-loan__form__control">
+                                {{ form_label(field) }}
+                                {{ form_widget(field) }}
+                                {{ form_errors(field) }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                
+                {% for field in form.personalInfo %}
+                    {% if field.vars.name in ['phone', 'marital_status'] %}
+                        <div class="col-md-6">
+                            <div class="apply-loan__form__control">
+                                {{ form_label(field) }}
+                                {{ form_widget(field) }}
+                                {{ form_errors(field) }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                
+                {% for field in form.personalInfo %}
+                    {% if field.vars.name in ['birth_date', 'dependents'] %}
+                        <div class="col-md-6">
+                            <div class="apply-loan__form__control">
+                                {{ form_label(field) }}
+                                {% if field.vars.name == 'birth_date' %}
+                                    <div class="apply-loan__form__date">
+                                        {{ form_widget(field) }}
+                                        <span class="apply-loan__form__date__icon">
+                                            <i class="icon-calendar"></i>
+                                        </span>
+                                    </div>
+                                {% else %}
+                                    {{ form_widget(field) }}
+                                {% endif %}
+                                {{ form_errors(field) }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+
+            <!-- Address Section -->
+            <h3 class="apply-loan__subsection__title mt-4">
+                <i class="icon-location"></i>
+                Adresse
+            </h3>
+            <div class="apply-loan__form__row row">
+                {% for field in form.personalInfo %}
+                    {% if field.vars.name starts with 'address_' %}
+                        <div class="col-md-6">
+                            <div class="apply-loan__form__control">
+                                {{ form_label(field) }}
+                                {{ form_widget(field) }}
+                                {{ form_errors(field) }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Section 3: Financial Details -->
+        <div class="apply-loan__details" data-step="3" style="display: none;">
+            <h2 class="apply-loan__details__title">
+                <i class="icon-money-1"></i>
+                Informations financières
+            </h2>
+            
+            <!-- Pre-filled Data Notice -->
+            {% if loan_application.financialInfo %}
+                <div class="alert alert-info mb-4">
+                    <i class="icon-info-circle"></i>
+                    <strong>Information:</strong> Vos données financières sont pré-remplies avec les informations précédemment saisies.
+                </div>
+            {% endif %}
+            
+            <div class="apply-loan__form__row row">
+                {% for field in form.financialInfo %}
+                    {% if field.vars.name in ['monthly_income', 'employment_type'] %}
+                        <div class="col-md-6">
+                            <div class="apply-loan__form__control">
+                                {{ form_label(field) }}
+                                {{ form_widget(field) }}
+                                {{ form_errors(field) }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                
+                {% for field in form.financialInfo %}
+                    {% if field.vars.name in ['employment_industry', 'employer_name'] %}
+                        <div class="col-md-6">
+                            <div class="apply-loan__form__control">
+                                {{ form_label(field) }}
+                                {{ form_widget(field) }}
+                                {{ form_errors(field) }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                
+                {% for field in form.financialInfo %}
+                    {% if field.vars.name in ['work_phone', 'monthly_expenses'] %}
+                        <div class="col-md-6">
+                            <div class="apply-loan__form__control">
+                                {{ form_label(field) }}
+                                {{ form_widget(field) }}
+                                {{ form_errors(field) }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+                
+                <div class="col-md-6">
+                    <div class="apply-loan__form__control">
+                        {{ form_label(form.financialInfo.existing_loans) }}
+                        {{ form_widget(form.financialInfo.existing_loans) }}
+                        {{ form_errors(form.financialInfo.existing_loans) }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Summary -->
+            <div class="financial-summary mt-4" style="display: none;">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="icon-chart"></i> Analyse financière mise à jour</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Capacité d'emprunt estimée:</strong> <span class="borrowing-capacity">-</span></p>
+                                <p><strong>Ratio d'endettement:</strong> <span class="debt-ratio">-</span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Revenus disponibles:</strong> <span class="available-income">-</span></p>
+                                <p><strong>Paiement maximum recommandé:</strong> <span class="max-payment">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 4: Guarantees -->
+        <div class="apply-loan__details" data-step="4" style="display: none;">
+            <h2 class="apply-loan__details__title">
+                <i class="icon-shield"></i>
+                Garanties (Optionnel)
+            </h2>
+            <div class="apply-loan__form__row row">
+                <div class="col-12">
+                    <div class="apply-loan__form__control">
+                        {{ form_label(form.guarantees) }}
+                        {{ form_widget(form.guarantees) }}
+                        {{ form_errors(form.guarantees) }}
+                        <small class="form-text text-muted">
+                            Les garanties peuvent améliorer vos chances d'approbation et réduire le taux d'intérêt.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="apply-loan__navigation mt-5">
+            <div class="row justify-content-between">
+                <div class="col-auto">
+                    <button type="button" class="btn btn-secondary btn-prev" style="display: none;">
+                        <i class="icon-arrow-left"></i>
+                        Précédent
+                    </button>
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-primary btn-next">
+                        Suivant
+                        <i class="icon-arrow-right"></i>
+                    </button>
+                    <div class="btn-group btn-submit" style="display: none;">
+                        <button type="submit" class="apply-loan__form__btn easilon-btn">
+                            <span>Sauvegarder les modifications</span>
+                            <span class="easilon-btn__icon">
+                                <i class="icon-save"></i>
+                            </span>
+                        </button>
+                        <a href="{{ path('loan_application_show', {id: loan_application.id}) }}" 
+                           class="btn btn-outline-secondary">
+                            <i class="icon-times"></i>
+                            Annuler
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{ form_end(form) }}
+    </div>
+</section>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+$(document).ready(function() {
+    // Pre-populate loan type info on page load
+    const currentLoanType = $('.loan-type-select').val();
+    if (currentLoanType) {
+        $('.loan-type-select').trigger('change');
+    }
+    
+    // Pre-calculate loan details on page load
+    calculateLoan();
+    
+    // Pre-calculate financial summary on page load
+    calculateFinancialSummary();
+    
+    // Show comparison notice when values change
+    let originalValues = {
+        amount: parseFloat($('.loan-amount-input').val()) || 0,
+        duration: parseInt($('.loan-duration-input').val()) || 0,
+        loanType: $('.loan-type-select').val()
+    };
+    
+    function checkForChanges() {
+        const currentAmount = parseFloat($('.loan-amount-input').val()) || 0;
+        const currentDuration = parseInt($('.loan-duration-input').val()) || 0;
+        const currentLoanType = $('.loan-type-select').val();
+        
+        const hasChanges = (
+            currentAmount !== originalValues.amount ||
+            currentDuration !== originalValues.duration ||
+            currentLoanType !== originalValues.loanType
+        );
+        
+        if (hasChanges) {
+            $('.comparison-section').show();
+        } else {
+            $('.comparison-section').hide();
+        }
+    }
+    
+    // Monitor for changes
+    $('.loan-amount-input, .loan-duration-input, .loan-type-select').on('input change', function() {
+        checkForChanges();
+    });
+    
+    // Auto-save functionality (optional)
+    let autoSaveTimeout;
+    $('form input, form select, form textarea').on('input change', function() {
+        clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = setTimeout(function() {
+            // Could implement auto-save here
+            console.log('Auto-save triggered');
+        }, 2000);
+    });
+    
+    // Warning before leaving page with unsaved changes
+    let hasUnsavedChanges = false;
+    $('form input, form select, form textarea').on('input change', function() {
+        hasUnsavedChanges = true;
+    });
+    
+    $('form').on('submit', function() {
+        hasUnsavedChanges = false;
+    });
+    
+    $(window).on('beforeunload', function() {
+        if (hasUnsavedChanges) {
+            return 'Vous avez des modifications non sauvegardées. Êtes-vous sûr de vouloir quitter cette page ?';
+        }
+    });
+});
+</script>
+{% endblock %}

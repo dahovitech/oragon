@@ -120,7 +120,31 @@
                                     <li><a href="{{ path('frontend_homepage') }}">Home</a></li>
                                     <li><a href="{{ path('frontend_homepage') }}">About Us</a></li>
                                     <li><a href="{{ path('frontend_homepage') }}">Services</a></li>
-                                    <li><a href="{{ path('frontend_homepage') }}">Apply for Loan</a></li>
+                                    
+                                    {% if is_granted('ROLE_USER') %}
+                                        <!-- User Menu -->
+                                        <li class="dropdown">
+                                            <a href="#" class="dropdown-toggle">My Loans</a>
+                                            <ul class="sub-menu">
+                                                <li><a href="{{ path('user_dashboard') }}">Dashboard</a></li>
+                                                <li><a href="{{ path('loan_application_new') }}">New Application</a></li>
+                                                <li><a href="{{ path('loan_application_index') }}">My Applications</a></li>
+                                            </ul>
+                                        </li>
+                                        <li class="dropdown">
+                                            <a href="#" class="dropdown-toggle">Account</a>
+                                            <ul class="sub-menu">
+                                                <li><a href="{{ path('user_dashboard') }}">Dashboard</a></li>
+                                                <li><a href="{{ path('app_logout') }}">Logout</a></li>
+                                            </ul>
+                                        </li>
+                                    {% else %}
+                                        <!-- Guest Menu -->
+                                        <li><a href="{{ path('loan_application_new') }}">Apply for Loan</a></li>
+                                        <li><a href="{{ path('app_login') }}">Login</a></li>
+                                        <li><a href="{{ path('app_register') }}">Register</a></li>
+                                    {% endif %}
+                                    
                                     <li><a href="{{ path('frontend_homepage') }}">Contact</a></li>
                                 </ul>
                             </nav><!-- /.main-header__nav -->
