@@ -1,0 +1,578 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nos services de financement{% endblock %}
+
+{% block meta_description %}Découvrez notre gamme complète de produits de financement adaptés à vos besoins personnels et professionnels.{% endblock %}
+
+{% block body %}
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="page-header__bg" style="background-image: url({{ asset('assets/images/backgrounds/page-header-bg.jpg') }});"></div>
+        <div class="container">
+            <div class="page-header__inner">
+                <h2 class="page-header__title">Nos services de financement</h2>
+                <ul class="easilon-breadcrumb list-unstyled">
+                    <li><a href="{{ path('home') }}">Accueil</a></li>
+                    <li><span>Services</span></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Filter Section -->
+    <section class="loan-filter section-space-two">
+        <div class="container">
+            <div class="loan-filter__inner">
+                <div class="row align-items-center">
+                    <div class="col-lg-6">
+                        <div class="sec-title">
+                            <h6 class="sec-title__tagline">Trouvez votre solution</h6>
+                            <h3 class="sec-title__title">Filtrer par vos besoins</h3>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <form action="{{ path('loan_catalog_index') }}" method="GET" class="loan-filter__form">
+                            <div class="row gutter-x-20">
+                                <div class="col-md-4">
+                                    <select name="type" class="selectpicker" data-size="5">
+                                        <option value="all" {% if currentAccountType == 'all' %}selected{% endif %}>Tous les profils</option>
+                                        <option value="INDIVIDUAL" {% if currentAccountType == 'INDIVIDUAL' %}selected{% endif %}>Particuliers</option>
+                                        <option value="BUSINESS" {% if currentAccountType == 'BUSINESS' %}selected{% endif %}>Entreprises</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="number" name="min_amount" placeholder="Montant min" 
+                                           value="{{ currentMinAmount }}" class="form-control">
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="number" name="max_amount" placeholder="Montant max" 
+                                           value="{{ currentMaxAmount }}" class="form-control">
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="submit" class="easilon-btn w-100">
+                                        <span>Filtrer</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Loan Types Section -->
+    <section class="loan-types section-space">
+        <div class="container">
+            {% if loanTypes|length > 0 %}
+                <div class="row gutter-y-30">
+                    {% for loanType in loanTypes %}
+                        <div class="col-lg-4 col-md-6">
+                            <div class="service-card wow fadeInUp" data-wow-duration="1500ms" data-wow-delay="{{ loop.index0 * 100 }}ms">
+                                <div class="service-card__image">
+                                    {% if loanType.image %}
+                                        <img src="{{ asset('uploads/media/' ~ loanType.image.fileName) }}" alt="{{ loanType.name }}">
+                                    {% else %}
+                                        <img src="{{ asset('assets/images/services/service-placeholder.jpg') }}" alt="{{ loanType.name }}">
+                                    {% endif %}
+                                    <div class="service-card__icon">
+                                        {% if 'personnel' in loanType.name|lower %}
+                                            <i class="icon-loan"></i>
+                                        {% elseif 'immobilier' in loanType.name|lower %}
+                                            <i class="icon-house"></i>
+                                        {% elseif 'auto' in loanType.name|lower %}
+                                            <i class="icon-car"></i>
+                                        {% elseif 'professionnel' in loanType.name|lower or 'entreprise' in loanType.name|lower %}
+                                            <i class="icon-business"></i>
+                                        {% else %}
+                                            <i class="icon-loan"></i>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="service-card__content">
+                                    <h3 class="service-card__title">
+                                        <a href="{{ path('loan_catalog_detail', {slug: loanType.slug}) }}">{{ loanType.name }}</a>
+                                    </h3>
+                                    <p class="service-card__text">
+                                        {{ loanType.description|length > 120 ? loanType.description|slice(0, 120) ~ '...' : loanType.description }}
+                                    </p>
+                                    
+                                    <div class="service-card__features">
+                                        <div class="service-card__feature">
+                                            <span class="service-card__feature__label">Montant :</span>
+                                            <span class="service-card__feature__value">
+                                                {{ loanType.minAmount|number_format(0, ',', ' ') }}€ - {{ loanType.maxAmount|number_format(0, ',', ' ') }}€
+                                            </span>
+                                        </div>
+                                        <div class="service-card__feature">
+                                            <span class="service-card__feature__label">Durée :</span>
+                                            <span class="service-card__feature__value">
+                                                {{ loanType.minDuration }} - {{ loanType.maxDuration }} mois
+                                            </span>
+                                        </div>
+                                        <div class="service-card__feature">
+                                            <span class="service-card__feature__label">Taux à partir de :</span>
+                                            <span class="service-card__feature__value rate">
+                                                {{ loanType.baseInterestRate }}% TAEG
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div class="service-card__bottom">
+                                        <a href="{{ path('loan_catalog_detail', {slug: loanType.slug}) }}" 
+                                           class="service-card__btn easilon-btn easilon-btn--base">
+                                            <span>En savoir plus</span>
+                                            <span class="easilon-btn__icon">
+                                                <i class="icon-double-right-arrow"></i>
+                                            </span>
+                                        </a>
+                                        
+                                        <div class="service-card__calculator">
+                                            <button type="button" class="btn-calculator" 
+                                                    data-loan-type="{{ loanType.id }}"
+                                                    data-min-amount="{{ loanType.minAmount }}"
+                                                    data-max-amount="{{ loanType.maxAmount }}"
+                                                    data-min-duration="{{ loanType.minDuration }}"
+                                                    data-max-duration="{{ loanType.maxDuration }}"
+                                                    data-rate="{{ loanType.baseInterestRate }}">
+                                                <i class="fa fa-calculator"></i> Simuler
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="empty-state text-center">
+                    <div class="empty-state__icon">
+                        <i class="fa fa-search fa-3x text-muted"></i>
+                    </div>
+                    <h4 class="empty-state__title">Aucun service trouvé</h4>
+                    <p class="empty-state__text">
+                        Aucun service ne correspond à vos critères de recherche. 
+                        Essayez de modifier vos filtres ou consultez tous nos services.
+                    </p>
+                    <a href="{{ path('loan_catalog_index') }}" class="easilon-btn">
+                        <span>Voir tous les services</span>
+                        <span class="easilon-btn__icon">
+                            <i class="icon-double-right-arrow"></i>
+                        </span>
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Calculator Modal -->
+    <div class="modal fade" id="calculatorModal" tabindex="-1" aria-labelledby="calculatorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="calculatorModalLabel">Simulateur de prêt</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="loan-calculator__form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-4">
+                                    <label for="modal-loan-amount">Montant du prêt</label>
+                                    <div class="loan-calculator__form__range-wrap">
+                                        <div id="modal-loan-amount" class="loan-calculator__form__range"></div>
+                                        <div class="loan-calculator__form__range__value">
+                                            <span class="modal-loan-amount-value">5000</span>€
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-4">
+                                    <label for="modal-loan-duration">Durée (mois)</label>
+                                    <div class="loan-calculator__form__range-wrap">
+                                        <div id="modal-loan-duration" class="loan-calculator__form__range"></div>
+                                        <div class="loan-calculator__form__range__value">
+                                            <span class="modal-loan-duration-value">12</span> mois
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="calculator-result">
+                            <div class="row text-center">
+                                <div class="col-md-4">
+                                    <div class="calculator-result__item">
+                                        <h4 class="calculator-result__value" id="modal-monthly-payment">0€</h4>
+                                        <p class="calculator-result__label">Mensualité</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="calculator-result__item">
+                                        <h4 class="calculator-result__value" id="modal-total-amount">0€</h4>
+                                        <p class="calculator-result__label">Coût total</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="calculator-result__item">
+                                        <h4 class="calculator-result__value" id="modal-total-interest">0€</h4>
+                                        <p class="calculator-result__label">Intérêts</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    {% if app.user %}
+                        <a href="#" class="easilon-btn" id="apply-now-btn">
+                            <span>Faire une demande</span>
+                            <span class="easilon-btn__icon">
+                                <i class="icon-double-right-arrow"></i>
+                            </span>
+                        </a>
+                    {% else %}
+                        <a href="{{ path('app_register') }}" class="easilon-btn">
+                            <span>S'inscrire pour continuer</span>
+                            <span class="easilon-btn__icon">
+                                <i class="icon-double-right-arrow"></i>
+                            </span>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <section class="cta-one section-space-two">
+        <div class="cta-one__bg" style="background-image: url({{ asset('assets/images/backgrounds/cta-bg-1.jpg') }});"></div>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <div class="cta-one__content">
+                        <h3 class="cta-one__title">Besoin d'aide pour choisir ?</h3>
+                        <p class="cta-one__text">
+                            Nos conseillers sont là pour vous accompagner dans le choix du financement adapté à votre situation.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="cta-one__btn">
+                        <a href="{{ path('contact') }}" class="easilon-btn easilon-btn--light">
+                            <span>Nous contacter</span>
+                            <span class="easilon-btn__icon">
+                                <i class="icon-double-right-arrow"></i>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentLoanType = null;
+    let modalAmountSlider, modalDurationSlider;
+
+    // Calculator button clicks
+    document.querySelectorAll('.btn-calculator').forEach(btn => {
+        btn.addEventListener('click', function() {
+            currentLoanType = this.dataset.loanType;
+            const minAmount = parseInt(this.dataset.minAmount);
+            const maxAmount = parseInt(this.dataset.maxAmount);
+            const minDuration = parseInt(this.dataset.minDuration);
+            const maxDuration = parseInt(this.dataset.maxDuration);
+            
+            // Initialize sliders
+            initializeModalSliders(minAmount, maxAmount, minDuration, maxDuration);
+            
+            // Show modal
+            new bootstrap.Modal(document.getElementById('calculatorModal')).show();
+        });
+    });
+
+    function initializeModalSliders(minAmount, maxAmount, minDuration, maxDuration) {
+        // Destroy existing sliders if they exist
+        if (modalAmountSlider) modalAmountSlider.destroy();
+        if (modalDurationSlider) modalDurationSlider.destroy();
+        
+        // Amount slider
+        modalAmountSlider = noUiSlider.create(document.getElementById('modal-loan-amount'), {
+            start: [Math.min(Math.max(5000, minAmount), maxAmount)],
+            range: {
+                'min': minAmount,
+                'max': maxAmount
+            },
+            step: 100,
+            format: {
+                to: function(value) { return Math.round(value); },
+                from: function(value) { return Number(value); }
+            }
+        });
+
+        // Duration slider  
+        modalDurationSlider = noUiSlider.create(document.getElementById('modal-loan-duration'), {
+            start: [Math.min(Math.max(12, minDuration), maxDuration)],
+            range: {
+                'min': minDuration,
+                'max': maxDuration
+            },
+            step: 1,
+            format: {
+                to: function(value) { return Math.round(value); },
+                from: function(value) { return Number(value); }
+            }
+        });
+
+        // Update handlers
+        modalAmountSlider.on('update', function(values) {
+            document.querySelector('.modal-loan-amount-value').textContent = Math.round(values[0]).toLocaleString();
+            calculateModalLoan();
+        });
+
+        modalDurationSlider.on('update', function(values) {
+            document.querySelector('.modal-loan-duration-value').textContent = Math.round(values[0]);
+            calculateModalLoan();
+        });
+
+        // Initial calculation
+        calculateModalLoan();
+    }
+
+    function calculateModalLoan() {
+        if (!modalAmountSlider || !modalDurationSlider) return;
+        
+        const amount = modalAmountSlider.get();
+        const duration = modalDurationSlider.get();
+        
+        fetch('{{ path('loan_calculator_ajax') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `amount=${amount}&duration=${duration}&loan_type_id=${currentLoanType}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('modal-monthly-payment').textContent = 
+                Math.round(data.monthly_payment).toLocaleString() + '€';
+            document.getElementById('modal-total-amount').textContent = 
+                Math.round(data.total_amount).toLocaleString() + '€';
+            document.getElementById('modal-total-interest').textContent = 
+                Math.round(data.total_interest).toLocaleString() + '€';
+        })
+        .catch(error => console.error('Error:', error));
+    }
+});
+</script>
+
+<style>
+.service-card {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.service-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+.service-card__image {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+}
+
+.service-card__image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.service-card__icon {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #007bff;
+}
+
+.service-card__content {
+    padding: 1.5rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.service-card__title {
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+    line-height: 1.3;
+}
+
+.service-card__title a {
+    color: #333;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.service-card__title a:hover {
+    color: #007bff;
+}
+
+.service-card__text {
+    color: #666;
+    margin-bottom: 1.5rem;
+    flex: 1;
+}
+
+.service-card__features {
+    margin-bottom: 1.5rem;
+}
+
+.service-card__feature {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.service-card__feature:last-child {
+    border-bottom: none;
+}
+
+.service-card__feature__label {
+    font-weight: 500;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.service-card__feature__value {
+    font-weight: 600;
+    color: #333;
+}
+
+.service-card__feature__value.rate {
+    color: #007bff;
+    font-size: 1.1rem;
+}
+
+.service-card__bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.service-card__btn {
+    flex: 1;
+}
+
+.btn-calculator {
+    background: transparent;
+    border: 2px solid #007bff;
+    color: #007bff;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-calculator:hover {
+    background: #007bff;
+    color: white;
+}
+
+.loan-filter__inner {
+    background: #fff;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.empty-state {
+    padding: 4rem 2rem;
+}
+
+.empty-state__icon {
+    margin-bottom: 2rem;
+}
+
+.empty-state__title {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.empty-state__text {
+    color: #666;
+    margin-bottom: 2rem;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.calculator-result {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.calculator-result__item {
+    margin-bottom: 1rem;
+}
+
+.calculator-result__value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 0.5rem;
+}
+
+.calculator-result__label {
+    color: #666;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .service-card__bottom {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .service-card__btn {
+        width: 100%;
+    }
+    
+    .loan-filter__form .row {
+        gap: 1rem 0;
+    }
+}
+</style>
+{% endblock %}

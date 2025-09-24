@@ -1,0 +1,9 @@
+# Exclusion des autres projets dans le workspace
+/browser/
+/external_api/
+/easilon-htm/
+/loan-platform/
+/shell_output_save/
+/.backups/
+
+# Include du .gitignore original du projet Oragon

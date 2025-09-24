@@ -1,0 +1,473 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes demandes de prêt{% endblock %}
+
+{% block body %}
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="page-header__bg" style="background-image: url({{ asset('assets/images/backgrounds/page-header-bg.jpg') }});"></div>
+        <div class="container">
+            <div class="page-header__inner">
+                <h2 class="page-header__title">Mes demandes de prêt</h2>
+                <ul class="easilon-breadcrumb list-unstyled">
+                    <li><a href="{{ path('home') }}">Accueil</a></li>
+                    <li><a href="{{ path('dashboard_index') }}">Dashboard</a></li>
+                    <li><span>Mes demandes</span></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Applications List -->
+    <section class="applications-list section-space">
+        <div class="container">
+            <!-- Header Actions -->
+            <div class="list-header">
+                <div class="row align-items-center">
+                    <div class="col-lg-6">
+                        <h3>Toutes mes demandes ({{ applications|length }})</h3>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="list-header__actions">
+                            <a href="{{ path('loan_application_new') }}" class="easilon-btn">
+                                <span>Nouvelle demande</span>
+                                <span class="easilon-btn__icon">
+                                    <i class="fa fa-plus"></i>
+                                </span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if applications|length > 0 %}
+                <div class="applications-grid">
+                    <div class="row gutter-y-30">
+                        {% for application in applications %}
+                            <div class="col-lg-6">
+                                <div class="application-card">
+                                    <div class="application-card__header">
+                                        <div class="application-card__title">
+                                            <h4>{{ application.loanType.name }}</h4>
+                                            <span class="application-card__id">#{{ application.id }}</span>
+                                        </div>
+                                        <div class="application-card__status">
+                                            <span class="badge badge-{{ application.status|lower|replace({'_': '-'}) }}">
+                                                {% if application.status == 'DRAFT' %}
+                                                    Brouillon
+                                                {% elseif application.status == 'SUBMITTED' %}
+                                                    Soumise
+                                                {% elseif application.status == 'UNDER_REVIEW' %}
+                                                    En cours d'étude
+                                                {% elseif application.status == 'APPROVED' %}
+                                                    Approuvée
+                                                {% elseif application.status == 'REJECTED' %}
+                                                    Rejetée
+                                                {% elseif application.status == 'DISBURSED' %}
+                                                    Débloquée
+                                                {% else %}
+                                                    {{ application.status }}
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="application-card__content">
+                                        <div class="application-card__details">
+                                            <div class="detail-row">
+                                                <span class="detail-label">Montant:</span>
+                                                <span class="detail-value">{{ application.requestedAmount|number_format(0, ',', ' ') }}€</span>
+                                            </div>
+                                            <div class="detail-row">
+                                                <span class="detail-label">Durée:</span>
+                                                <span class="detail-value">{{ application.duration }} mois</span>
+                                            </div>
+                                            {% if application.monthlyPayment %}
+                                                <div class="detail-row">
+                                                    <span class="detail-label">Mensualité:</span>
+                                                    <span class="detail-value">{{ application.monthlyPayment|number_format(2, ',', ' ') }}€</span>
+                                                </div>
+                                            {% endif %}
+                                            <div class="detail-row">
+                                                <span class="detail-label">Date:</span>
+                                                <span class="detail-value">
+                                                    {% if application.submittedAt %}
+                                                        {{ application.submittedAt|date('d/m/Y') }}
+                                                    {% else %}
+                                                        Brouillon
+                                                    {% endif %}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        
+                                        {% if application.purpose %}
+                                            <div class="application-card__purpose">
+                                                <p>{{ application.purpose|length > 100 ? application.purpose|slice(0, 100) ~ '...' : application.purpose }}</p>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="application-card__footer">
+                                        <div class="application-card__actions">
+                                            <a href="{{ path('loan_application_detail', {id: application.id}) }}" 
+                                               class="btn btn-outline-primary">
+                                                <i class="fa fa-eye"></i> Voir détails
+                                            </a>
+                                            
+                                            {% if application.status in ['DRAFT', 'REJECTED'] %}
+                                                <a href="{{ path('loan_application_edit', {id: application.id}) }}" 
+                                                   class="btn btn-outline-secondary">
+                                                    <i class="fa fa-edit"></i> Modifier
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        {% if application.status == 'APPROVED' %}
+                                            <div class="application-card__next-step">
+                                                <small class="text-success">
+                                                    <i class="fa fa-check-circle"></i>
+                                                    Félicitations! Votre demande a été approuvée.
+                                                </small>
+                                            </div>
+                                        {% elseif application.status == 'REJECTED' and application.rejectionReason %}
+                                            <div class="application-card__next-step">
+                                                <small class="text-danger">
+                                                    <i class="fa fa-info-circle"></i>
+                                                    {{ application.rejectionReason|length > 80 ? application.rejectionReason|slice(0, 80) ~ '...' : application.rejectionReason }}
+                                                </small>
+                                            </div>
+                                        {% elseif application.status == 'UNDER_REVIEW' %}
+                                            <div class="application-card__next-step">
+                                                <small class="text-info">
+                                                    <i class="fa fa-clock"></i>
+                                                    Votre demande est en cours d'étude.
+                                                </small>
+                                            </div>
+                                        {% elseif application.status == 'SUBMITTED' %}
+                                            <div class="application-card__next-step">
+                                                <small class="text-info">
+                                                    <i class="fa fa-paper-plane"></i>
+                                                    Demande en attente de traitement.
+                                                </small>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% else %}
+                <!-- Empty State -->
+                <div class="empty-state">
+                    <div class="empty-state__content">
+                        <div class="empty-state__icon">
+                            <i class="fa fa-file-alt fa-4x text-muted"></i>
+                        </div>
+                        <h3 class="empty-state__title">Aucune demande de prêt</h3>
+                        <p class="empty-state__text">
+                            Vous n'avez pas encore fait de demande de prêt. 
+                            Commencez dès maintenant en choisissant le type de financement qui vous convient.
+                        </p>
+                        <div class="empty-state__actions">
+                            <a href="{{ path('loan_catalog_index') }}" class="easilon-btn">
+                                <span>Découvrir nos prêts</span>
+                                <span class="easilon-btn__icon">
+                                    <i class="icon-double-right-arrow"></i>
+                                </span>
+                            </a>
+                            <a href="{{ path('loan_application_new') }}" class="btn btn-outline-primary ml-3">
+                                <i class="fa fa-plus"></i> Nouvelle demande
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Quick Stats -->
+            {% if applications|length > 0 %}
+                <div class="applications-stats">
+                    <div class="row gutter-y-20">
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fa fa-file-alt text-primary"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h4>{{ applications|length }}</h4>
+                                    <p>Total demandes</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fa fa-clock text-warning"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h4>{{ applications|filter(app => app.status in ['SUBMITTED', 'UNDER_REVIEW'])|length }}</h4>
+                                    <p>En cours</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fa fa-check-circle text-success"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h4>{{ applications|filter(app => app.status in ['APPROVED', 'DISBURSED'])|length }}</h4>
+                                    <p>Approuvées</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fa fa-edit text-info"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h4>{{ applications|filter(app => app.status == 'DRAFT')|length }}</h4>
+                                    <p>Brouillons</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_stylesheets %}
+<style>
+.list-header {
+    margin-bottom: 2rem;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.list-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.list-header__actions {
+    text-align: right;
+}
+
+.application-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.application-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+.application-card__header {
+    padding: 1.5rem 1.5rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.application-card__title h4 {
+    margin: 0;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.application-card__id {
+    font-size: 0.8rem;
+    color: #666;
+    font-weight: normal;
+}
+
+.application-card__content {
+    padding: 1rem 1.5rem;
+    flex: 1;
+}
+
+.application-card__details {
+    margin-bottom: 1rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.detail-value {
+    font-weight: 600;
+    color: #333;
+}
+
+.application-card__purpose {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f1f1f1;
+}
+
+.application-card__purpose p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #666;
+    font-style: italic;
+}
+
+.application-card__footer {
+    padding: 1rem 1.5rem 1.5rem;
+    border-top: 1px solid #f1f1f1;
+}
+
+.application-card__actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.application-card__actions .btn {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.application-card__next-step {
+    margin-top: 0.5rem;
+}
+
+.application-card__next-step small {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.badge-draft { background-color: #6c757d; }
+.badge-submitted { background-color: #17a2b8; }
+.badge-under-review { background-color: #ffc107; color: #212529; }
+.badge-approved { background-color: #28a745; }
+.badge-rejected { background-color: #dc3545; }
+.badge-disbursed { background-color: #007bff; }
+
+.empty-state {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 4rem 2rem;
+    text-align: center;
+}
+
+.empty-state__icon {
+    margin-bottom: 2rem;
+}
+
+.empty-state__title {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.empty-state__text {
+    color: #666;
+    margin-bottom: 2rem;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.empty-state__actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+}
+
+.applications-stats {
+    margin-top: 3rem;
+}
+
+.stat-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.stat-icon {
+    font-size: 2rem;
+    opacity: 0.8;
+}
+
+.stat-content h4 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.stat-content p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .list-header {
+        padding: 1rem;
+    }
+    
+    .list-header__actions {
+        text-align: left;
+        margin-top: 1rem;
+    }
+    
+    .application-card__header {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+    
+    .application-card__actions {
+        flex-direction: column;
+    }
+    
+    .empty-state {
+        padding: 2rem 1rem;
+    }
+    
+    .empty-state__actions {
+        flex-direction: column;
+    }
+    
+    .stat-card {
+        justify-content: center;
+        text-align: center;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,658 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détail de la demande #{{ application.id }}{% endblock %}
+
+{% block body %}
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="page-header__bg" style="background-image: url({{ asset('assets/images/backgrounds/page-header-bg.jpg') }});"></div>
+        <div class="container">
+            <div class="page-header__inner">
+                <h2 class="page-header__title">Demande de prêt #{{ application.id }}</h2>
+                <ul class="easilon-breadcrumb list-unstyled">
+                    <li><a href="{{ path('home') }}">Accueil</a></li>
+                    <li><a href="{{ path('dashboard_index') }}">Dashboard</a></li>
+                    <li><a href="{{ path('loan_application_index') }}">Mes demandes</a></li>
+                    <li><span>Demande #{{ application.id }}</span></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Application Detail -->
+    <section class="application-detail section-space">
+        <div class="container">
+            <div class="row gutter-x-60">
+                <div class="col-lg-8">
+                    <div class="application-detail__content">
+                        <!-- Status Banner -->
+                        <div class="status-banner status-{{ application.status|lower|replace({'_': '-'}) }}">
+                            <div class="status-banner__icon">
+                                {% if application.status == 'DRAFT' %}
+                                    <i class="fa fa-edit"></i>
+                                {% elseif application.status == 'SUBMITTED' %}
+                                    <i class="fa fa-clock"></i>
+                                {% elseif application.status == 'UNDER_REVIEW' %}
+                                    <i class="fa fa-search"></i>
+                                {% elseif application.status == 'APPROVED' %}
+                                    <i class="fa fa-check-circle"></i>
+                                {% elseif application.status == 'REJECTED' %}
+                                    <i class="fa fa-times-circle"></i>
+                                {% elseif application.status == 'DISBURSED' %}
+                                    <i class="fa fa-money-bill-wave"></i>
+                                {% endif %}
+                            </div>
+                            <div class="status-banner__content">
+                                <h3>
+                                    {% if application.status == 'DRAFT' %}
+                                        Brouillon
+                                    {% elseif application.status == 'SUBMITTED' %}
+                                        Demande soumise
+                                    {% elseif application.status == 'UNDER_REVIEW' %}
+                                        En cours d'étude
+                                    {% elseif application.status == 'APPROVED' %}
+                                        Demande approuvée
+                                    {% elseif application.status == 'REJECTED' %}
+                                        Demande refusée
+                                    {% elseif application.status == 'DISBURSED' %}
+                                        Fonds débloqués
+                                    {% endif %}
+                                </h3>
+                                <p>
+                                    {% if application.status == 'DRAFT' %}
+                                        Votre demande est en cours de rédaction. Vous pouvez la modifier et la soumettre.
+                                    {% elseif application.status == 'SUBMITTED' %}
+                                        Votre demande a été soumise le {{ application.submittedAt|date('d/m/Y à H:i') }}. Elle sera examinée sous 48-72h.
+                                    {% elseif application.status == 'UNDER_REVIEW' %}
+                                        Votre demande est actuellement étudiée par nos équipes.
+                                    {% elseif application.status == 'APPROVED' %}
+                                        Félicitations! Votre demande a été approuvée le {{ application.approvedAt|date('d/m/Y') }}.
+                                    {% elseif application.status == 'REJECTED' %}
+                                        Votre demande a été refusée le {{ application.rejectedAt|date('d/m/Y') }}.
+                                    {% elseif application.status == 'DISBURSED' %}
+                                        Les fonds ont été débloqués et virés sur votre compte.
+                                    {% endif %}
+                                </p>
+                                {% if application.rejectionReason %}
+                                    <div class="rejection-reason">
+                                        <strong>Motif du refus:</strong> {{ application.rejectionReason }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Loan Details -->
+                        <div class="detail-section">
+                            <h3>Détails du prêt</h3>
+                            <div class="detail-grid">
+                                <div class="detail-item">
+                                    <span class="detail-label">Type de prêt</span>
+                                    <span class="detail-value">{{ application.loanType.name }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Montant demandé</span>
+                                    <span class="detail-value">{{ application.requestedAmount|number_format(0, ',', ' ') }}€</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Durée</span>
+                                    <span class="detail-value">{{ application.duration }} mois</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Taux d'intérêt</span>
+                                    <span class="detail-value">{{ application.interestRate ? application.interestRate ~ '%' : 'À déterminer' }}</span>
+                                </div>
+                                {% if application.monthlyPayment %}
+                                    <div class="detail-item">
+                                        <span class="detail-label">Mensualité</span>
+                                        <span class="detail-value">{{ application.monthlyPayment|number_format(2, ',', ' ') }}€</span>
+                                    </div>
+                                    <div class="detail-item">
+                                        <span class="detail-label">Coût total</span>
+                                        <span class="detail-value">{{ application.totalAmount|number_format(2, ',', ' ') }}€</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Purpose -->
+                        <div class="detail-section">
+                            <h3>Objet du prêt</h3>
+                            <p>{{ application.purpose }}</p>
+                        </div>
+
+                        <!-- Financial Information -->
+                        {% if application.personalInfo %}
+                            <div class="detail-section">
+                                <h3>Informations financières</h3>
+                                <div class="detail-grid">
+                                    {% if application.personalInfo.monthly_income %}
+                                        <div class="detail-item">
+                                            <span class="detail-label">Revenus mensuels</span>
+                                            <span class="detail-value">{{ application.personalInfo.monthly_income|number_format(0, ',', ' ') }}€</span>
+                                        </div>
+                                    {% endif %}
+                                    {% if application.personalInfo.monthly_expenses %}
+                                        <div class="detail-item">
+                                            <span class="detail-label">Charges mensuelles</span>
+                                            <span class="detail-value">{{ application.personalInfo.monthly_expenses|number_format(0, ',', ' ') }}€</span>
+                                        </div>
+                                    {% endif %}
+                                    {% if application.personalInfo.employment_status %}
+                                        <div class="detail-item">
+                                            <span class="detail-label">Situation professionnelle</span>
+                                            <span class="detail-value">{{ application.personalInfo.employment_status }}</span>
+                                        </div>
+                                    {% endif %}
+                                    {% if application.personalInfo.company_name %}
+                                        <div class="detail-item">
+                                            <span class="detail-label">Employeur</span>
+                                            <span class="detail-value">{{ application.personalInfo.company_name }}</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- Guarantees -->
+                        {% if application.guarantees %}
+                            <div class="detail-section">
+                                <h3>Garanties proposées</h3>
+                                <p>{{ application.guarantees }}</p>
+                            </div>
+                        {% endif %}
+
+                        <!-- Documents -->
+                        {% if application.documents|length > 0 %}
+                            <div class="detail-section">
+                                <h3>Documents joints</h3>
+                                <div class="documents-list">
+                                    {% for document in application.documents %}
+                                        <div class="document-item">
+                                            <div class="document-icon">
+                                                <i class="fa fa-file{% if document.filePath ends with '.pdf' %}-pdf{% elseif document.filePath ends with '.jpg' or document.filePath ends with '.jpeg' or document.filePath ends with '.png' %}-image{% endif %}"></i>
+                                            </div>
+                                            <div class="document-info">
+                                                <h5>{{ document.originalName }}</h5>
+                                                <p>
+                                                    Téléchargé le {{ document.uploadedAt|date('d/m/Y à H:i') }}
+                                                    {% if document.isVerified %}
+                                                        <span class="badge bg-success">Vérifié</span>
+                                                    {% else %}
+                                                        <span class="badge bg-warning">En attente</span>
+                                                    {% endif %}
+                                                </p>
+                                            </div>
+                                            <div class="document-actions">
+                                                <a href="{{ asset(document.filePath) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fa fa-eye"></i> Voir
+                                                </a>
+                                                <a href="{{ asset(document.filePath) }}" download class="btn btn-sm btn-outline-secondary">
+                                                    <i class="fa fa-download"></i> Télécharger
+                                                </a>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- Timeline -->
+                        <div class="detail-section">
+                            <h3>Historique</h3>
+                            <div class="timeline">
+                                {% if application.submittedAt %}
+                                    <div class="timeline-item">
+                                        <div class="timeline-icon bg-primary">
+                                            <i class="fa fa-paper-plane"></i>
+                                        </div>
+                                        <div class="timeline-content">
+                                            <h5>Demande soumise</h5>
+                                            <p>{{ application.submittedAt|date('d/m/Y à H:i') }}</p>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if application.reviewedAt %}
+                                    <div class="timeline-item">
+                                        <div class="timeline-icon bg-info">
+                                            <i class="fa fa-search"></i>
+                                        </div>
+                                        <div class="timeline-content">
+                                            <h5>Mise en étude</h5>
+                                            <p>{{ application.reviewedAt|date('d/m/Y à H:i') }}</p>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if application.approvedAt %}
+                                    <div class="timeline-item">
+                                        <div class="timeline-icon bg-success">
+                                            <i class="fa fa-check"></i>
+                                        </div>
+                                        <div class="timeline-content">
+                                            <h5>Demande approuvée</h5>
+                                            <p>{{ application.approvedAt|date('d/m/Y à H:i') }}</p>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if application.rejectedAt %}
+                                    <div class="timeline-item">
+                                        <div class="timeline-icon bg-danger">
+                                            <i class="fa fa-times"></i>
+                                        </div>
+                                        <div class="timeline-content">
+                                            <h5>Demande refusée</h5>
+                                            <p>{{ application.rejectedAt|date('d/m/Y à H:i') }}</p>
+                                            {% if application.rejectionReason %}
+                                                <small>{{ application.rejectionReason }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="col-lg-4">
+                    <div class="application-sidebar">
+                        <!-- Quick Actions -->
+                        <div class="sidebar-card">
+                            <h4>Actions</h4>
+                            <div class="actions-list">
+                                {% if application.status in ['DRAFT', 'REJECTED'] %}
+                                    <a href="{{ path('loan_application_edit', {id: application.id}) }}" class="easilon-btn w-100 mb-2">
+                                        <span>Modifier la demande</span>
+                                        <span class="easilon-btn__icon">
+                                            <i class="fa fa-edit"></i>
+                                        </span>
+                                    </a>
+                                {% endif %}
+                                
+                                <a href="{{ path('loan_application_index') }}" class="btn btn-outline-secondary w-100 mb-2">
+                                    <i class="fa fa-arrow-left"></i> Retour à mes demandes
+                                </a>
+                                
+                                <button onclick="window.print()" class="btn btn-outline-primary w-100">
+                                    <i class="fa fa-print"></i> Imprimer
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Contact Support -->
+                        <div class="sidebar-card">
+                            <h4>Besoin d'aide ?</h4>
+                            <p>Notre équipe est là pour vous accompagner</p>
+                            <div class="contact-methods">
+                                <div class="contact-method">
+                                    <i class="fa fa-phone text-primary"></i>
+                                    <span>01 23 45 67 89</span>
+                                </div>
+                                <div class="contact-method">
+                                    <i class="fa fa-envelope text-primary"></i>
+                                    <span>support@easilon.com</span>
+                                </div>
+                                <div class="contact-method">
+                                    <i class="fa fa-clock text-primary"></i>
+                                    <span>Lun-Ven 9h-18h</span>
+                                </div>
+                            </div>
+                            <a href="{{ path('contact') }}" class="easilon-btn easilon-btn--light w-100 mt-3">
+                                <span>Nous contacter</span>
+                                <span class="easilon-btn__icon">
+                                    <i class="icon-double-right-arrow"></i>
+                                </span>
+                            </a>
+                        </div>
+
+                        <!-- Application Progress -->
+                        {% if application.status in ['SUBMITTED', 'UNDER_REVIEW', 'APPROVED'] %}
+                            <div class="sidebar-card">
+                                <h4>Progression</h4>
+                                <div class="progress-steps">
+                                    <div class="progress-step {{ application.status in ['SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'DISBURSED'] ? 'completed' : '' }}">
+                                        <i class="fa fa-check"></i>
+                                        <span>Soumise</span>
+                                    </div>
+                                    <div class="progress-step {{ application.status in ['UNDER_REVIEW', 'APPROVED', 'DISBURSED'] ? 'completed' : (application.status == 'SUBMITTED' ? 'current' : '') }}">
+                                        <i class="fa fa-search"></i>
+                                        <span>En étude</span>
+                                    </div>
+                                    <div class="progress-step {{ application.status in ['APPROVED', 'DISBURSED'] ? 'completed' : (application.status == 'UNDER_REVIEW' ? 'current' : '') }}">
+                                        <i class="fa fa-file-contract"></i>
+                                        <span>Contrat</span>
+                                    </div>
+                                    <div class="progress-step {{ application.status == 'DISBURSED' ? 'completed' : (application.status == 'APPROVED' ? 'current' : '') }}">
+                                        <i class="fa fa-money-bill-wave"></i>
+                                        <span>Déblocage</span>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_stylesheets %}
+<style>
+.status-banner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.status-banner.status-draft {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+}
+
+.status-banner.status-submitted {
+    background: #d1ecf1;
+    border: 1px solid #bee5eb;
+    color: #0c5460;
+}
+
+.status-banner.status-under-review {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+}
+
+.status-banner.status-approved {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.status-banner.status-rejected {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+.status-banner.status-disbursed {
+    background: #d1ecf1;
+    border: 1px solid #bee5eb;
+    color: #0c5460;
+}
+
+.status-banner__icon {
+    font-size: 3rem;
+    opacity: 0.7;
+}
+
+.status-banner__content h3 {
+    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+}
+
+.status-banner__content p {
+    margin: 0;
+    opacity: 0.8;
+}
+
+.rejection-reason {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+}
+
+.detail-section {
+    background: #fff;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.detail-section h3 {
+    margin-bottom: 1.5rem;
+    color: #333;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 0.75rem;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.detail-label {
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.detail-value {
+    font-weight: 600;
+    color: #333;
+}
+
+.documents-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.document-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.document-icon {
+    font-size: 2rem;
+    color: #007bff;
+    min-width: 50px;
+    text-align: center;
+}
+
+.document-info {
+    flex: 1;
+}
+
+.document-info h5 {
+    margin-bottom: 0.25rem;
+    font-size: 1rem;
+}
+
+.document-info p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.document-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 20px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.timeline-icon {
+    position: absolute;
+    left: -32px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+}
+
+.timeline-content h5 {
+    margin-bottom: 0.25rem;
+    color: #333;
+}
+
+.timeline-content p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.timeline-content small {
+    color: #999;
+}
+
+.application-sidebar {
+    position: sticky;
+    top: 2rem;
+}
+
+.sidebar-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.sidebar-card h4 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.contact-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.contact-method {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.contact-method i {
+    width: 20px;
+    text-align: center;
+}
+
+.progress-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.progress-step {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 6px;
+    background: #f8f9fa;
+    color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.progress-step.completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.progress-step.current {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.progress-step i {
+    width: 20px;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .status-banner {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .document-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+    
+    .document-actions {
+        justify-content: center;
+    }
+    
+    .timeline {
+        padding-left: 1rem;
+    }
+    
+    .timeline-icon {
+        left: -20px;
+        width: 30px;
+        height: 30px;
+        font-size: 0.8rem;
+    }
+}
+
+@media print {
+    .application-sidebar,
+    .page-header,
+    .status-banner__icon {
+        display: none !important;
+    }
+    
+    .application-detail__content {
+        box-shadow: none;
+    }
+    
+    .detail-section {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        page-break-inside: avoid;
+    }
+}
+</style>
+{% endblock %}

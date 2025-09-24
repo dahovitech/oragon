@@ -1,0 +1,698 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ loanType.name }} - Détail du service{% endblock %}
+
+{% block meta_description %}{{ loanType.description }}{% endblock %}
+
+{% block body %}
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="page-header__bg" style="background-image: url({{ asset('assets/images/backgrounds/page-header-bg.jpg') }});"></div>
+        <div class="container">
+            <div class="page-header__inner">
+                <h2 class="page-header__title">{{ loanType.name }}</h2>
+                <ul class="easilon-breadcrumb list-unstyled">
+                    <li><a href="{{ path('home') }}">Accueil</a></li>
+                    <li><a href="{{ path('loan_catalog_index') }}">Services</a></li>
+                    <li><span>{{ loanType.name }}</span></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Service Detail -->
+    <section class="service-detail section-space">
+        <div class="container">
+            <div class="row gutter-x-60">
+                <div class="col-lg-8">
+                    <div class="service-detail__content">
+                        <!-- Main Image -->
+                        <div class="service-detail__image">
+                            {% if loanType.image %}
+                                <img src="{{ asset('uploads/media/' ~ loanType.image.fileName) }}" alt="{{ loanType.name }}" class="img-fluid">
+                            {% else %}
+                                <img src="{{ asset('assets/images/services/service-detail-placeholder.jpg') }}" alt="{{ loanType.name }}" class="img-fluid">
+                            {% endif %}
+                        </div>
+
+                        <!-- Description -->
+                        <div class="service-detail__text">
+                            <h3>À propos de {{ loanType.name }}</h3>
+                            <p>{{ loanType.description }}</p>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <h4>Avantages</h4>
+                                    <ul class="service-detail__advantages">
+                                        <li><i class="fa fa-check-circle"></i> Taux compétitifs à partir de {{ loanType.baseInterestRate }}%</li>
+                                        <li><i class="fa fa-check-circle"></i> Réponse rapide sous 48h</li>
+                                        <li><i class="fa fa-check-circle"></i> Remboursement anticipé possible</li>
+                                        <li><i class="fa fa-check-circle"></i> Suivi en ligne 24h/24</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h4>Documents requis</h4>
+                                    <ul class="service-detail__documents">
+                                        {% for document in loanType.requiredDocuments %}
+                                            <li>
+                                                <i class="fa fa-file-alt"></i>
+                                                {% if document == 'ID_CARD' %}
+                                                    Pièce d'identité
+                                                {% elseif document == 'PROOF_INCOME' %}
+                                                    Justificatif de revenus
+                                                {% elseif document == 'PROOF_ADDRESS' %}
+                                                    Justificatif de domicile
+                                                {% elseif document == 'BANK_STATEMENT' %}
+                                                    Relevés bancaires
+                                                {% elseif document == 'BUSINESS_REGISTRATION' %}
+                                                    Extrait Kbis
+                                                {% elseif document == 'FINANCIAL_STATEMENTS' %}
+                                                    Bilans comptables
+                                                {% elseif document == 'STUDENT_CERTIFICATE' %}
+                                                    Certificat de scolarité
+                                                {% elseif document == 'WORK_ESTIMATE' %}
+                                                    Devis travaux
+                                                {% elseif document == 'EQUIPMENT_QUOTE' %}
+                                                    Devis équipement
+                                                {% else %}
+                                                    {{ document }}
+                                                {% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- FAQ Section -->
+                        <div class="service-detail__faq mt-5">
+                            <h3>Questions fréquentes</h3>
+                            <div class="accordion" id="faqAccordion">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="faq1">
+                                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapse1">
+                                            Quels sont les critères d'éligibilité ?
+                                        </button>
+                                    </h2>
+                                    <div id="collapse1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body">
+                                            Pour bénéficier de {{ loanType.name }}, vous devez être 
+                                            {% if 'INDIVIDUAL' in loanType.allowedAccountTypes %}particulier{% endif %}
+                                            {% if 'BUSINESS' in loanType.allowedAccountTypes %}professionnel{% endif %},
+                                            disposer de revenus réguliers, et ne pas être inscrit au fichier des incidents de remboursement.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="faq2">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse2">
+                                            Quel est le délai de traitement ?
+                                        </button>
+                                    </h2>
+                                    <div id="collapse2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body">
+                                            Après réception de votre dossier complet, nous nous engageons à vous donner une réponse dans un délai de 48 à 72 heures maximum.
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="faq3">
+                                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse3">
+                                            Puis-je rembourser par anticipation ?
+                                        </button>
+                                    </h2>
+                                    <div id="collapse3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body">
+                                            Oui, vous pouvez effectuer un remboursement anticipé partiel ou total à tout moment, sans pénalité.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="col-lg-4">
+                    <div class="service-detail__sidebar">
+                        <!-- Quick Info Card -->
+                        <div class="service-info-card">
+                            <div class="service-info-card__header">
+                                <h3>{{ loanType.name }}</h3>
+                                <div class="service-info-card__icon">
+                                    {% if 'personnel' in loanType.name|lower %}
+                                        <i class="icon-loan"></i>
+                                    {% elseif 'immobilier' in loanType.name|lower %}
+                                        <i class="icon-house"></i>
+                                    {% elseif 'auto' in loanType.name|lower %}
+                                        <i class="icon-car"></i>
+                                    {% elseif 'professionnel' in loanType.name|lower or 'entreprise' in loanType.name|lower %}
+                                        <i class="icon-business"></i>
+                                    {% else %}
+                                        <i class="icon-loan"></i>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="service-info-card__features">
+                                <div class="service-info-card__feature">
+                                    <span class="service-info-card__feature__label">Montant</span>
+                                    <span class="service-info-card__feature__value">
+                                        {{ loanType.minAmount|number_format(0, ',', ' ') }}€ - {{ loanType.maxAmount|number_format(0, ',', ' ') }}€
+                                    </span>
+                                </div>
+                                <div class="service-info-card__feature">
+                                    <span class="service-info-card__feature__label">Durée</span>
+                                    <span class="service-info-card__feature__value">
+                                        {{ loanType.minDuration }} - {{ loanType.maxDuration }} mois
+                                    </span>
+                                </div>
+                                <div class="service-info-card__feature">
+                                    <span class="service-info-card__feature__label">Taux</span>
+                                    <span class="service-info-card__feature__value rate">
+                                        À partir de {{ loanType.baseInterestRate }}% TAEG
+                                    </span>
+                                </div>
+                                <div class="service-info-card__feature">
+                                    <span class="service-info-card__feature__label">Public</span>
+                                    <span class="service-info-card__feature__value">
+                                        {% if 'INDIVIDUAL' in loanType.allowedAccountTypes %}
+                                            {% if 'BUSINESS' in loanType.allowedAccountTypes %}
+                                                Particuliers & Entreprises
+                                            {% else %}
+                                                Particuliers
+                                            {% endif %}
+                                        {% elseif 'BUSINESS' in loanType.allowedAccountTypes %}
+                                            Entreprises
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="service-info-card__actions">
+                                <button type="button" class="easilon-btn w-100 mb-3" id="simulate-btn"
+                                        data-loan-type="{{ loanType.id }}"
+                                        data-min-amount="{{ loanType.minAmount }}"
+                                        data-max-amount="{{ loanType.maxAmount }}"
+                                        data-min-duration="{{ loanType.minDuration }}"
+                                        data-max-duration="{{ loanType.maxDuration }}"
+                                        data-rate="{{ loanType.baseInterestRate }}">
+                                    <span>Simuler mon prêt</span>
+                                    <span class="easilon-btn__icon">
+                                        <i class="fa fa-calculator"></i>
+                                    </span>
+                                </button>
+                                
+                                {% if app.user %}
+                                    <a href="#" class="easilon-btn easilon-btn--base w-100">
+                                        <span>Faire une demande</span>
+                                        <span class="easilon-btn__icon">
+                                            <i class="icon-double-right-arrow"></i>
+                                        </span>
+                                    </a>
+                                {% else %}
+                                    <a href="{{ path('app_register') }}" class="easilon-btn easilon-btn--base w-100">
+                                        <span>S'inscrire</span>
+                                        <span class="easilon-btn__icon">
+                                            <i class="icon-double-right-arrow"></i>
+                                        </span>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Contact Card -->
+                        <div class="contact-info-card">
+                            <div class="contact-info-card__header">
+                                <h4>Besoin d'aide ?</h4>
+                                <p>Nos conseillers sont à votre disposition</p>
+                            </div>
+                            
+                            <div class="contact-info-card__items">
+                                <div class="contact-info-card__item">
+                                    <div class="contact-info-card__item__icon">
+                                        <i class="fa fa-phone"></i>
+                                    </div>
+                                    <div class="contact-info-card__item__content">
+                                        <span class="contact-info-card__item__label">Appelez-nous</span>
+                                        <span class="contact-info-card__item__value">01 23 45 67 89</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="contact-info-card__item">
+                                    <div class="contact-info-card__item__icon">
+                                        <i class="fa fa-envelope"></i>
+                                    </div>
+                                    <div class="contact-info-card__item__content">
+                                        <span class="contact-info-card__item__label">Écrivez-nous</span>
+                                        <span class="contact-info-card__item__value">contact@easilon.com</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="contact-info-card__item">
+                                    <div class="contact-info-card__item__icon">
+                                        <i class="fa fa-clock"></i>
+                                    </div>
+                                    <div class="contact-info-card__item__content">
+                                        <span class="contact-info-card__item__label">Horaires</span>
+                                        <span class="contact-info-card__item__value">Lun-Ven 9h-18h</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="contact-info-card__btn">
+                                <a href="{{ path('contact') }}" class="easilon-btn easilon-btn--light w-100">
+                                    <span>Nous contacter</span>
+                                    <span class="easilon-btn__icon">
+                                        <i class="icon-double-right-arrow"></i>
+                                    </span>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Other Services -->
+                        <div class="related-services-card">
+                            <h4>Autres services</h4>
+                            <div class="related-services-list">
+                                <a href="{{ path('loan_catalog_index') }}" class="related-service-item">
+                                    <i class="fa fa-arrow-right"></i>
+                                    <span>Voir tous nos services</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Calculator Modal (same as in index) -->
+    <div class="modal fade" id="calculatorModal" tabindex="-1" aria-labelledby="calculatorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="calculatorModalLabel">Simulateur - {{ loanType.name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="loan-calculator__form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-4">
+                                    <label for="detail-loan-amount">Montant du prêt</label>
+                                    <div class="loan-calculator__form__range-wrap">
+                                        <div id="detail-loan-amount" class="loan-calculator__form__range"></div>
+                                        <div class="loan-calculator__form__range__value">
+                                            <span class="detail-loan-amount-value">{{ loanType.minAmount }}</span>€
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-4">
+                                    <label for="detail-loan-duration">Durée (mois)</label>
+                                    <div class="loan-calculator__form__range-wrap">
+                                        <div id="detail-loan-duration" class="loan-calculator__form__range"></div>
+                                        <div class="loan-calculator__form__range__value">
+                                            <span class="detail-loan-duration-value">{{ loanType.minDuration }}</span> mois
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="calculator-result">
+                            <div class="row text-center">
+                                <div class="col-md-4">
+                                    <div class="calculator-result__item">
+                                        <h4 class="calculator-result__value" id="detail-monthly-payment">0€</h4>
+                                        <p class="calculator-result__label">Mensualité</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="calculator-result__item">
+                                        <h4 class="calculator-result__value" id="detail-total-amount">0€</h4>
+                                        <p class="calculator-result__label">Coût total</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="calculator-result__item">
+                                        <h4 class="calculator-result__value" id="detail-total-interest">0€</h4>
+                                        <p class="calculator-result__label">Intérêts</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    {% if app.user %}
+                        <a href="#" class="easilon-btn" id="apply-now-btn">
+                            <span>Faire une demande</span>
+                            <span class="easilon-btn__icon">
+                                <i class="icon-double-right-arrow"></i>
+                            </span>
+                        </a>
+                    {% else %}
+                        <a href="{{ path('app_register') }}" class="easilon-btn">
+                            <span>S'inscrire pour continuer</span>
+                            <span class="easilon-btn__icon">
+                                <i class="icon-double-right-arrow"></i>
+                            </span>
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let detailAmountSlider, detailDurationSlider;
+    
+    // Simulate button click
+    document.getElementById('simulate-btn').addEventListener('click', function() {
+        const minAmount = parseInt(this.dataset.minAmount);
+        const maxAmount = parseInt(this.dataset.maxAmount);
+        const minDuration = parseInt(this.dataset.minDuration);
+        const maxDuration = parseInt(this.dataset.maxDuration);
+        
+        initializeDetailSliders(minAmount, maxAmount, minDuration, maxDuration);
+        new bootstrap.Modal(document.getElementById('calculatorModal')).show();
+    });
+    
+    function initializeDetailSliders(minAmount, maxAmount, minDuration, maxDuration) {
+        // Destroy existing sliders if they exist
+        if (detailAmountSlider) detailAmountSlider.destroy();
+        if (detailDurationSlider) detailDurationSlider.destroy();
+        
+        // Amount slider
+        detailAmountSlider = noUiSlider.create(document.getElementById('detail-loan-amount'), {
+            start: [Math.min(Math.max(5000, minAmount), maxAmount)],
+            range: {
+                'min': minAmount,
+                'max': maxAmount
+            },
+            step: 100,
+            format: {
+                to: function(value) { return Math.round(value); },
+                from: function(value) { return Number(value); }
+            }
+        });
+
+        // Duration slider  
+        detailDurationSlider = noUiSlider.create(document.getElementById('detail-loan-duration'), {
+            start: [Math.min(Math.max(12, minDuration), maxDuration)],
+            range: {
+                'min': minDuration,
+                'max': maxDuration
+            },
+            step: 1,
+            format: {
+                to: function(value) { return Math.round(value); },
+                from: function(value) { return Number(value); }
+            }
+        });
+
+        // Update handlers
+        detailAmountSlider.on('update', function(values) {
+            document.querySelector('.detail-loan-amount-value').textContent = Math.round(values[0]).toLocaleString();
+            calculateDetailLoan();
+        });
+
+        detailDurationSlider.on('update', function(values) {
+            document.querySelector('.detail-loan-duration-value').textContent = Math.round(values[0]);
+            calculateDetailLoan();
+        });
+
+        // Initial calculation
+        calculateDetailLoan();
+    }
+
+    function calculateDetailLoan() {
+        if (!detailAmountSlider || !detailDurationSlider) return;
+        
+        const amount = detailAmountSlider.get();
+        const duration = detailDurationSlider.get();
+        
+        fetch('{{ path('loan_calculator_ajax') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `amount=${amount}&duration=${duration}&loan_type_id={{ loanType.id }}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('detail-monthly-payment').textContent = 
+                Math.round(data.monthly_payment).toLocaleString() + '€';
+            document.getElementById('detail-total-amount').textContent = 
+                Math.round(data.total_amount).toLocaleString() + '€';
+            document.getElementById('detail-total-interest').textContent = 
+                Math.round(data.total_interest).toLocaleString() + '€';
+        })
+        .catch(error => console.error('Error:', error));
+    }
+});
+</script>
+
+<style>
+.service-detail__content {
+    background: #fff;
+    border-radius: 8px;
+    padding: 0;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.service-detail__image {
+    margin-bottom: 2rem;
+}
+
+.service-detail__image img {
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+}
+
+.service-detail__text {
+    padding: 2rem;
+}
+
+.service-detail__advantages,
+.service-detail__documents {
+    list-style: none;
+    padding: 0;
+}
+
+.service-detail__advantages li,
+.service-detail__documents li {
+    padding: 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.service-detail__advantages li i {
+    color: #28a745;
+    font-size: 1.1rem;
+}
+
+.service-detail__documents li i {
+    color: #007bff;
+    font-size: 1rem;
+}
+
+.service-detail__sidebar {
+    position: sticky;
+    top: 2rem;
+}
+
+.service-info-card,
+.contact-info-card,
+.related-services-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.service-info-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.service-info-card__icon {
+    width: 50px;
+    height: 50px;
+    background: #007bff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+}
+
+.service-info-card__features {
+    margin-bottom: 2rem;
+}
+
+.service-info-card__feature {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.service-info-card__feature:last-child {
+    border-bottom: none;
+}
+
+.service-info-card__feature__label {
+    font-weight: 500;
+    color: #666;
+}
+
+.service-info-card__feature__value {
+    font-weight: 600;
+    color: #333;
+}
+
+.service-info-card__feature__value.rate {
+    color: #007bff;
+    font-size: 1.1rem;
+}
+
+.contact-info-card__header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.contact-info-card__header h4 {
+    margin-bottom: 0.5rem;
+}
+
+.contact-info-card__header p {
+    color: #666;
+    margin: 0;
+}
+
+.contact-info-card__item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.contact-info-card__item:last-child {
+    border-bottom: none;
+}
+
+.contact-info-card__item__icon {
+    width: 40px;
+    height: 40px;
+    background: #f8f9fa;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #007bff;
+}
+
+.contact-info-card__item__content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.contact-info-card__item__label {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.contact-info-card__item__value {
+    font-weight: 600;
+    color: #333;
+}
+
+.contact-info-card__btn {
+    margin-top: 1.5rem;
+}
+
+.related-services-card h4 {
+    margin-bottom: 1rem;
+}
+
+.related-service-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    color: #333;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.related-service-item:hover {
+    color: #007bff;
+}
+
+.related-service-item i {
+    color: #007bff;
+    transition: transform 0.3s ease;
+}
+
+.related-service-item:hover i {
+    transform: translateX(3px);
+}
+
+.calculator-result {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.calculator-result__item {
+    margin-bottom: 1rem;
+}
+
+.calculator-result__value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 0.5rem;
+}
+
+.calculator-result__label {
+    color: #666;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .service-detail__text {
+        padding: 1rem;
+    }
+    
+    .service-info-card__header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}

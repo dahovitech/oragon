@@ -1,0 +1,368 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Vérification de compte{% endblock %}
+
+{% block meta_description %}Vérifiez votre compte en soumettant vos documents d'identité et justificatifs requis pour accéder à nos services de prêt.{% endblock %}
+
+{% block body %}
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="page-header__bg" style="background-image: url({{ asset('assets/images/backgrounds/page-header-bg.jpg') }});"></div>
+        <div class="container">
+            <div class="page-header__inner">
+                <h2 class="page-header__title">Vérification de compte</h2>
+                <ul class="easilon-breadcrumb list-unstyled">
+                    <li><a href="{{ path('home') }}">Accueil</a></li>
+                    <li><span>Vérification</span></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Verification Section -->
+    <section class="verification-section section-space">
+        <div class="container">
+            <div class="row">
+                <!-- Main Content -->
+                <div class="col-lg-8">
+                    <div class="verification-form__wrapper">
+                        <div class="sec-title">
+                            <h6 class="sec-title__tagline">Sécurité</h6>
+                            <h3 class="sec-title__title">Vérification de votre compte</h3>
+                            <p class="sec-title__text">
+                                Pour garantir la sécurité de nos services et respecter la réglementation, 
+                                nous devons vérifier votre identité et vos informations.
+                            </p>
+                        </div>
+
+                        {% if existingVerifications|length > 0 %}
+                            <div class="verification-status mb-4">
+                                <h4>Statut de vos vérifications</h4>
+                                <div class="row">
+                                    {% for verification in existingVerifications %}
+                                        <div class="col-md-6 mb-3">
+                                            <div class="verification-status__item">
+                                                <div class="verification-status__header">
+                                                    <h5>{{ verification.verificationType == 'IDENTITY' ? 'Identité' : 
+                                                             verification.verificationType == 'ADDRESS' ? 'Domicile' : 
+                                                             verification.verificationType == 'INCOME' ? 'Revenus' : 'Entreprise' }}</h5>
+                                                    <span class="verification-status__badge 
+                                                        {% if verification.status == 'VERIFIED' %}verified
+                                                        {% elseif verification.status == 'REJECTED' %}rejected
+                                                        {% else %}pending{% endif %}">
+                                                        {% if verification.status == 'VERIFIED' %}
+                                                            <i class="fa fa-check-circle"></i> Vérifié
+                                                        {% elseif verification.status == 'REJECTED' %}
+                                                            <i class="fa fa-times-circle"></i> Rejeté
+                                                        {% else %}
+                                                            <i class="fa fa-clock"></i> En attente
+                                                        {% endif %}
+                                                    </span>
+                                                </div>
+                                                <p class="verification-status__date">
+                                                    Soumis le {{ verification.submittedAt|date('d/m/Y à H:i') }}
+                                                </p>
+                                                {% if verification.comments %}
+                                                    <div class="verification-status__comments">
+                                                        <strong>Commentaires :</strong>
+                                                        <p>{{ verification.comments }}</p>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- Verification Form -->
+                        <div class="verification-form">
+                            <div class="verification-form__bg" style="background-image: url({{ asset('assets/images/shapes/form-bg.png') }});"></div>
+                            
+                            {{ form_start(form, {'attr': {'class': 'verification-form__form', 'enctype': 'multipart/form-data'}}) }}
+                            
+                                <div class="row">
+                                    <!-- Verification Type -->
+                                    <div class="col-12 mb-4">
+                                        <div class="form-group">
+                                            {{ form_label(form.verificationType, null, {'label_attr': {'class': 'form-label'}}) }}
+                                            {{ form_widget(form.verificationType) }}
+                                            {{ form_errors(form.verificationType) }}
+                                        </div>
+                                    </div>
+
+                                    <!-- Identity Documents -->
+                                    <div class="col-md-6 mb-4">
+                                        <div class="form-group file-upload-group">
+                                            {{ form_label(form.identityDocuments, null, {'label_attr': {'class': 'form-label'}}) }}
+                                            <div class="file-upload-wrapper">
+                                                <div class="file-upload-icon">
+                                                    <i class="fa fa-id-card"></i>
+                                                </div>
+                                                {{ form_widget(form.identityDocuments) }}
+                                                {{ form_help(form.identityDocuments) }}
+                                                {{ form_errors(form.identityDocuments) }}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Address Documents -->
+                                    <div class="col-md-6 mb-4">
+                                        <div class="form-group file-upload-group">
+                                            {{ form_label(form.addressDocuments, null, {'label_attr': {'class': 'form-label'}}) }}
+                                            <div class="file-upload-wrapper">
+                                                <div class="file-upload-icon">
+                                                    <i class="fa fa-home"></i>
+                                                </div>
+                                                {{ form_widget(form.addressDocuments) }}
+                                                {{ form_help(form.addressDocuments) }}
+                                                {{ form_errors(form.addressDocuments) }}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Income Documents -->
+                                    <div class="col-md-6 mb-4">
+                                        <div class="form-group file-upload-group">
+                                            {{ form_label(form.incomeDocuments, null, {'label_attr': {'class': 'form-label'}}) }}
+                                            <div class="file-upload-wrapper">
+                                                <div class="file-upload-icon">
+                                                    <i class="fa fa-money-bill"></i>
+                                                </div>
+                                                {{ form_widget(form.incomeDocuments) }}
+                                                {{ form_help(form.incomeDocuments) }}
+                                                {{ form_errors(form.incomeDocuments) }}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Business Documents -->
+                                    <div class="col-md-6 mb-4">
+                                        <div class="form-group file-upload-group">
+                                            {{ form_label(form.businessDocuments, null, {'label_attr': {'class': 'form-label'}}) }}
+                                            <div class="file-upload-wrapper">
+                                                <div class="file-upload-icon">
+                                                    <i class="fa fa-building"></i>
+                                                </div>
+                                                {{ form_widget(form.businessDocuments) }}
+                                                {{ form_help(form.businessDocuments) }}
+                                                {{ form_errors(form.businessDocuments) }}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Comments -->
+                                    <div class="col-12 mb-4">
+                                        <div class="form-group">
+                                            {{ form_label(form.comments, null, {'label_attr': {'class': 'form-label'}}) }}
+                                            {{ form_widget(form.comments) }}
+                                            {{ form_help(form.comments) }}
+                                            {{ form_errors(form.comments) }}
+                                        </div>
+                                    </div>
+
+                                    <!-- Submit Button -->
+                                    <div class="col-12">
+                                        <div class="verification-form__btn text-center">
+                                            {{ form_widget(form.submit) }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                            {{ form_end(form) }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="col-lg-4">
+                    <div class="verification-sidebar">
+                        <!-- Help Section -->
+                        <div class="verification-sidebar__item">
+                            <h4 class="verification-sidebar__title">
+                                <i class="fa fa-question-circle"></i>
+                                Aide et informations
+                            </h4>
+                            <div class="verification-sidebar__content">
+                                <h5>Documents requis</h5>
+                                <ul class="verification-sidebar__list">
+                                    <li><strong>Identité :</strong> CNI, passeport en cours de validité</li>
+                                    <li><strong>Domicile :</strong> Facture récente (moins de 3 mois)</li>
+                                    <li><strong>Revenus :</strong> 3 derniers bulletins de salaire ou avis d'imposition</li>
+                                    <li><strong>Entreprise :</strong> Kbis, statuts, bilans (pour les professionnels)</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Security Info -->
+                        <div class="verification-sidebar__item">
+                            <h4 class="verification-sidebar__title">
+                                <i class="fa fa-shield-alt"></i>
+                                Sécurité
+                            </h4>
+                            <div class="verification-sidebar__content">
+                                <p>Vos documents sont transmis de manière sécurisée et cryptée. Ils sont uniquement utilisés dans le cadre de la vérification de votre compte.</p>
+                                <p><strong>Délai de traitement :</strong> 24 à 48 heures ouvrables</p>
+                            </div>
+                        </div>
+
+                        <!-- Contact -->
+                        <div class="verification-sidebar__item">
+                            <h4 class="verification-sidebar__title">
+                                <i class="fa fa-headset"></i>
+                                Besoin d'aide ?
+                            </h4>
+                            <div class="verification-sidebar__content">
+                                <p>Notre équipe support est à votre disposition :</p>
+                                <p>
+                                    <strong>Email :</strong> 
+                                    <a href="mailto:support@loanplatform.com">support@loanplatform.com</a>
+                                </p>
+                                <p>
+                                    <strong>Téléphone :</strong> 
+                                    <a href="tel:+33123456789">+33 1 23 45 67 89</a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // File upload feedback
+    const fileInputs = document.querySelectorAll('input[type="file"]');
+    
+    fileInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            const fileCount = this.files.length;
+            const wrapper = this.closest('.file-upload-wrapper');
+            
+            if (fileCount > 0) {
+                wrapper.classList.add('has-files');
+                const feedback = wrapper.querySelector('.file-feedback') || document.createElement('div');
+                feedback.className = 'file-feedback';
+                feedback.innerHTML = `<i class="fa fa-check text-success"></i> ${fileCount} fichier(s) sélectionné(s)`;
+                
+                if (!wrapper.querySelector('.file-feedback')) {
+                    wrapper.appendChild(feedback);
+                }
+            } else {
+                wrapper.classList.remove('has-files');
+                const feedback = wrapper.querySelector('.file-feedback');
+                if (feedback) {
+                    feedback.remove();
+                }
+            }
+        });
+    });
+});
+</script>
+
+<style>
+.verification-status__item {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.verification-status__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.verification-status__badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.verification-status__badge.verified {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.verification-status__badge.rejected {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.verification-status__badge.pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.file-upload-group {
+    position: relative;
+}
+
+.file-upload-wrapper {
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.file-upload-wrapper:hover {
+    border-color: #007bff;
+    background-color: #f8f9fa;
+}
+
+.file-upload-wrapper.has-files {
+    border-color: #28a745;
+    background-color: #f8fff8;
+}
+
+.file-upload-icon {
+    font-size: 2rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.verification-sidebar__item {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.verification-sidebar__title {
+    color: #007bff;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.verification-sidebar__list {
+    list-style: none;
+    padding: 0;
+}
+
+.verification-sidebar__list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.verification-sidebar__list li:last-child {
+    border-bottom: none;
+}
+
+.file-feedback {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}

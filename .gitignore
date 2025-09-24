@@ -1,0 +1,42 @@
+# Exclusion des autres projets dans le workspace
+/browser/
+/external_api/
+/easilon-htm/
+/loan-platform/
+/shell_output_save/
+/.backups/
+
+# ==============================================================================
+# SYMFONY PROJECT - ORAGON
+# ==============================================================================
+
+# Composer dependencies
+/vendor/
+
+# Environment variables
+.env.local
+.env.local.php
+.env.*.local
+
+# Symfony cache and logs
+/var/
+/public/bundles/
+
+# PHPUnit cache
+.phpunit.result.cache
+
+# Node.js dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# IDE files
+/.idea/
+/.vscode/
+
+# Temp files
+*.tmp
+*.temp
+
+# Secrets
+/config/secrets/prod/prod.decrypt.private.php

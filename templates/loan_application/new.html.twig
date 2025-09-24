@@ -1,0 +1,731 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouvelle demande de prêt{% endblock %}
+
+{% block body %}
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="page-header__bg" style="background-image: url({{ asset('assets/images/backgrounds/page-header-bg.jpg') }});"></div>
+        <div class="container">
+            <div class="page-header__inner">
+                <h2 class="page-header__title">Demande de prêt</h2>
+                <ul class="easilon-breadcrumb list-unstyled">
+                    <li><a href="{{ path('home') }}">Accueil</a></li>
+                    <li><a href="{{ path('dashboard_index') }}">Dashboard</a></li>
+                    <li><span>Nouvelle demande</span></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Application Form -->
+    <section class="loan-application section-space">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    {{ form_start(form, {'attr': {'class': 'loan-application-form', 'novalidate': 'novalidate'}}) }}
+                    
+                    <!-- Progress Steps -->
+                    <div class="application-steps">
+                        <div class="steps-header">
+                            <div class="step-item active">
+                                <div class="step-number">1</div>
+                                <div class="step-title">Informations du prêt</div>
+                            </div>
+                            <div class="step-item">
+                                <div class="step-number">2</div>
+                                <div class="step-title">Situation financière</div>
+                            </div>
+                            <div class="step-item">
+                                <div class="step-number">3</div>
+                                <div class="step-title">Documents</div>
+                            </div>
+                            <div class="step-item">
+                                <div class="step-number">4</div>
+                                <div class="step-title">Validation</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 1: Loan Information -->
+                        <div class="step-content active" id="step-1">
+                            <div class="step-content__header">
+                                <h3>Informations sur votre projet</h3>
+                                <p>Définissez les caractéristiques de votre prêt</p>
+                            </div>
+                            
+                            <div class="row gutter-y-20">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {{ form_label(form.loanType) }}
+                                        {{ form_widget(form.loanType) }}
+                                        {{ form_errors(form.loanType) }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {{ form_label(form.requestedAmount) }}
+                                        {{ form_widget(form.requestedAmount) }}
+                                        {{ form_errors(form.requestedAmount) }}
+                                        <small class="form-text text-muted">Montant souhaité en euros</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {{ form_label(form.duration) }}
+                                        {{ form_widget(form.duration) }}
+                                        {{ form_errors(form.duration) }}
+                                        <small class="form-text text-muted">Durée de remboursement en mois</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        {{ form_label(form.purpose) }}
+                                        {{ form_widget(form.purpose) }}
+                                        {{ form_errors(form.purpose) }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Loan Calculator Preview -->
+                            <div class="loan-preview" id="loan-preview" style="display: none;">
+                                <h4>Aperçu de votre prêt</h4>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="preview-item">
+                                            <span class="preview-label">Mensualité estimée</span>
+                                            <span class="preview-value" id="preview-monthly">-</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="preview-item">
+                                            <span class="preview-label">Coût total</span>
+                                            <span class="preview-value" id="preview-total">-</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="preview-item">
+                                            <span class="preview-label">Taux d'intérêt</span>
+                                            <span class="preview-value" id="preview-rate">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="step-navigation">
+                                <button type="button" class="easilon-btn" onclick="nextStep()">
+                                    <span>Suivant</span>
+                                    <span class="easilon-btn__icon"><i class="icon-double-right-arrow"></i></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Financial Information -->
+                        <div class="step-content" id="step-2" style="display: none;">
+                            <div class="step-content__header">
+                                <h3>Votre situation financière</h3>
+                                <p>Ces informations nous aident à évaluer votre capacité de remboursement</p>
+                            </div>
+                            
+                            <div class="row gutter-y-20">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {{ form_label(form.monthlyIncome) }}
+                                        {{ form_widget(form.monthlyIncome) }}
+                                        {{ form_errors(form.monthlyIncome) }}
+                                        <small class="form-text text-muted">Revenus nets mensuels</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {{ form_label(form.monthlyExpenses) }}
+                                        {{ form_widget(form.monthlyExpenses) }}
+                                        {{ form_errors(form.monthlyExpenses) }}
+                                        <small class="form-text text-muted">Charges fixes mensuelles</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {{ form_label(form.employmentStatus) }}
+                                        {{ form_widget(form.employmentStatus) }}
+                                        {{ form_errors(form.employmentStatus) }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        {{ form_label(form.companyName) }}
+                                        {{ form_widget(form.companyName) }}
+                                        {{ form_errors(form.companyName) }}
+                                    </div>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        {{ form_label(form.guarantees) }}
+                                        {{ form_widget(form.guarantees) }}
+                                        {{ form_errors(form.guarantees) }}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="step-navigation">
+                                <button type="button" class="btn btn-outline-secondary" onclick="prevStep()">
+                                    <i class="fa fa-arrow-left"></i> Précédent
+                                </button>
+                                <button type="button" class="easilon-btn" onclick="nextStep()">
+                                    <span>Suivant</span>
+                                    <span class="easilon-btn__icon"><i class="icon-double-right-arrow"></i></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Documents -->
+                        <div class="step-content" id="step-3" style="display: none;">
+                            <div class="step-content__header">
+                                <h3>Documents justificatifs</h3>
+                                <p>Joignez les documents nécessaires à l'étude de votre dossier</p>
+                            </div>
+                            
+                            <div class="documents-upload">
+                                <div class="required-documents" id="required-documents">
+                                    <h4>Documents requis pour ce type de prêt</h4>
+                                    <div class="document-checklist">
+                                        <!-- Will be populated by JavaScript based on loan type -->
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    {{ form_label(form.documents) }}
+                                    {{ form_widget(form.documents) }}
+                                    {{ form_errors(form.documents) }}
+                                    <small class="form-text text-muted">
+                                        Formats acceptés: PDF, JPG, PNG, GIF (max 10MB par fichier)
+                                    </small>
+                                </div>
+                                
+                                <div class="upload-preview" id="upload-preview"></div>
+                            </div>
+                            
+                            <div class="step-navigation">
+                                <button type="button" class="btn btn-outline-secondary" onclick="prevStep()">
+                                    <i class="fa fa-arrow-left"></i> Précédent
+                                </button>
+                                <button type="button" class="easilon-btn" onclick="nextStep()">
+                                    <span>Suivant</span>
+                                    <span class="easilon-btn__icon"><i class="icon-double-right-arrow"></i></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Validation -->
+                        <div class="step-content" id="step-4" style="display: none;">
+                            <div class="step-content__header">
+                                <h3>Validation de votre demande</h3>
+                                <p>Vérifiez les informations avant de soumettre votre demande</p>
+                            </div>
+                            
+                            <div class="application-summary">
+                                <div class="summary-section">
+                                    <h4>Détails du prêt</h4>
+                                    <div class="summary-grid">
+                                        <div class="summary-item">
+                                            <span class="summary-label">Type de prêt:</span>
+                                            <span class="summary-value" id="summary-loan-type">-</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="summary-label">Montant:</span>
+                                            <span class="summary-value" id="summary-amount">-</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="summary-label">Durée:</span>
+                                            <span class="summary-value" id="summary-duration">-</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="summary-label">Mensualité estimée:</span>
+                                            <span class="summary-value" id="summary-monthly">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="summary-section">
+                                    <h4>Situation financière</h4>
+                                    <div class="summary-grid">
+                                        <div class="summary-item">
+                                            <span class="summary-label">Revenus mensuels:</span>
+                                            <span class="summary-value" id="summary-income">-</span>
+                                        </div>
+                                        <div class="summary-item">
+                                            <span class="summary-label">Situation professionnelle:</span>
+                                            <span class="summary-value" id="summary-employment">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="summary-section">
+                                    <h4>Documents</h4>
+                                    <div class="summary-documents" id="summary-documents">
+                                        <!-- Will be populated by JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="final-confirmation">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="confirm-terms" required>
+                                    <label class="form-check-label" for="confirm-terms">
+                                        Je certifie sur l'honneur l'exactitude des informations fournies et j'accepte les 
+                                        <a href="#" target="_blank">conditions générales</a>.
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="step-navigation">
+                                <button type="button" class="btn btn-outline-secondary" onclick="prevStep()">
+                                    <i class="fa fa-arrow-left"></i> Précédent
+                                </button>
+                                <button type="submit" class="easilon-btn easilon-btn--base" id="submit-application">
+                                    <span>Soumettre ma demande</span>
+                                    <span class="easilon-btn__icon"><i class="fa fa-check"></i></span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_javascripts %}
+<script>
+let currentStep = 1;
+const totalSteps = 4;
+
+function showStep(step) {
+    // Hide all steps
+    for (let i = 1; i <= totalSteps; i++) {
+        document.getElementById('step-' + i).style.display = 'none';
+        document.querySelector('.step-item:nth-child(' + i + ')').classList.remove('active');
+    }
+    
+    // Show current step
+    document.getElementById('step-' + step).style.display = 'block';
+    document.querySelector('.step-item:nth-child(' + step + ')').classList.add('active');
+    
+    currentStep = step;
+}
+
+function nextStep() {
+    if (validateCurrentStep()) {
+        if (currentStep < totalSteps) {
+            showStep(currentStep + 1);
+            
+            // Update summary when reaching step 4
+            if (currentStep === 4) {
+                updateSummary();
+            }
+        }
+    }
+}
+
+function prevStep() {
+    if (currentStep > 1) {
+        showStep(currentStep - 1);
+    }
+}
+
+function validateCurrentStep() {
+    const currentStepElement = document.getElementById('step-' + currentStep);
+    const inputs = currentStepElement.querySelectorAll('input[required], select[required], textarea[required]');
+    let isValid = true;
+    
+    inputs.forEach(input => {
+        if (!input.value.trim()) {
+            input.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            input.classList.remove('is-invalid');
+        }
+    });
+    
+    return isValid;
+}
+
+function updateSummary() {
+    // Update loan details
+    const loanTypeSelect = document.getElementById('loan_application_loanType');
+    const loanTypeText = loanTypeSelect.options[loanTypeSelect.selectedIndex]?.text || '-';
+    document.getElementById('summary-loan-type').textContent = loanTypeText;
+    
+    const amount = document.getElementById('loan_application_requestedAmount').value;
+    document.getElementById('summary-amount').textContent = amount ? amount + '€' : '-';
+    
+    const duration = document.getElementById('loan_application_duration').value;
+    document.getElementById('summary-duration').textContent = duration ? duration + ' mois' : '-';
+    
+    // Update financial info
+    const income = document.getElementById('loan_application_monthlyIncome').value;
+    document.getElementById('summary-income').textContent = income ? income + '€' : '-';
+    
+    const employmentSelect = document.getElementById('loan_application_employmentStatus');
+    const employmentText = employmentSelect.options[employmentSelect.selectedIndex]?.text || '-';
+    document.getElementById('summary-employment').textContent = employmentText;
+    
+    // Update documents
+    const fileInput = document.getElementById('loan_application_documents');
+    const summaryDocuments = document.getElementById('summary-documents');
+    summaryDocuments.innerHTML = '';
+    
+    if (fileInput.files.length > 0) {
+        for (let file of fileInput.files) {
+            const docItem = document.createElement('div');
+            docItem.className = 'summary-document-item';
+            docItem.innerHTML = `<i class="fa fa-file"></i> ${file.name}`;
+            summaryDocuments.appendChild(docItem);
+        }
+    } else {
+        summaryDocuments.innerHTML = '<p class="text-muted">Aucun document sélectionné</p>';
+    }
+}
+
+// Loan calculator
+function calculateLoan() {
+    const loanTypeSelect = document.getElementById('loan_application_loanType');
+    const amount = parseFloat(document.getElementById('loan_application_requestedAmount').value);
+    const duration = parseInt(document.getElementById('loan_application_duration').value);
+    
+    if (loanTypeSelect.value && amount && duration) {
+        fetch('{{ path('loan_calculator_ajax') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `amount=${amount}&duration=${duration}&loan_type_id=${loanTypeSelect.value}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('preview-monthly').textContent = Math.round(data.monthly_payment).toLocaleString() + '€';
+            document.getElementById('preview-total').textContent = Math.round(data.total_amount).toLocaleString() + '€';
+            document.getElementById('preview-rate').textContent = data.interest_rate + '%';
+            document.getElementById('summary-monthly').textContent = Math.round(data.monthly_payment).toLocaleString() + '€';
+            
+            document.getElementById('loan-preview').style.display = 'block';
+        })
+        .catch(error => console.error('Error:', error));
+    }
+}
+
+// Event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Calculator triggers
+    ['loan_application_loanType', 'loan_application_requestedAmount', 'loan_application_duration'].forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('change', calculateLoan);
+            element.addEventListener('input', calculateLoan);
+        }
+    });
+    
+    // File upload preview
+    const fileInput = document.getElementById('loan_application_documents');
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            const preview = document.getElementById('upload-preview');
+            preview.innerHTML = '';
+            
+            for (let file of this.files) {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'upload-item';
+                fileItem.innerHTML = `
+                    <i class="fa fa-file"></i>
+                    <span>${file.name}</span>
+                    <small>(${(file.size / 1024 / 1024).toFixed(2)} MB)</small>
+                `;
+                preview.appendChild(fileItem);
+            }
+        });
+    }
+
+    // Form submission
+    document.getElementById('submit-application').addEventListener('click', function(e) {
+        const confirmCheckbox = document.getElementById('confirm-terms');
+        if (!confirmCheckbox.checked) {
+            e.preventDefault();
+            alert('Veuillez accepter les conditions générales pour continuer.');
+        }
+    });
+});
+</script>
+
+<style>
+.loan-application-form {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.application-steps {
+    padding: 2rem;
+}
+
+.steps-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 3rem;
+    position: relative;
+}
+
+.steps-header::before {
+    content: '';
+    position: absolute;
+    top: 25px;
+    left: 50px;
+    right: 50px;
+    height: 2px;
+    background: #e9ecef;
+    z-index: 1;
+}
+
+.step-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    z-index: 2;
+}
+
+.step-number {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.step-item.active .step-number {
+    background: #007bff;
+    color: white;
+}
+
+.step-title {
+    font-size: 0.9rem;
+    color: #6c757d;
+    text-align: center;
+}
+
+.step-item.active .step-title {
+    color: #007bff;
+    font-weight: 600;
+}
+
+.step-content {
+    padding: 2rem 0;
+}
+
+.step-content__header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.step-content__header h3 {
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.step-content__header p {
+    color: #666;
+    margin: 0;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.loan-preview {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+}
+
+.loan-preview h4 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.preview-item {
+    text-align: center;
+    padding: 1rem;
+}
+
+.preview-label {
+    display: block;
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.preview-value {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.step-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.documents-upload {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 1.5rem;
+}
+
+.required-documents h4 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.document-checklist {
+    margin-bottom: 1.5rem;
+}
+
+.upload-preview {
+    margin-top: 1rem;
+}
+
+.upload-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    border: 1px solid #e9ecef;
+}
+
+.upload-item i {
+    color: #007bff;
+}
+
+.application-summary {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 1.5rem;
+}
+
+.summary-section {
+    margin-bottom: 2rem;
+}
+
+.summary-section h4 {
+    margin-bottom: 1rem;
+    color: #333;
+    border-bottom: 1px solid #e9ecef;
+    padding-bottom: 0.5rem;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 4px;
+    border: 1px solid #e9ecef;
+}
+
+.summary-label {
+    font-weight: 500;
+    color: #666;
+}
+
+.summary-value {
+    font-weight: 600;
+    color: #333;
+}
+
+.summary-document-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: white;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+    border: 1px solid #e9ecef;
+}
+
+.final-confirmation {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+}
+
+.form-check-label {
+    font-size: 0.9rem;
+    color: #856404;
+}
+
+.form-check-label a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.form-check-label a:hover {
+    text-decoration: underline;
+}
+
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+@media (max-width: 768px) {
+    .steps-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .steps-header::before {
+        display: none;
+    }
+    
+    .step-navigation {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

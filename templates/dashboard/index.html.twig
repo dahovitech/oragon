@@ -1,0 +1,410 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tableau de bord{% endblock %}
+
+{% block body %}
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="page-header__bg" style="background-image: url({{ asset('assets/images/backgrounds/page-header-bg.jpg') }});"></div>
+        <div class="container">
+            <div class="page-header__inner">
+                <h2 class="page-header__title">Mon tableau de bord</h2>
+                <ul class="easilon-breadcrumb list-unstyled">
+                    <li><a href="{{ path('home') }}">Accueil</a></li>
+                    <li><span>Dashboard</span></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Content -->
+    <section class="dashboard section-space">
+        <div class="container">
+            <div class="dashboard-header">
+                <div class="row align-items-center">
+                    <div class="col-lg-6">
+                        <div class="dashboard-welcome">
+                            <h3>Bonjour {{ user.firstName ?? user.email }}!</h3>
+                            <p>Bienvenue sur votre espace personnel. Gérez vos demandes de prêt et votre compte en toute simplicité.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="dashboard-quick-actions">
+                            {% if user.isVerified %}
+                                <a href="{{ path('loan_catalog_index') }}" class="easilon-btn">
+                                    <span>Nouvelle demande</span>
+                                    <span class="easilon-btn__icon">
+                                        <i class="icon-plus"></i>
+                                    </span>
+                                </a>
+                            {% else %}
+                                <a href="{{ path('user_verification_index') }}" class="easilon-btn">
+                                    <span>Vérifier mon compte</span>
+                                    <span class="easilon-btn__icon">
+                                        <i class="icon-verified"></i>
+                                    </span>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row gutter-y-30">
+                <!-- Account Status Card -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="dashboard-stat-card">
+                        <div class="dashboard-stat-card__icon">
+                            {% if user.isVerified %}
+                                <i class="fa fa-check-circle text-success"></i>
+                            {% else %}
+                                <i class="fa fa-clock text-warning"></i>
+                            {% endif %}
+                        </div>
+                        <div class="dashboard-stat-card__content">
+                            <h4 class="dashboard-stat-card__title">Statut du compte</h4>
+                            <p class="dashboard-stat-card__value">
+                                {% if user.isVerified %}
+                                    <span class="text-success">Vérifié</span>
+                                {% else %}
+                                    <span class="text-warning">En attente</span>
+                                {% endif %}
+                            </p>
+                            <div class="dashboard-stat-card__progress">
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: {{ verificationProgress }}%" aria-valuenow="{{ verificationProgress }}" aria-valuemin="0" aria-valuemax="100">
+                                        {{ verificationProgress|round }}%
+                                    </div>
+                                </div>
+                                <small class="text-muted">Vérification complète</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loan Applications Count -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="dashboard-stat-card">
+                        <div class="dashboard-stat-card__icon">
+                            <i class="fa fa-file-alt text-primary"></i>
+                        </div>
+                        <div class="dashboard-stat-card__content">
+                            <h4 class="dashboard-stat-card__title">Demandes de prêt</h4>
+                            <p class="dashboard-stat-card__value">{{ loanApplications|length }}</p>
+                            <small class="text-muted">
+                                {% if loanApplications|length > 0 %}
+                                    Dernière: {{ loanApplications[0].submittedAt|date('d/m/Y') }}
+                                {% else %}
+                                    Aucune demande
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Type -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="dashboard-stat-card">
+                        <div class="dashboard-stat-card__icon">
+                            {% if user.accountType == 'BUSINESS' %}
+                                <i class="fa fa-building text-info"></i>
+                            {% else %}
+                                <i class="fa fa-user text-info"></i>
+                            {% endif %}
+                        </div>
+                        <div class="dashboard-stat-card__content">
+                            <h4 class="dashboard-stat-card__title">Type de compte</h4>
+                            <p class="dashboard-stat-card__value">
+                                {% if user.accountType == 'BUSINESS' %}
+                                    Entreprise
+                                {% else %}
+                                    Particulier
+                                {% endif %}
+                            </p>
+                            <small class="text-muted">{{ user.email }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Applications -->
+            {% if loanApplications|length > 0 %}
+                <div class="dashboard-section mt-5">
+                    <div class="dashboard-section__header">
+                        <h3>Mes demandes récentes</h3>
+                        <a href="{{ path('dashboard_applications') }}" class="easilon-btn easilon-btn--base">
+                            <span>Voir tout</span>
+                            <span class="easilon-btn__icon">
+                                <i class="icon-double-right-arrow"></i>
+                            </span>
+                        </a>
+                    </div>
+                    <div class="dashboard-section__content">
+                        <div class="loan-applications-table">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Type de prêt</th>
+                                            <th>Montant</th>
+                                            <th>Durée</th>
+                                            <th>Statut</th>
+                                            <th>Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for application in loanApplications %}
+                                            <tr>
+                                                <td>
+                                                    <strong>{{ application.loanType.name }}</strong>
+                                                </td>
+                                                <td>{{ application.requestedAmount|number_format(0, ',', ' ') }}€</td>
+                                                <td>{{ application.duration }} mois</td>
+                                                <td>
+                                                    <span class="badge badge-{{ application.status|lower|replace({'_': '-'}) }}">
+                                                        {% if application.status == 'DRAFT' %}
+                                                            Brouillon
+                                                        {% elseif application.status == 'SUBMITTED' %}
+                                                            Soumise
+                                                        {% elseif application.status == 'UNDER_REVIEW' %}
+                                                            En cours d'étude
+                                                        {% elseif application.status == 'APPROVED' %}
+                                                            Approuvée
+                                                        {% elseif application.status == 'REJECTED' %}
+                                                            Rejetée
+                                                        {% elseif application.status == 'DISBURSED' %}
+                                                            Débloquée
+                                                        {% else %}
+                                                            {{ application.status }}
+                                                        {% endif %}
+                                                    </span>
+                                                </td>
+                                                <td>{{ application.submittedAt ? application.submittedAt|date('d/m/Y') : 'N/A' }}</td>
+                                                <td>
+                                                    <a href="#" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fa fa-eye"></i> Voir
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Verification Status -->
+            {% if not user.isVerified %}
+                <div class="dashboard-section mt-5">
+                    <div class="dashboard-section__header">
+                        <h3>Vérification du compte</h3>
+                        <a href="{{ path('user_verification_index') }}" class="easilon-btn easilon-btn--base">
+                            <span>Continuer</span>
+                            <span class="easilon-btn__icon">
+                                <i class="icon-double-right-arrow"></i>
+                            </span>
+                        </a>
+                    </div>
+                    <div class="dashboard-section__content">
+                        <div class="verification-checklist">
+                            {% for verificationType in requiredVerifications %}
+                                <div class="verification-checklist__item">
+                                    <div class="verification-checklist__item__icon">
+                                        {% if verificationType in completedVerifications %}
+                                            <i class="fa fa-check-circle text-success"></i>
+                                        {% elseif verificationType in pendingVerifications %}
+                                            <i class="fa fa-clock text-warning"></i>
+                                        {% else %}
+                                            <i class="fa fa-times-circle text-muted"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="verification-checklist__item__content">
+                                        <h5>
+                                            {% if verificationType == 'IDENTITY' %}
+                                                Vérification d'identité
+                                            {% elseif verificationType == 'ADDRESS' %}
+                                                Justificatif de domicile
+                                            {% elseif verificationType == 'INCOME' %}
+                                                Justificatif de revenus
+                                            {% else %}
+                                                {{ verificationType }}
+                                            {% endif %}
+                                        </h5>
+                                        <p>
+                                            {% if verificationType in completedVerifications %}
+                                                <span class="text-success">Validé</span>
+                                            {% elseif verificationType in pendingVerifications %}
+                                                <span class="text-warning">En cours de vérification</span>
+                                            {% else %}
+                                                <span class="text-muted">En attente</span>
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_stylesheets %}
+<style>
+.dashboard-header {
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.dashboard-welcome h3 {
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-welcome p {
+    color: #666;
+    margin: 0;
+}
+
+.dashboard-quick-actions {
+    text-align: right;
+}
+
+.dashboard-stat-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.dashboard-stat-card__icon {
+    font-size: 2.5rem;
+    opacity: 0.8;
+}
+
+.dashboard-stat-card__content {
+    flex: 1;
+}
+
+.dashboard-stat-card__title {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.dashboard-stat-card__value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-stat-card__progress .progress {
+    height: 4px;
+    margin-bottom: 0.25rem;
+}
+
+.dashboard-section {
+    background: #fff;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.dashboard-section__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.dashboard-section__header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.loan-applications-table .table th {
+    border-top: none;
+    border-bottom: 1px solid #dee2e6;
+    font-weight: 600;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.badge-draft { background-color: #6c757d; }
+.badge-submitted { background-color: #17a2b8; }
+.badge-under-review { background-color: #ffc107; color: #212529; }
+.badge-approved { background-color: #28a745; }
+.badge-rejected { background-color: #dc3545; }
+.badge-disbursed { background-color: #007bff; }
+
+.verification-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.verification-checklist__item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.verification-checklist__item__icon {
+    font-size: 1.5rem;
+}
+
+.verification-checklist__item__content h5 {
+    margin-bottom: 0.25rem;
+    font-size: 1rem;
+}
+
+.verification-checklist__item__content p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+    .dashboard-header {
+        padding: 1rem;
+    }
+    
+    .dashboard-section {
+        padding: 1rem;
+    }
+    
+    .dashboard-section__header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .dashboard-quick-actions {
+        text-align: left;
+    }
+    
+    .verification-checklist__item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,797 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Dashboard Administration{% endblock %}
+
+{% block admin_content %}
+    <div class="admin-header">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1>Dashboard Administration</h1>
+                <p class="admin-subtitle">Vue d'ensemble de la plateforme</p>
+            </div>
+            <div class="col-lg-6">
+                <div class="admin-actions">
+                    <span class="text-muted">Dernière mise à jour: {{ 'now'|date('d/m/Y H:i') }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Statistics -->
+    <div class="stats-grid">
+        <div class="row">
+            <!-- Users Section -->
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card stat-card--primary">
+                    <div class="stat-card__icon">
+                        <i class="fa fa-users"></i>
+                    </div>
+                    <div class="stat-card__content">
+                        <h3>{{ stats.totalUsers }}</h3>
+                        <p>Utilisateurs total</p>
+                        <small>{{ stats.verifiedUsers }} vérifiés</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Verifications Section -->
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card stat-card--warning">
+                    <div class="stat-card__icon">
+                        <i class="fa fa-clock"></i>
+                    </div>
+                    <div class="stat-card__content">
+                        <h3>{{ stats.pendingVerifications }}</h3>
+                        <p>Vérifications en attente</p>
+                        <small>{{ stats.rejectedVerifications }} rejetées</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Loan Applications Section -->
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card stat-card--info">
+                    <div class="stat-card__icon">
+                        <i class="fa fa-file-alt"></i>
+                    </div>
+                    <div class="stat-card__content">
+                        <h3>{{ stats.totalApplications }}</h3>
+                        <p>Demandes de prêt</p>
+                        <small>{{ stats.pendingApplications + stats.underReviewApplications }} à traiter</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contracts Section -->
+            <div class="col-lg-3 col-md-6">
+                <div class="stat-card stat-card--success">
+                    <div class="stat-card__icon">
+                        <i class="fa fa-file-contract"></i>
+                    </div>
+                    <div class="stat-card__content">
+                        <h3>{{ stats.totalContracts }}</h3>
+                        <p>Contrats générés</p>
+                        <small>{{ stats.signedContracts }} signés</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Statistics -->
+    <div class="row gutter-x-30">
+        <!-- Loan Applications Overview -->
+        <div class="col-lg-6">
+            <div class="admin-card">
+                <div class="admin-card__header">
+                    <h3>État des demandes de prêt</h3>
+                    <a href="{{ path('admin_loan_applications_index') }}" class="btn btn-sm btn-outline-primary">
+                        Voir tout
+                    </a>
+                </div>
+                <div class="admin-card__body">
+                    <div class="progress-stats">
+                        <div class="progress-stat">
+                            <div class="progress-stat__label">
+                                <span>En attente</span>
+                                <span class="badge badge-warning">{{ stats.pendingApplications }}</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning" style="width: {{ stats.totalApplications > 0 ? (stats.pendingApplications / stats.totalApplications * 100)|round : 0 }}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="progress-stat">
+                            <div class="progress-stat__label">
+                                <span>En étude</span>
+                                <span class="badge badge-info">{{ stats.underReviewApplications }}</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-info" style="width: {{ stats.totalApplications > 0 ? (stats.underReviewApplications / stats.totalApplications * 100)|round : 0 }}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="progress-stat">
+                            <div class="progress-stat__label">
+                                <span>Approuvées</span>
+                                <span class="badge badge-success">{{ stats.approvedApplications }}</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" style="width: {{ stats.totalApplications > 0 ? (stats.approvedApplications / stats.totalApplications * 100)|round : 0 }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contracts Overview -->
+        <div class="col-lg-6">
+            <div class="admin-card">
+                <div class="admin-card__header">
+                    <h3>État des contrats</h3>
+                    <a href="{{ path('admin_contracts_index') }}" class="btn btn-sm btn-outline-primary">
+                        Voir tout
+                    </a>
+                </div>
+                <div class="admin-card__body">
+                    <div class="contract-stats">
+                        <div class="contract-stat">
+                            <div class="contract-stat__icon">
+                                <i class="fa fa-file text-primary"></i>
+                            </div>
+                            <div class="contract-stat__content">
+                                <h4>{{ stats.totalContracts }}</h4>
+                                <p>Total générés</p>
+                            </div>
+                        </div>
+                        
+                        <div class="contract-stat">
+                            <div class="contract-stat__icon">
+                                <i class="fa fa-signature text-success"></i>
+                            </div>
+                            <div class="contract-stat__content">
+                                <h4>{{ stats.signedContracts }}</h4>
+                                <p>Signés</p>
+                            </div>
+                        </div>
+                        
+                        <div class="contract-stat">
+                            <div class="contract-stat__icon">
+                                <i class="fa fa-check-circle text-info"></i>
+                            </div>
+                            <div class="contract-stat__content">
+                                <h4>{{ stats.activeContracts }}</h4>
+                                <p>Actifs</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row gutter-x-30">
+        <!-- Recent Applications -->
+        <div class="col-lg-6">
+            <div class="admin-card">
+                <div class="admin-card__header">
+                    <h3>Demandes récentes</h3>
+                    <a href="{{ path('admin_loan_applications_index') }}" class="btn btn-sm btn-outline-primary">
+                        Voir toutes
+                    </a>
+                </div>
+                <div class="admin-card__body">
+                    {% if recentApplications|length > 0 %}
+                        <div class="recent-items">
+                            {% for application in recentApplications %}
+                                <div class="recent-item">
+                                    <div class="recent-item__icon">
+                                        <i class="fa fa-file-alt text-primary"></i>
+                                    </div>
+                                    <div class="recent-item__content">
+                                        <h5>{{ application.loanType.name }}</h5>
+                                        <p>{{ application.user.email }} - {{ application.requestedAmount|number_format(0, ',', ' ') }}€</p>
+                                        <small>{{ application.submittedAt|date('d/m/Y H:i') }}</small>
+                                    </div>
+                                    <div class="recent-item__status">
+                                        <span class="badge badge-{{ application.status|lower|replace({'_': '-'}) }}">
+                                            {{ application.status }}
+                                        </span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Aucune demande récente.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Verifications -->
+        <div class="col-lg-6">
+            <div class="admin-card">
+                <div class="admin-card__header">
+                    <h3>Vérifications récentes</h3>
+                    <a href="{{ path('admin_verifications') }}" class="btn btn-sm btn-outline-primary">
+                        Voir toutes
+                    </a>
+                </div>
+                <div class="admin-card__body">
+                    {% if recentVerifications|length > 0 %}
+                        <div class="recent-items">
+                            {% for verification in recentVerifications %}
+                                <div class="recent-item">
+                                    <div class="recent-item__icon">
+                                        <i class="fa fa-user-check text-warning"></i>
+                                    </div>
+                                    <div class="recent-item__content">
+                                        <h5>{{ verification.verificationType }}</h5>
+                                        <p>{{ verification.user.email }}</p>
+                                        <small>{{ verification.submittedAt|date('d/m/Y H:i') }}</small>
+                                    </div>
+                                    <div class="recent-item__status">
+                                        <span class="badge badge-{{ verification.status|lower }}">
+                                            {{ verification.status }}
+                                        </span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Aucune vérification récente.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="admin-card">
+        <div class="admin-card__header">
+            <h3>Actions rapides</h3>
+        </div>
+        <div class="admin-card__body">
+            <div class="quick-actions-grid">
+                <a href="{{ path('admin_loan_applications_index', {status: 'SUBMITTED'}) }}" class="quick-action">
+                    <div class="quick-action__icon">
+                        <i class="fa fa-clock text-warning"></i>
+                    </div>
+                    <div class="quick-action__content">
+                        <h4>{{ stats.pendingApplications }}</h4>
+                        <p>Demandes à traiter</p>
+                    </div>
+                </a>
+                
+                <a href="{{ path('admin_verifications', {status: 'PENDING'}) }}" class="quick-action">
+                    <div class="quick-action__icon">
+                        <i class="fa fa-user-check text-info"></i>
+                    </div>
+                    <div class="quick-action__content">
+                        <h4>{{ stats.pendingVerifications }}</h4>
+                        <p>Vérifications en attente</p>
+                    </div>
+                </a>
+                
+                <a href="{{ path('admin_contracts_index', {status: 'pending'}) }}" class="quick-action">
+                    <div class="quick-action__icon">
+                        <i class="fa fa-file-contract text-success"></i>
+                    </div>
+                    <div class="quick-action__content">
+                        <h4>{{ stats.totalContracts - stats.signedContracts }}</h4>
+                        <p>Contrats à signer</p>
+                    </div>
+                </a>
+                
+                <a href="{{ path('admin_loan_applications_stats') }}" class="quick-action">
+                    <div class="quick-action__icon">
+                        <i class="fa fa-chart-bar text-primary"></i>
+                    </div>
+                    <div class="quick-action__content">
+                        <h4><i class="fa fa-chart-line"></i></h4>
+                        <p>Statistiques avancées</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block admin_stylesheets %}
+<style>
+.progress-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.progress-stat {
+    margin-bottom: 1rem;
+}
+
+.progress-stat__label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.progress {
+    height: 8px;
+    background-color: #f1f3f4;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.contract-stats {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    text-align: center;
+}
+
+.contract-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.contract-stat__icon {
+    font-size: 2rem;
+}
+
+.contract-stat__content h4 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.contract-stat__content p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.recent-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.recent-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.recent-item__icon {
+    font-size: 1.5rem;
+    min-width: 40px;
+    text-align: center;
+}
+
+.recent-item__content {
+    flex: 1;
+}
+
+.recent-item__content h5 {
+    margin: 0 0 0.25rem;
+    font-size: 0.95rem;
+    color: #333;
+}
+
+.recent-item__content p {
+    margin: 0 0 0.25rem;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.recent-item__content small {
+    color: #999;
+    font-size: 0.75rem;
+}
+
+.recent-item__status {
+    min-width: 80px;
+    text-align: right;
+}
+
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.quick-action {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+}
+
+.quick-action:hover {
+    background: #e9ecef;
+    text-decoration: none;
+    color: inherit;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.quick-action__icon {
+    font-size: 2rem;
+    min-width: 50px;
+    text-align: center;
+}
+
+.quick-action__content h4 {
+    margin: 0 0 0.25rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.quick-action__content p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.badge-submitted { background-color: #17a2b8; }
+.badge-under-review { background-color: #ffc107; color: #212529; }
+.badge-approved { background-color: #28a745; }
+.badge-rejected { background-color: #dc3545; }
+.badge-pending { background-color: #ffc107; color: #212529; }
+.badge-verified { background-color: #28a745; }
+
+@media (max-width: 768px) {
+    .contract-stats {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .quick-actions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .recent-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .recent-item__status {
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}
+                        </div>
+                        <div class="admin-stats-card__content">
+                            <h3 class="admin-stats-card__number">{{ stats.verifiedUsers }}</h3>
+                            <p class="admin-stats-card__label">Utilisateurs vérifiés</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="admin-stats-card">
+                        <div class="admin-stats-card__icon">
+                            <i class="fa fa-times-circle text-danger"></i>
+                        </div>
+                        <div class="admin-stats-card__content">
+                            <h3 class="admin-stats-card__number">{{ stats.rejectedVerifications }}</h3>
+                            <p class="admin-stats-card__label">Vérifications rejetées</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <!-- Recent Verifications -->
+                <div class="col-lg-8">
+                    <div class="admin-section">
+                        <div class="admin-section__header">
+                            <h4 class="admin-section__title">Vérifications récentes</h4>
+                            <a href="{{ path('admin_verifications') }}" class="easilon-btn easilon-btn--base">
+                                <span>Voir tout</span>
+                                <span class="easilon-btn__icon">
+                                    <i class="icon-double-right-arrow"></i>
+                                </span>
+                            </a>
+                        </div>
+                        <div class="admin-section__content">
+                            {% if recentVerifications|length > 0 %}
+                                <div class="table-responsive">
+                                    <table class="table admin-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Utilisateur</th>
+                                                <th>Type</th>
+                                                <th>Statut</th>
+                                                <th>Date</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for verification in recentVerifications %}
+                                                <tr>
+                                                    <td>
+                                                        <div class="user-info">
+                                                            <strong>{{ verification.user.fullName }}</strong><br>
+                                                            <small class="text-muted">{{ verification.user.email }}</small>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span class="verification-type-badge">
+                                                            {% if verification.verificationType == 'IDENTITY' %}
+                                                                <i class="fa fa-id-card"></i> Identité
+                                                            {% elseif verification.verificationType == 'ADDRESS' %}
+                                                                <i class="fa fa-home"></i> Domicile
+                                                            {% elseif verification.verificationType == 'INCOME' %}
+                                                                <i class="fa fa-money-bill"></i> Revenus
+                                                            {% else %}
+                                                                <i class="fa fa-building"></i> Entreprise
+                                                            {% endif %}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="status-badge status-{{ verification.status|lower }}">
+                                                            {% if verification.status == 'VERIFIED' %}
+                                                                <i class="fa fa-check-circle"></i> Vérifié
+                                                            {% elseif verification.status == 'REJECTED' %}
+                                                                <i class="fa fa-times-circle"></i> Rejeté
+                                                            {% else %}
+                                                                <i class="fa fa-clock"></i> En attente
+                                                            {% endif %}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <small>{{ verification.submittedAt|date('d/m/Y H:i') }}</small>
+                                                    </td>
+                                                    <td>
+                                                        <a href="{{ path('admin_verification_detail', {id: verification.id}) }}" 
+                                                           class="btn btn-sm btn-outline-primary">
+                                                            <i class="fa fa-eye"></i> Voir
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="empty-state">
+                                    <i class="fa fa-inbox fa-3x text-muted"></i>
+                                    <h5>Aucune vérification récente</h5>
+                                    <p class="text-muted">Les nouvelles demandes de vérification apparaîtront ici.</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="col-lg-4">
+                    <div class="admin-section">
+                        <div class="admin-section__header">
+                            <h4 class="admin-section__title">Actions rapides</h4>
+                        </div>
+                        <div class="admin-section__content">
+                            <div class="quick-actions">
+                                <a href="{{ path('admin_verifications', {status: 'pending'}) }}" class="quick-action-item">
+                                    <div class="quick-action-item__icon">
+                                        <i class="fa fa-clock"></i>
+                                    </div>
+                                    <div class="quick-action-item__content">
+                                        <h5>Vérifications en attente</h5>
+                                        <p>Traiter les demandes de vérification</p>
+                                    </div>
+                                </a>
+                                
+                                <a href="{{ path('admin_users') }}" class="quick-action-item">
+                                    <div class="quick-action-item__icon">
+                                        <i class="fa fa-users"></i>
+                                    </div>
+                                    <div class="quick-action-item__content">
+                                        <h5>Gestion des utilisateurs</h5>
+                                        <p>Voir et gérer les comptes utilisateurs</p>
+                                    </div>
+                                </a>
+                                
+                                <a href="#" class="quick-action-item">
+                                    <div class="quick-action-item__icon">
+                                        <i class="fa fa-chart-bar"></i>
+                                    </div>
+                                    <div class="quick-action-item__content">
+                                        <h5>Rapports</h5>
+                                        <p>Statistiques et analyses</p>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_javascripts %}
+<style>
+.admin-stats-card {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+}
+
+.admin-stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.admin-stats-card__icon {
+    font-size: 2.5rem;
+    opacity: 0.8;
+}
+
+.admin-stats-card__number {
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 0;
+    color: #333;
+}
+
+.admin-stats-card__label {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.admin-section {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.admin-section__header {
+    padding: 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.admin-section__title {
+    margin: 0;
+    color: #333;
+}
+
+.admin-section__content {
+    padding: 1.5rem;
+}
+
+.admin-table {
+    margin: 0;
+}
+
+.admin-table th {
+    border-top: none;
+    font-weight: 600;
+    color: #555;
+    background-color: #f8f9fa;
+}
+
+.status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.status-badge.status-verified {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-badge.status-rejected {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.status-badge.status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.verification-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #666;
+}
+
+.quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.quick-action-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+}
+
+.quick-action-item:hover {
+    background-color: #f8f9fa;
+    border-color: #007bff;
+    text-decoration: none;
+    color: inherit;
+}
+
+.quick-action-item__icon {
+    font-size: 1.5rem;
+    color: #007bff;
+}
+
+.quick-action-item__content h5 {
+    margin: 0 0 0.25rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.quick-action-item__content p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.user-info strong {
+    font-size: 0.9rem;
+}
+
+.user-info small {
+    font-size: 0.8rem;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,222 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accueil{% endblock %}
+
+{% block meta_description %}Plateforme de prêt en ligne moderne pour particuliers et entreprises. Solutions de financement rapides et personnalisées.{% endblock %}
+
+{% block body %}
+    <!-- Hero Section -->
+    <section class="banner-one">
+        <div class="banner-one__bg" style="background-image: url({{ asset('assets/images/backgrounds/banner-bg-1.jpg') }});"></div>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-6">
+                    <div class="banner-one__content wow fadeInUp" data-wow-duration="1500ms" data-wow-delay="000ms">
+                        <h2 class="banner-one__title">
+                            Votre solution de 
+                            <span class="banner-one__title__styled">financement</span>
+                            personnalisée
+                        </h2>
+                        <p class="banner-one__text">
+                            Obtenez rapidement le prêt adapté à vos besoins. 
+                            Particuliers ou entreprises, nous avons la solution qu'il vous faut.
+                        </p>
+                        <div class="banner-one__btn">
+                            {% if app.user %}
+                                <a href="#" class="easilon-btn">
+                                    <span>Nouvelle demande</span>
+                                    <span class="easilon-btn__icon">
+                                        <i class="icon-double-right-arrow"></i>
+                                    </span>
+                                </a>
+                            {% else %}
+                                <a href="{{ path('app_register') }}" class="easilon-btn">
+                                    <span>Commencer maintenant</span>
+                                    <span class="easilon-btn__icon">
+                                        <i class="icon-double-right-arrow"></i>
+                                    </span>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="banner-one__image wow fadeInRight" data-wow-duration="1500ms" data-wow-delay="300ms">
+                        <img src="{{ asset('assets/images/resources/banner-1.png') }}" alt="Loan Platform">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Loan Calculator Section -->
+    <section class="loan-calculator section-space">
+        <div class="container">
+            <div class="sec-title text-center">
+                <h6 class="sec-title__tagline">Simulateur</h6>
+                <h3 class="sec-title__title">Calculez votre prêt</h3>
+            </div>
+            <div class="loan-calculator__inner">
+                <div class="row">
+                    <div class="col-lg-8 mx-auto">
+                        <div class="loan-calculator__form">
+                            <div class="loan-calculator__form__bg" style="background-image: url({{ asset('assets/images/shapes/loan-calculator-form-bg.png') }});"></div>
+                            <form action="#" class="loan-calculator__form__form">
+                                <div class="loan-calculator__form__control">
+                                    <label for="loan-amount">Montant du prêt</label>
+                                    <div class="loan-calculator__form__range-wrap">
+                                        <div id="loan-amount" class="loan-calculator__form__range"></div>
+                                        <div class="loan-calculator__form__range__value">
+                                            <span class="loan-amount-value">5000</span>€
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="loan-calculator__form__control">
+                                    <label for="loan-duration">Durée (mois)</label>
+                                    <div class="loan-calculator__form__range-wrap">
+                                        <div id="loan-duration" class="loan-calculator__form__range"></div>
+                                        <div class="loan-calculator__form__range__value">
+                                            <span class="loan-duration-value">12</span> mois
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="loan-calculator__form__btn">
+                                    <button type="submit" class="easilon-btn">
+                                        <span>Calculer</span>
+                                        <span class="easilon-btn__icon">
+                                            <i class="icon-double-right-arrow"></i>
+                                        </span>
+                                    </button>
+                                </div>
+                            </form>
+                            <div class="loan-calculator__result">
+                                <h4 class="loan-calculator__result__title">Résultat du calcul</h4>
+                                <div class="loan-calculator__result__content">
+                                    <div class="loan-calculator__result__item">
+                                        <span class="loan-calculator__result__label">Mensualité :</span>
+                                        <span class="loan-calculator__result__value monthly-payment">450€</span>
+                                    </div>
+                                    <div class="loan-calculator__result__item">
+                                        <span class="loan-calculator__result__label">Coût total :</span>
+                                        <span class="loan-calculator__result__value total-cost">5400€</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section class="service-one section-space">
+        <div class="service-one__bg" style="background-image: url({{ asset('assets/images/backgrounds/service-bg-1.jpg') }});"></div>
+        <div class="container">
+            <div class="row gutter-y-30">
+                <div class="col-lg-4">
+                    <div class="sec-title">
+                        <h6 class="sec-title__tagline">Nos services</h6>
+                        <h3 class="sec-title__title">Solutions de financement</h3>
+                        <p class="sec-title__text">
+                            Découvrez notre gamme complète de produits financiers 
+                            adaptés à vos besoins personnels et professionnels.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="row gutter-y-30">
+                        <div class="col-md-6">
+                            <div class="service-one__item">
+                                <div class="service-one__item__icon">
+                                    <i class="icon-loan"></i>
+                                </div>
+                                <h3 class="service-one__item__title">
+                                    <a href="#">Prêt personnel</a>
+                                </h3>
+                                <p class="service-one__item__text">
+                                    Financez vos projets personnels avec des conditions avantageuses.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="service-one__item">
+                                <div class="service-one__item__icon">
+                                    <i class="icon-house"></i>
+                                </div>
+                                <h3 class="service-one__item__title">
+                                    <a href="#">Prêt immobilier</a>
+                                </h3>
+                                <p class="service-one__item__text">
+                                    Concrétisez votre projet immobilier avec notre accompagnement.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="service-one__item">
+                                <div class="service-one__item__icon">
+                                    <i class="icon-car"></i>
+                                </div>
+                                <h3 class="service-one__item__title">
+                                    <a href="#">Prêt auto</a>
+                                </h3>
+                                <p class="service-one__item__text">
+                                    Achetez votre véhicule neuf ou d'occasion en toute simplicité.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="service-one__item">
+                                <div class="service-one__item__icon">
+                                    <i class="icon-business"></i>
+                                </div>
+                                <h3 class="service-one__item__title">
+                                    <a href="#">Prêt professionnel</a>
+                                </h3>
+                                <p class="service-one__item__text">
+                                    Développez votre entreprise avec nos solutions de financement.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-one section-space-two">
+        <div class="cta-one__bg" style="background-image: url({{ asset('assets/images/backgrounds/cta-bg-1.jpg') }});"></div>
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <div class="cta-one__content">
+                        <h3 class="cta-one__title">Prêt à commencer votre demande ?</h3>
+                        <p class="cta-one__text">
+                            Obtenez une réponse rapide et personnalisée pour votre projet de financement.
+                        </p>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="cta-one__btn">
+                        {% if app.user %}
+                            <a href="#" class="easilon-btn easilon-btn--light">
+                                <span>Faire une demande</span>
+                                <span class="easilon-btn__icon">
+                                    <i class="icon-double-right-arrow"></i>
+                                </span>
+                            </a>
+                        {% else %}
+                            <a href="{{ path('app_register') }}" class="easilon-btn easilon-btn--light">
+                                <span>S'inscrire</span>
+                                <span class="easilon-btn__icon">
+                                    <i class="icon-double-right-arrow"></i>
+                                </span>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

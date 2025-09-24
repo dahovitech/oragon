@@ -1,0 +1,596 @@
+{% extends 'admin/base.html.twig' %}
+
+{% block title %}Traitement - Demande #{{ application.id }}{% endblock %}
+
+{% block admin_content %}
+    <div class="admin-header">
+        <div class="breadcrumb-nav">
+            <a href="{{ path('admin_loan_applications_index') }}" class="breadcrumb-link">
+                <i class="fa fa-arrow-left"></i> Demandes de prêt
+            </a>
+            <span class="breadcrumb-separator">/</span>
+            <a href="{{ path('admin_loan_application_detail', {id: application.id}) }}" class="breadcrumb-link">
+                Demande #{{ application.id }}
+            </a>
+        </div>
+        <h1>Traitement de la demande</h1>
+        <p class="admin-subtitle">{{ application.loanType.name }} - {{ application.user.email }}</p>
+    </div>
+
+    <div class="row gutter-x-30">
+        <!-- Decision Forms -->
+        <div class="col-lg-8">
+            <!-- Current Status -->
+            <div class="admin-card">
+                <div class="admin-card__header">
+                    <h3>Statut actuel</h3>
+                </div>
+                <div class="admin-card__body">
+                    <div class="current-status">
+                        <span class="badge badge-{{ application.status|lower|replace({'_': '-'}) }} badge-lg">
+                            {% if application.status == 'SUBMITTED' %}
+                                Soumise
+                            {% elseif application.status == 'UNDER_REVIEW' %}
+                                En cours d'étude
+                            {% else %}
+                                {{ application.status }}
+                            {% endif %}
+                        </span>
+                        <p class="status-description">
+                            {% if application.status == 'SUBMITTED' %}
+                                Cette demande vient d'être soumise et attend d'être prise en charge.
+                            {% elseif application.status == 'UNDER_REVIEW' %}
+                                Cette demande est actuellement en cours d'étude depuis le {{ application.reviewedAt|date('d/m/Y à H:i') }}.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Start Review -->
+            {% if application.status == 'SUBMITTED' %}
+                <div class="admin-card">
+                    <div class="admin-card__header">
+                        <h3>Démarrer l'étude</h3>
+                    </div>
+                    <div class="admin-card__body">
+                        <form method="POST" class="review-form">
+                            <input type="hidden" name="action" value="start_review">
+                            <p>Cliquez sur le bouton ci-dessous pour prendre en charge cette demande et la marquer comme "En cours d'étude".</p>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa fa-search"></i> Commencer l'étude
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Approval Form -->
+            {% if application.status in ['SUBMITTED', 'UNDER_REVIEW'] %}
+                <div class="admin-card">
+                    <div class="admin-card__header">
+                        <h3>Approuver la demande</h3>
+                    </div>
+                    <div class="admin-card__body">
+                        <form method="POST" class="review-form" id="approve-form">
+                            <input type="hidden" name="action" value="approve">
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="interest_rate">Taux d'intérêt final (%)</label>
+                                        <input type="number" 
+                                               class="form-control" 
+                                               id="interest_rate" 
+                                               name="interest_rate" 
+                                               value="{{ application.loanType.baseInterestRate }}" 
+                                               step="0.01" 
+                                               min="0" 
+                                               max="50" 
+                                               required>
+                                        <small class="form-text text-muted">
+                                            Taux de base: {{ application.loanType.baseInterestRate }}%
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="duration_months">Durée validée (mois)</label>
+                                        <input type="number" 
+                                               class="form-control" 
+                                               id="duration_months" 
+                                               value="{{ application.duration }}" 
+                                               readonly>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Loan Calculator -->
+                            <div class="loan-calculator">
+                                <h4>Calcul automatique</h4>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="calc-result">
+                                            <label>Mensualité</label>
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   id="calculated_monthly" 
+                                                   name="monthly_payment" 
+                                                   readonly>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="calc-result">
+                                            <label>Coût total</label>
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   id="calculated_total" 
+                                                   name="total_amount" 
+                                                   readonly>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="calc-result">
+                                            <label>Coût du crédit</label>
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   id="calculated_cost" 
+                                                   readonly>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="approval_comments">Commentaires internes (optionnel)</label>
+                                <textarea class="form-control" 
+                                          id="approval_comments" 
+                                          name="comments" 
+                                          rows="3" 
+                                          placeholder="Notes internes sur cette approbation..."></textarea>
+                            </div>
+
+                            <div class="form-check mb-3">
+                                <input type="checkbox" class="form-check-input" id="confirm_approval" required>
+                                <label class="form-check-label" for="confirm_approval">
+                                    Je confirme l'approbation de cette demande de prêt avec les conditions ci-dessus.
+                                </label>
+                            </div>
+
+                            <button type="submit" class="btn btn-success">
+                                <i class="fa fa-check"></i> Approuver la demande
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Rejection Form -->
+            {% if application.status in ['SUBMITTED', 'UNDER_REVIEW'] %}
+                <div class="admin-card">
+                    <div class="admin-card__header">
+                        <h3>Refuser la demande</h3>
+                    </div>
+                    <div class="admin-card__body">
+                        <form method="POST" class="review-form" id="reject-form">
+                            <input type="hidden" name="action" value="reject">
+                            
+                            <div class="form-group">
+                                <label for="rejection_reason">Motif du refus *</label>
+                                <select class="form-select" id="rejection_reason_select" required>
+                                    <option value="">Sélectionnez un motif</option>
+                                    <option value="Revenus insuffisants">Revenus insuffisants</option>
+                                    <option value="Taux d'endettement trop élevé">Taux d'endettement trop élevé</option>
+                                    <option value="Documents manquants ou non conformes">Documents manquants ou non conformes</option>
+                                    <option value="Historique de crédit défavorable">Historique de crédit défavorable</option>
+                                    <option value="Projet non éligible">Projet non éligible</option>
+                                    <option value="Garanties insuffisantes">Garanties insuffisantes</option>
+                                    <option value="Autre">Autre (préciser ci-dessous)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="rejection_reason_text">Explication détaillée</label>
+                                <textarea class="form-control" 
+                                          id="rejection_reason_text" 
+                                          name="rejection_reason" 
+                                          rows="4" 
+                                          placeholder="Expliquez en détail les raisons du refus..."
+                                          required></textarea>
+                                <small class="form-text text-muted">
+                                    Ce texte sera communiqué au client. Soyez précis et constructif.
+                                </small>
+                            </div>
+
+                            <div class="form-check mb-3">
+                                <input type="checkbox" class="form-check-input" id="confirm_rejection" required>
+                                <label class="form-check-label" for="confirm_rejection">
+                                    Je confirme le refus de cette demande de prêt.
+                                </label>
+                            </div>
+
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fa fa-times"></i> Refuser la demande
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Application Summary -->
+        <div class="col-lg-4">
+            <!-- Quick Summary -->
+            <div class="admin-card">
+                <div class="admin-card__header">
+                    <h3>Résumé de la demande</h3>
+                </div>
+                <div class="admin-card__body">
+                    <div class="summary-item">
+                        <span class="summary-label">Client:</span>
+                        <span class="summary-value">{{ application.user.firstName ?? 'N/A' }} {{ application.user.lastName ?? '' }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Email:</span>
+                        <span class="summary-value">{{ application.user.email }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Type:</span>
+                        <span class="summary-value">{{ application.loanType.name }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Montant:</span>
+                        <span class="summary-value amount">{{ application.requestedAmount|number_format(0, ',', ' ') }}€</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Durée:</span>
+                        <span class="summary-value">{{ application.duration }} mois</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Soumise le:</span>
+                        <span class="summary-value">{{ application.submittedAt|date('d/m/Y à H:i') }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Assessment -->
+            {% if application.personalInfo and application.personalInfo.monthly_income %}
+                <div class="admin-card">
+                    <div class="admin-card__header">
+                        <h3>Évaluation financière</h3>
+                    </div>
+                    <div class="admin-card__body">
+                        {% set monthly_income = application.personalInfo.monthly_income %}
+                        {% set monthly_expenses = application.personalInfo.monthly_expenses ?? 0 %}
+                        {% set estimated_monthly = (application.requestedAmount * (application.loanType.baseInterestRate / 100 / 12) * ((1 + (application.loanType.baseInterestRate / 100 / 12)) ** application.duration)) / (((1 + (application.loanType.baseInterestRate / 100 / 12)) ** application.duration) - 1) %}
+                        {% set debt_ratio = estimated_monthly / monthly_income * 100 %}
+
+                        <div class="assessment-metric">
+                            <span class="metric-label">Revenus mensuels:</span>
+                            <span class="metric-value">{{ monthly_income|number_format(0, ',', ' ') }}€</span>
+                        </div>
+                        
+                        {% if monthly_expenses > 0 %}
+                            <div class="assessment-metric">
+                                <span class="metric-label">Charges mensuelles:</span>
+                                <span class="metric-value">{{ monthly_expenses|number_format(0, ',', ' ') }}€</span>
+                            </div>
+                            <div class="assessment-metric">
+                                <span class="metric-label">Capacité:</span>
+                                <span class="metric-value">{{ (monthly_income - monthly_expenses)|number_format(0, ',', ' ') }}€</span>
+                            </div>
+                        {% endif %}
+
+                        <div class="assessment-metric">
+                            <span class="metric-label">Mensualité estimée:</span>
+                            <span class="metric-value">{{ estimated_monthly|number_format(2, ',', ' ') }}€</span>
+                        </div>
+
+                        <div class="assessment-metric">
+                            <span class="metric-label">Taux d'endettement:</span>
+                            <span class="metric-value {{ debt_ratio > 33 ? 'text-danger' : (debt_ratio > 25 ? 'text-warning' : 'text-success') }}">
+                                {{ debt_ratio|number_format(1) }}%
+                            </span>
+                        </div>
+
+                        <div class="risk-indicator">
+                            <h5>Évaluation du risque</h5>
+                            {% if debt_ratio <= 25 %}
+                                <span class="badge badge-success">Risque faible</span>
+                                <p><small>Taux d'endettement acceptable, bon profil.</small></p>
+                            {% elseif debt_ratio <= 33 %}
+                                <span class="badge badge-warning">Risque modéré</span>
+                                <p><small>Taux d'endettement élevé mais dans les normes.</small></p>
+                            {% else %}
+                                <span class="badge badge-danger">Risque élevé</span>
+                                <p><small>Taux d'endettement dépassant les recommandations.</small></p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Documents Status -->
+            <div class="admin-card">
+                <div class="admin-card__header">
+                    <h3>État des documents</h3>
+                </div>
+                <div class="admin-card__body">
+                    {% if application.documents|length > 0 %}
+                        {% set verified_docs = application.documents|filter(d => d.isVerified)|length %}
+                        {% set total_docs = application.documents|length %}
+                        
+                        <div class="docs-progress">
+                            <div class="progress">
+                                <div class="progress-bar" style="width: {{ (verified_docs / total_docs * 100)|round }}%"></div>
+                            </div>
+                            <p>{{ verified_docs }}/{{ total_docs }} documents vérifiés</p>
+                        </div>
+
+                        <div class="docs-list">
+                            {% for document in application.documents %}
+                                <div class="doc-item">
+                                    <span class="doc-name">{{ document.originalName|length > 25 ? document.originalName[:25] ~ '...' : document.originalName }}</span>
+                                    {% if document.isVerified %}
+                                        <span class="badge badge-success">OK</span>
+                                    {% else %}
+                                        <span class="badge badge-warning">En attente</span>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <a href="{{ path('admin_loan_application_documents', {id: application.id}) }}" 
+                           class="btn btn-outline-info btn-sm w-100 mt-2">
+                            Gérer les documents
+                        </a>
+                    {% else %}
+                        <p class="text-muted">Aucun document joint.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block admin_javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-calculate loan details
+    function calculateLoan() {
+        const amount = {{ application.requestedAmount }};
+        const duration = {{ application.duration }};
+        const rateInput = document.getElementById('interest_rate');
+        
+        if (rateInput) {
+            const rate = parseFloat(rateInput.value) || 0;
+            
+            if (rate > 0) {
+                const monthlyRate = rate / 100 / 12;
+                const monthlyPayment = amount * (monthlyRate * Math.pow(1 + monthlyRate, duration)) / (Math.pow(1 + monthlyRate, duration) - 1);
+                const totalAmount = monthlyPayment * duration;
+                const totalCost = totalAmount - amount;
+                
+                document.getElementById('calculated_monthly').value = Math.round(monthlyPayment).toLocaleString() + '€';
+                document.getElementById('calculated_total').value = Math.round(totalAmount).toLocaleString() + '€';
+                document.getElementById('calculated_cost').value = Math.round(totalCost).toLocaleString() + '€';
+            }
+        }
+    }
+
+    // Calculate on rate change
+    const rateInput = document.getElementById('interest_rate');
+    if (rateInput) {
+        rateInput.addEventListener('input', calculateLoan);
+        calculateLoan(); // Initial calculation
+    }
+
+    // Handle rejection reason selection
+    const rejectionSelect = document.getElementById('rejection_reason_select');
+    const rejectionText = document.getElementById('rejection_reason_text');
+    
+    if (rejectionSelect && rejectionText) {
+        rejectionSelect.addEventListener('change', function() {
+            if (this.value && this.value !== 'Autre') {
+                rejectionText.value = this.value;
+            } else if (this.value === 'Autre') {
+                rejectionText.value = '';
+                rejectionText.focus();
+            }
+        });
+    }
+
+    // Form confirmations
+    document.getElementById('approve-form')?.addEventListener('submit', function(e) {
+        if (!confirm('Êtes-vous sûr de vouloir approuver cette demande de prêt ?')) {
+            e.preventDefault();
+        }
+    });
+
+    document.getElementById('reject-form')?.addEventListener('submit', function(e) {
+        if (!confirm('Êtes-vous sûr de vouloir refuser cette demande de prêt ?')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}
+
+{% block admin_stylesheets %}
+<style>
+.breadcrumb-separator {
+    margin: 0 0.5rem;
+    color: #6c757d;
+}
+
+.current-status {
+    text-align: center;
+    padding: 1rem;
+}
+
+.badge-lg {
+    font-size: 1rem;
+    padding: 0.75rem 1.5rem;
+}
+
+.status-description {
+    margin-top: 1rem;
+    color: #666;
+}
+
+.review-form {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.loan-calculator {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.loan-calculator h4 {
+    margin-bottom: 1rem;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.calc-result label {
+    font-size: 0.85rem;
+    color: #666;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.calc-result input {
+    font-weight: 600;
+    text-align: center;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.summary-item:last-child {
+    border-bottom: none;
+}
+
+.summary-label {
+    font-weight: 500;
+    color: #666;
+}
+
+.summary-value {
+    font-weight: 600;
+    color: #333;
+}
+
+.summary-value.amount {
+    color: #007bff;
+    font-size: 1.1rem;
+}
+
+.assessment-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.assessment-metric:last-child {
+    border-bottom: none;
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 500;
+}
+
+.metric-value {
+    font-weight: 600;
+    color: #333;
+}
+
+.risk-indicator {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e9ecef;
+    text-align: center;
+}
+
+.risk-indicator h5 {
+    margin-bottom: 0.75rem;
+    color: #333;
+    font-size: 1rem;
+}
+
+.risk-indicator p {
+    margin: 0.5rem 0 0;
+}
+
+.docs-progress {
+    margin-bottom: 1rem;
+}
+
+.docs-progress .progress {
+    height: 8px;
+    margin-bottom: 0.5rem;
+}
+
+.docs-progress p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #666;
+    text-align: center;
+}
+
+.docs-list {
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.doc-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f1f1;
+    font-size: 0.85rem;
+}
+
+.doc-item:last-child {
+    border-bottom: none;
+}
+
+.doc-name {
+    color: #333;
+}
+
+@media (max-width: 768px) {
+    .calc-result {
+        margin-bottom: 1rem;
+    }
+    
+    .summary-item,
+    .assessment-metric {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+    
+    .risk-indicator {
+        text-align: left;
+    }
+}
+</style>
+{% endblock %}

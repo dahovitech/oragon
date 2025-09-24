@@ -1,0 +1,356 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Vérification - {{ verification.user.fullName }}{% endblock %}
+
+{% block body %}
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="page-header__bg" style="background-image: url({{ asset('assets/images/backgrounds/page-header-bg.jpg') }});"></div>
+        <div class="container">
+            <div class="page-header__inner">
+                <h2 class="page-header__title">Détail de vérification</h2>
+                <ul class="easilon-breadcrumb list-unstyled">
+                    <li><a href="{{ path('home') }}">Accueil</a></li>
+                    <li><a href="{{ path('admin_dashboard') }}">Admin</a></li>
+                    <li><a href="{{ path('admin_verifications') }}">Vérifications</a></li>
+                    <li><span>Détail</span></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Verification Detail Section -->
+    <section class="verification-detail section-space">
+        <div class="container">
+            <div class="row">
+                <!-- Main Content -->
+                <div class="col-lg-8">
+                    <!-- User Information -->
+                    <div class="admin-section mb-4">
+                        <div class="admin-section__header">
+                            <h4 class="admin-section__title">Informations utilisateur</h4>
+                            <span class="status-badge status-{{ verification.status|lower }}">
+                                {% if verification.status == 'VERIFIED' %}
+                                    <i class="fa fa-check-circle"></i> Vérifié
+                                {% elseif verification.status == 'REJECTED' %}
+                                    <i class="fa fa-times-circle"></i> Rejeté
+                                {% else %}
+                                    <i class="fa fa-clock"></i> En attente
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="admin-section__content">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="user-detail-item">
+                                        <strong>Nom complet :</strong>
+                                        <span>{{ verification.user.fullName }}</span>
+                                    </div>
+                                    <div class="user-detail-item">
+                                        <strong>Email :</strong>
+                                        <span>{{ verification.user.email }}</span>
+                                    </div>
+                                    <div class="user-detail-item">
+                                        <strong>Type de compte :</strong>
+                                        <span>{{ verification.user.accountType == 'INDIVIDUAL' ? 'Particulier' : 'Entreprise' }}</span>
+                                    </div>
+                                    <div class="user-detail-item">
+                                        <strong>Téléphone :</strong>
+                                        <span>{{ verification.user.phoneNumber ?: 'Non renseigné' }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="user-detail-item">
+                                        <strong>Adresse :</strong>
+                                        <span>{{ verification.user.address ?: 'Non renseignée' }}</span>
+                                    </div>
+                                    <div class="user-detail-item">
+                                        <strong>Ville :</strong>
+                                        <span>{{ verification.user.city ?: 'Non renseignée' }}</span>
+                                    </div>
+                                    <div class="user-detail-item">
+                                        <strong>Code postal :</strong>
+                                        <span>{{ verification.user.postalCode ?: 'Non renseigné' }}</span>
+                                    </div>
+                                    <div class="user-detail-item">
+                                        <strong>Inscrit le :</strong>
+                                        <span>{{ verification.user.createdAt|date('d/m/Y H:i') }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Verification Information -->
+                    <div class="admin-section mb-4">
+                        <div class="admin-section__header">
+                            <h4 class="admin-section__title">Détails de la vérification</h4>
+                        </div>
+                        <div class="admin-section__content">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="verification-detail-item">
+                                        <strong>Type de vérification :</strong>
+                                        <span class="verification-type-badge">
+                                            {% if verification.verificationType == 'IDENTITY' %}
+                                                <i class="fa fa-id-card"></i> Vérification d'identité
+                                            {% elseif verification.verificationType == 'ADDRESS' %}
+                                                <i class="fa fa-home"></i> Justificatif de domicile
+                                            {% elseif verification.verificationType == 'INCOME' %}
+                                                <i class="fa fa-money-bill"></i> Justificatifs de revenus
+                                            {% else %}
+                                                <i class="fa fa-building"></i> Documents d'entreprise
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <div class="verification-detail-item">
+                                        <strong>Date de soumission :</strong>
+                                        <span>{{ verification.submittedAt|date('d/m/Y à H:i') }}</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    {% if verification.verifiedAt %}
+                                        <div class="verification-detail-item">
+                                            <strong>Date de traitement :</strong>
+                                            <span>{{ verification.verifiedAt|date('d/m/Y à H:i') }}</span>
+                                        </div>
+                                    {% endif %}
+                                    {% if verification.verifiedBy %}
+                                        <div class="verification-detail-item">
+                                            <strong>Traité par :</strong>
+                                            <span>{{ verification.verifiedBy.fullName }}</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            {% if verification.comments %}
+                                <div class="mt-3">
+                                    <strong>Commentaires :</strong>
+                                    <div class="verification-comments">
+                                        {{ verification.comments|nl2br }}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Documents -->
+                    <div class="admin-section mb-4">
+                        <div class="admin-section__header">
+                            <h4 class="admin-section__title">Documents soumis</h4>
+                        </div>
+                        <div class="admin-section__content">
+                            {% if verification.documents|length > 0 %}
+                                <div class="documents-grid">
+                                    {% for document in verification.documents %}
+                                        <div class="document-item">
+                                            <div class="document-item__header">
+                                                <div class="document-item__icon">
+                                                    {% if document.fileName|split('.')|last|lower in ['pdf'] %}
+                                                        <i class="fa fa-file-pdf text-danger"></i>
+                                                    {% else %}
+                                                        <i class="fa fa-file-image text-primary"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="document-item__info">
+                                                    <h6>{{ document.originalName }}</h6>
+                                                    <small class="text-muted">
+                                                        {{ document.documentType }} - 
+                                                        {{ document.uploadedAt|date('d/m/Y H:i') }}
+                                                    </small>
+                                                </div>
+                                            </div>
+                                            <div class="document-item__actions">
+                                                <a href="{{ asset(document.filePath) }}" 
+                                                   target="_blank" 
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="fa fa-eye"></i> Voir
+                                                </a>
+                                                <a href="{{ asset(document.filePath) }}" 
+                                                   download="{{ document.originalName }}"
+                                                   class="btn btn-sm btn-outline-secondary">
+                                                    <i class="fa fa-download"></i> Télécharger
+                                                </a>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="empty-state">
+                                    <i class="fa fa-file fa-2x text-muted"></i>
+                                    <p class="text-muted">Aucun document soumis</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions Sidebar -->
+                <div class="col-lg-4">
+                    {% if verification.status == 'PENDING' %}
+                        <div class="admin-section mb-4">
+                            <div class="admin-section__header">
+                                <h4 class="admin-section__title">Actions</h4>
+                            </div>
+                            <div class="admin-section__content">
+                                <!-- Approve Form -->
+                                <form method="post" action="{{ path('admin_verification_approve', {id: verification.id}) }}" class="mb-3">
+                                    <div class="form-group mb-3">
+                                        <label for="approve-comments" class="form-label">Commentaires (optionnel)</label>
+                                        <textarea name="comments" id="approve-comments" class="form-control" rows="3"
+                                                  placeholder="Commentaires pour l'approbation..."></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-success w-100">
+                                        <i class="fa fa-check"></i> Approuver la vérification
+                                    </button>
+                                </form>
+
+                                <!-- Reject Form -->
+                                <form method="post" action="{{ path('admin_verification_reject', {id: verification.id}) }}">
+                                    <div class="form-group mb-3">
+                                        <label for="reject-comments" class="form-label">Raison du rejet *</label>
+                                        <textarea name="comments" id="reject-comments" class="form-control" rows="3" required
+                                                  placeholder="Expliquez pourquoi cette vérification est rejetée..."></textarea>
+                                    </div>
+                                    <button type="submit" class="btn btn-danger w-100">
+                                        <i class="fa fa-times"></i> Rejeter la vérification
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Navigation -->
+                    <div class="admin-section">
+                        <div class="admin-section__header">
+                            <h4 class="admin-section__title">Navigation</h4>
+                        </div>
+                        <div class="admin-section__content">
+                            <div class="navigation-links">
+                                <a href="{{ path('admin_verifications') }}" class="nav-link-item">
+                                    <i class="fa fa-arrow-left"></i> Retour aux vérifications
+                                </a>
+                                <a href="{{ path('admin_users') }}" class="nav-link-item">
+                                    <i class="fa fa-users"></i> Voir tous les utilisateurs
+                                </a>
+                                <a href="{{ path('admin_dashboard') }}" class="nav-link-item">
+                                    <i class="fa fa-tachometer-alt"></i> Dashboard admin
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+
+{% block extra_javascripts %}
+<style>
+.user-detail-item, .verification-detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.user-detail-item:last-child, .verification-detail-item:last-child {
+    border-bottom: none;
+}
+
+.user-detail-item strong, .verification-detail-item strong {
+    flex: 0 0 40%;
+    font-weight: 600;
+    color: #555;
+}
+
+.user-detail-item span, .verification-detail-item span {
+    flex: 1;
+    text-align: right;
+}
+
+.verification-comments {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+}
+
+.documents-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.document-item {
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 1rem;
+    background: #f8f9fa;
+}
+
+.document-item__header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.document-item__icon {
+    font-size: 1.5rem;
+}
+
+.document-item__info h6 {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.document-item__actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.navigation-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.nav-link-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #555;
+    transition: all 0.2s ease;
+}
+
+.nav-link-item:hover {
+    background-color: #f8f9fa;
+    border-color: #007bff;
+    text-decoration: none;
+    color: #007bff;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+}
+
+.verification-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    background-color: #e9ecef;
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}

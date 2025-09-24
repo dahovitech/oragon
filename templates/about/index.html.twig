@@ -1,0 +1,200 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}À propos de nous{% endblock %}
+
+{% block meta_description %}Découvrez notre histoire, notre mission et notre équipe dédiée à vous offrir les meilleures solutions de financement.{% endblock %}
+
+{% block body %}
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="page-header__bg" style="background-image: url({{ asset('assets/images/backgrounds/page-header-bg.jpg') }});"></div>
+        <div class="container">
+            <div class="page-header__inner">
+                <h2 class="page-header__title">À propos de nous</h2>
+                <ul class="easilon-breadcrumb list-unstyled">
+                    <li><a href="{{ path('home') }}">Accueil</a></li>
+                    <li><span>À propos</span></li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section class="about-one section-space">
+        <div class="container">
+            <div class="row gutter-y-50">
+                <div class="col-lg-6 wow fadeInLeft" data-wow-duration="1500ms">
+                    <div class="about-one__image">
+                        <img src="{{ asset('assets/images/resources/about-1-1.jpg') }}" alt="À propos de nous">
+                        <div class="about-one__image__caption">
+                            <div class="about-one__image__caption__inner">
+                                <h3 class="about-one__image__caption__number">15+</h3>
+                                <p class="about-one__image__caption__text">Années d'expérience</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="about-one__content wow fadeInRight" data-wow-duration="1500ms">
+                        <div class="sec-title">
+                            <h6 class="sec-title__tagline">À propos de nous</h6>
+                            <h3 class="sec-title__title">Votre partenaire de confiance pour le financement</h3>
+                        </div>
+                        <p class="about-one__content__text">
+                            Depuis plus de 15 ans, nous accompagnons particuliers et entreprises dans leurs projets de financement. 
+                            Notre expertise et notre engagement nous permettent d'offrir des solutions personnalisées et adaptées 
+                            à chaque situation.
+                        </p>
+                        <div class="about-one__content__list">
+                            <div class="about-one__content__list__item">
+                                <div class="about-one__content__list__item__icon">
+                                    <i class="icon-check"></i>
+                                </div>
+                                <div class="about-one__content__list__item__content">
+                                    <h4 class="about-one__content__list__item__title">Processus simplifié</h4>
+                                    <p class="about-one__content__list__item__text">
+                                        Demande en ligne rapide et facile avec réponse sous 24h.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="about-one__content__list__item">
+                                <div class="about-one__content__list__item__icon">
+                                    <i class="icon-check"></i>
+                                </div>
+                                <div class="about-one__content__list__item__content">
+                                    <h4 class="about-one__content__list__item__title">Taux compétitifs</h4>
+                                    <p class="about-one__content__list__item__text">
+                                        Les meilleurs taux du marché adaptés à votre profil.
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="about-one__content__list__item">
+                                <div class="about-one__content__list__item__icon">
+                                    <i class="icon-check"></i>
+                                </div>
+                                <div class="about-one__content__list__item__content">
+                                    <h4 class="about-one__content__list__item__title">Accompagnement personnalisé</h4>
+                                    <p class="about-one__content__list__item__text">
+                                        Une équipe dédiée vous accompagne tout au long du processus.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Section -->
+    <section class="team-one section-space">
+        <div class="container">
+            <div class="sec-title text-center">
+                <h6 class="sec-title__tagline">Notre équipe</h6>
+                <h3 class="sec-title__title">Des experts à votre service</h3>
+            </div>
+            <div class="row gutter-y-30">
+                <div class="col-lg-4 col-md-6">
+                    <div class="team-one__item wow fadeInUp" data-wow-duration="1500ms" data-wow-delay="000ms">
+                        <div class="team-one__item__image">
+                            <img src="{{ asset('assets/images/team/team-1-1.jpg') }}" alt="Marie Dubois">
+                        </div>
+                        <div class="team-one__item__content">
+                            <h3 class="team-one__item__name">Marie Dubois</h3>
+                            <p class="team-one__item__designation">Directrice Générale</p>
+                            <p class="team-one__item__text">
+                                Plus de 20 ans d'expérience dans le secteur financier.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="team-one__item wow fadeInUp" data-wow-duration="1500ms" data-wow-delay="100ms">
+                        <div class="team-one__item__image">
+                            <img src="{{ asset('assets/images/team/team-1-2.jpg') }}" alt="Pierre Martin">
+                        </div>
+                        <div class="team-one__item__content">
+                            <h3 class="team-one__item__name">Pierre Martin</h3>
+                            <p class="team-one__item__designation">Directeur Commercial</p>
+                            <p class="team-one__item__text">
+                                Expert en solutions de financement pour entreprises.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="team-one__item wow fadeInUp" data-wow-duration="1500ms" data-wow-delay="200ms">
+                        <div class="team-one__item__image">
+                            <img src="{{ asset('assets/images/team/team-1-3.jpg') }}" alt="Sophie Laurent">
+                        </div>
+                        <div class="team-one__item__content">
+                            <h3 class="team-one__item__name">Sophie Laurent</h3>
+                            <p class="team-one__item__designation">Responsable Crédit</p>
+                            <p class="team-one__item__text">
+                                Spécialisée dans l'analyse et l'approbation des dossiers.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Choose Us Section -->
+    <section class="why-choose-one section-space">
+        <div class="why-choose-one__bg" style="background-image: url({{ asset('assets/images/backgrounds/why-choose-bg-1.jpg') }});"></div>
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="sec-title">
+                        <h6 class="sec-title__tagline">Pourquoi nous choisir</h6>
+                        <h3 class="sec-title__title">Les avantages de notre plateforme</h3>
+                        <p class="sec-title__text">
+                            Découvrez ce qui nous distingue et pourquoi des milliers de clients nous font confiance.
+                        </p>
+                    </div>
+                    <div class="why-choose-one__list">
+                        <div class="why-choose-one__list__item">
+                            <div class="why-choose-one__list__item__icon">
+                                <i class="icon-security"></i>
+                            </div>
+                            <div class="why-choose-one__list__item__content">
+                                <h4 class="why-choose-one__list__item__title">Sécurité garantie</h4>
+                                <p class="why-choose-one__list__item__text">
+                                    Vos données sont protégées par les plus hauts standards de sécurité.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="why-choose-one__list__item">
+                            <div class="why-choose-one__list__item__icon">
+                                <i class="icon-support"></i>
+                            </div>
+                            <div class="why-choose-one__list__item__content">
+                                <h4 class="why-choose-one__list__item__title">Support 24/7</h4>
+                                <p class="why-choose-one__list__item__text">
+                                    Notre équipe est disponible à tout moment pour vous aider.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="why-choose-one__list__item">
+                            <div class="why-choose-one__list__item__icon">
+                                <i class="icon-fast"></i>
+                            </div>
+                            <div class="why-choose-one__list__item__content">
+                                <h4 class="why-choose-one__list__item__title">Traitement rapide</h4>
+                                <p class="why-choose-one__list__item__text">
+                                    Réponse de principe en moins de 24 heures.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="why-choose-one__image wow fadeInRight" data-wow-duration="1500ms">
+                        <img src="{{ asset('assets/images/resources/why-choose-1.png') }}" alt="Pourquoi nous choisir">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

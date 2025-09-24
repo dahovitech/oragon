@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="{{ app.request.locale }}">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}{% endblock %} || Loan Platform || Modern Loan & Finance Platform</title>
+    
+    <!-- favicons Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('assets/images/favicons/apple-touch-icon.png') }}" />
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('assets/images/favicons/favicon-32x32.png') }}" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('assets/images/favicons/favicon-16x16.png') }}" />
+    <link rel="manifest" href="{{ asset('assets/images/favicons/site.webmanifest') }}" />
+    
+    {% block meta %}
+        {% if block('meta_description') is defined %}
+            <meta name="description" content="{% block meta_description %}{% endblock %}">
+        {% else %}
+            <meta name="description" content="Modern loan and finance platform for individuals and businesses. Quick loans, finance solutions, and professional financial services." />
+        {% endif %}
+        <meta name="author" content="Loan Platform">
+        <meta property="og:title" content="{% block og_title %}{{ block('title') }}{% endblock %}">
+        <meta property="og:type" content="website">
+        {% if block('meta_description') is defined %}
+            <meta property="og:description" content="{% block og_description %}{{ block('meta_description') }}{% endblock %}">
+        {% endif %}
+    {% endblock %}
+
+    <!-- fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
+    {% block stylesheets %}
+        <!-- Easilon Template CSS -->
+        <link rel="stylesheet" href="{{ asset('assets/vendors/bootstrap/css/bootstrap.min.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/bootstrap-select/bootstrap-select.min.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/animate/animate.min.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/fontawesome/css/all.min.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/jquery-ui/jquery-ui.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/jarallax/jarallax.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/jquery-magnific-popup/jquery.magnific-popup.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/nouislider/nouislider.min.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/nouislider/nouislider.pips.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/tiny-slider/tiny-slider.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/easilon-icons/style.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/owl-carousel/css/owl.carousel.min.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/owl-carousel/css/owl.theme.default.min.css') }}" />
+        <link rel="stylesheet" href="{{ asset('assets/vendors/slick/slick.css') }}" />
+
+        <!-- template styles -->
+        <link rel="stylesheet" href="{{ asset('assets/css/easilon.css') }}" />
+        
+        <!-- Custom styles -->
+        {{ encore_entry_link_tags('app') }}
+    {% endblock %}
+</head>
+
+<body class="custom-cursor">
+
+    <div class="custom-cursor__cursor"></div>
+    <div class="custom-cursor__cursor-two"></div>
+
+    <div class="preloader">
+        <div class="preloader__image" style="background-image: url({{ asset('assets/images/loader.png') }});"></div>
+    </div>
+    <!-- /.preloader -->
+    
+    <div class="page-wrapper">
+        {% block topbar %}
+        <div class="topbar">
+            <div class="container-fluid">
+                <div class="topbar__inner">
+                    <ul class="list-unstyled topbar__info">
+                        <li>
+                            <span class="topbar__info__icon">
+                                <i class="icon-mail-1"></i>
+                            </span>
+                            <a href="mailto:support@loanplatform.com">support@loanplatform.com</a>
+                        </li>
+                        <li>
+                            <span class="topbar__info__icon topbar__info__icon--phone">
+                                <i class="icon-headset"></i>
+                            </span>
+                            <a href="tel:+33123456789">+33 1 23 45 67 89</a>
+                        </li>
+                    </ul><!-- /.list-unstyled topbar__info -->
+                    <div class="topbar__right">
+                        <ul class="list-unstyled topbar__pages">
+                            {% if app.user %}
+                                <li><a href="{{ path('app_logout') }}">Se déconnecter</a></li>
+                                <li><a href="{{ path('user_verification_index') }}">Vérification</a></li>
+                                {% if is_granted('ROLE_ADMIN') %}
+                                    <li><a href="{{ path('admin_dashboard') }}">Administration</a></li>
+                                {% endif %}
+                            {% else %}
+                                <li><a href="{{ path('app_login') }}">Se connecter</a></li>
+                                <li><a href="{{ path('app_register') }}">S'inscrire</a></li>
+                            {% endif %}
+                            <li><a href="#">Carrière</a></li>
+                            <li><a href="#">FAQ</a></li>
+                        </ul><!-- /.topbar__pages -->
+                        <div class="topbar__social">
+                            <a href="https://facebook.com">
+                                <i class="fab fa-facebook-f" aria-hidden="true"></i>
+                                <span class="sr-only">Facebook</span>
+                            </a>
+                            <a href="https://twitter.com">
+                                <i class="fab fa-twitter" aria-hidden="true"></i>
+                                <span class="sr-only">Twitter</span>
+                            </a>
+                            <a href="https://linkedin.com">
+                                <i class="fab fa-linkedin-in" aria-hidden="true"></i>
+                                <span class="sr-only">Linkedin</span>
+                            </a>
+                            <a href="https://youtube.com">
+                                <i class="fab fa-youtube" aria-hidden="true"></i>
+                                <span class="sr-only">Youtube</span>
+                            </a>
+                        </div><!-- /.topbar__social -->
+                    </div><!-- /.list-unstyled topbar__right -->
+                </div><!-- /.topbar__inner -->
+            </div><!-- /.container-fluid -->
+        </div><!-- /.topbar -->
+        {% endblock %}
+
+        {% block header %}
+        <header class="main-header sticky-header sticky-header--normal">
+            <div class="container-fluid">
+                <div class="main-header__inner">
+                    <div class="main-header__logo logo-retina">
+                        <a href="{{ path('home') }}">
+                            <img src="{{ asset('assets/images/logo-dark.png') }}" alt="Loan Platform" width="150">
+                        </a>
+                    </div><!-- /.main-header__logo -->
+                    <div class="main-header__right">
+                        <nav class="main-header__nav main-menu">
+                            <ul class="main-menu__list">
+                                <li><a href="{{ path('home') }}">Accueil</a></li>
+                                <li><a href="{{ path('about') }}">À propos</a></li>
+                                <li class="dropdown">
+                                    <a href="{{ path('loan_catalog_index') }}">Services</a>
+                                    <ul>
+                                        <li><a href="{{ path('loan_catalog_index', {type: 'INDIVIDUAL'}) }}">Prêts particuliers</a></li>
+                                        <li><a href="{{ path('loan_catalog_index', {type: 'BUSINESS'}) }}">Prêts professionnels</a></li>
+                                        <li><a href="{{ path('loan_simulator') }}">Simulateur</a></li>
+                                    </ul>
+                                </li>
+                                <li><a href="{{ path('loan_simulator') }}">Simulateur</a></li>
+                                <li><a href="{{ path('contact') }}">Contact</a></li>
+                                {% if app.user %}
+                                    <li class="dropdown">
+                                        <a href="#">Mon espace</a>
+                                        <ul>
+                                            <li><a href="{{ path('dashboard_index') }}">Tableau de bord</a></li>
+                                            <li><a href="{{ path('app_notifications_index') }}">Notifications</a></li>
+                                            <li><a href="{{ path('user_verification_index') }}">Vérification de compte</a></li>
+                                            <li><a href="{{ path('dashboard_applications') }}">Mes demandes</a></li>
+                                            <li><a href="{{ path('dashboard_profile') }}">Mon profil</a></li>
+                                            {% if is_granted('ROLE_ADMIN') %}
+                                                <li><a href="{{ path('admin_dashboard') }}">Administration</a></li>
+                                            {% endif %}
+                                        </ul>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav><!-- /.main-header__nav -->
+                        <div class="main-header__right__btn">
+                            {% if app.user %}
+                                <!-- Notifications dropdown -->
+                                <div class="dropdown me-3" id="notification-dropdown">
+                                    <button class="btn btn-outline-light position-relative" type="button" 
+                                            id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-bell"></i>
+                                        <span id="notification-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" 
+                                              style="display: none;">
+                                            0
+                                        </span>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationsDropdown" style="width: 350px; max-height: 400px; overflow-y: auto;">
+                                        <li class="dropdown-header d-flex justify-content-between align-items-center">
+                                            <span>Notifications</span>
+                                            <a href="{{ path('app_notifications_index') }}" class="btn btn-sm btn-link">Voir tout</a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <ul id="notification-list" class="list-unstyled mb-0">
+                                            <li class="dropdown-item text-muted">Chargement des notifications...</li>
+                                        </ul>
+                                    </ul>
+                                </div>
+                                
+                                <a href="{{ path('loan_catalog_index') }}" class="easilon-btn">
+                                    <span>Nouvelle demande</span>
+                                    <span class="easilon-btn__icon">
+                                        <i class="icon-double-right-arrow"></i>
+                                    </span>
+                                </a>
+                            {% else %}
+                                <a href="{{ path('app_register') }}" class="easilon-btn">
+                                    <span>Commencer</span>
+                                    <span class="easilon-btn__icon">
+                                        <i class="icon-double-right-arrow"></i>
+                                    </span>
+                                </a>
+                            {% endif %}
+                        </div><!-- /.main-header__right__btn -->
+                        <div class="mobile-nav__btn mobile-nav__toggler">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div><!-- /.mobile-nav__btn -->
+                    </div><!-- /.main-header__right -->
+                </div><!-- /.main-header__inner -->
+            </div><!-- /.container-fluid -->
+        </header><!-- /.main-header -->
+        {% endblock %}
+
+        {% block body_wrapper %}
+            {# Flash messages #}
+            {% for type, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ type == 'error' ? 'danger' : type }} alert-dismissible fade show position-fixed" 
+                         style="top: 100px; right: 20px; z-index: 1040; max-width: 400px;" role="alert">
+                        <i class="fa fa-{% if type == 'success' %}check-circle{% elseif type == 'error' or type == 'danger' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+
+            {% block main %}
+                {% block body %}{% endblock %}
+            {% endblock %}
+        {% endblock %}
+
+        {% block footer %}
+        <footer class="main-footer background-black">
+            <div class="main-footer__top">
+                <div class="container">
+                    <div class="row gutter-y-30">
+                        <div class="col-md-6 col-lg-4 wow fadeInUp" data-wow-duration="1500ms" data-wow-delay="000ms">
+                            <div class="footer-widget footer-widget--about">
+                                <div class="footer-widget__logo logo-retina">
+                                    <a href="{{ path('home') }}">
+                                        <img src="{{ asset('assets/images/logo-light.png') }}" alt="Loan Platform" width="155">
+                                    </a>
+                                </div><!-- /.footer-widget__logo -->
+                                <p class="footer-widget__about-text">
+                                    Votre partenaire de confiance pour tous vos besoins de financement. 
+                                    Solutions personnalisées pour particuliers et entreprises.
+                                </p>
+                                <div class="footer-widget__social social-links-two">
+                                    <a href="https://facebook.com">
+                                        <span class="social-links-two__icon">
+                                            <i class="fab fa-facebook-f" aria-hidden="true"></i>
+                                        </span>
+                                        <span class="sr-only">Facebook</span>
+                                    </a>
+                                    <a href="https://twitter.com">
+                                        <span class="social-links-two__icon">
+                                            <i class="fab fa-twitter" aria-hidden="true"></i>
+                                        </span>
+                                        <span class="sr-only">Twitter</span>
+                                    </a>
+                                    <a href="https://linkedin.com">
+                                        <span class="social-links-two__icon">
+                                            <i class="fab fa-linkedin-in" aria-hidden="true"></i>
+                                        </span>
+                                        <span class="sr-only">Linkedin</span>
+                                    </a>
+                                </div><!-- /.footer-widget__social -->
+                            </div><!-- /.footer-widget -->
+                        </div><!-- /.col-md-6 col-lg-4 -->
+                        <div class="col-md-6 col-lg-2 wow fadeInUp" data-wow-duration="1500ms" data-wow-delay="100ms">
+                            <div class="footer-widget footer-widget--links">
+                                <h3 class="footer-widget__title">Services</h3>
+                                <ul class="list-unstyled footer-widget__menu">
+                                    <li><a href="#">Prêt personnel</a></li>
+                                    <li><a href="#">Prêt immobilier</a></li>
+                                    <li><a href="#">Prêt auto</a></li>
+                                    <li><a href="#">Prêt professionnel</a></li>
+                                    <li><a href="#">Crédit-bail</a></li>
+                                </ul><!-- /.list-unstyled footer-widget__menu -->
+                            </div><!-- /.footer-widget -->
+                        </div><!-- /.col-md-6 col-lg-2 -->
+                        <div class="col-md-6 col-lg-3 wow fadeInUp" data-wow-duration="1500ms" data-wow-delay="200ms">
+                            <div class="footer-widget footer-widget--links">
+                                <h3 class="footer-widget__title">Support</h3>
+                                <ul class="list-unstyled footer-widget__menu">
+                                    <li><a href="#">Centre d'aide</a></li>
+                                    <li><a href="#">FAQ</a></li>
+                                    <li><a href="#">Contact</a></li>
+                                    <li><a href="#">Politique de confidentialité</a></li>
+                                    <li><a href="#">Conditions d'utilisation</a></li>
+                                </ul><!-- /.list-unstyled footer-widget__menu -->
+                            </div><!-- /.footer-widget -->
+                        </div><!-- /.col-md-6 col-lg-3 -->
+                        <div class="col-md-6 col-lg-3 wow fadeInUp" data-wow-duration="1500ms" data-wow-delay="300ms">
+                            <div class="footer-widget footer-widget--contact">
+                                <h3 class="footer-widget__title">Contact</h3>
+                                <ul class="list-unstyled footer-widget__contact">
+                                    <li>
+                                        <span class="footer-widget__contact__icon">
+                                            <i class="icon-location"></i>
+                                        </span>
+                                        123 Avenue des Finances, 75001 Paris
+                                    </li>
+                                    <li>
+                                        <span class="footer-widget__contact__icon">
+                                            <i class="icon-phone"></i>
+                                        </span>
+                                        <a href="tel:+33123456789">+33 1 23 45 67 89</a>
+                                    </li>
+                                    <li>
+                                        <span class="footer-widget__contact__icon">
+                                            <i class="icon-mail"></i>
+                                        </span>
+                                        <a href="mailto:support@loanplatform.com">support@loanplatform.com</a>
+                                    </li>
+                                </ul><!-- /.list-unstyled footer-widget__contact -->
+                            </div><!-- /.footer-widget -->
+                        </div><!-- /.col-md-6 col-lg-3 -->
+                    </div><!-- /.row -->
+                </div><!-- /.container -->
+            </div><!-- /.main-footer__top -->
+            <div class="main-footer__bottom">
+                <div class="container">
+                    <div class="main-footer__bottom__inner">
+                        <div class="row gutter-y-40 align-items-center">
+                            <div class="col-md-5 wow fadeInUp" data-wow-duration="1500ms" data-wow-delay="000ms">
+                                <div class="main-footer__social social-links-two">
+                                    <a href="https://facebook.com">
+                                        <span class="social-links-two__icon">
+                                            <i class="fab fa-facebook-f" aria-hidden="true"></i>
+                                        </span>
+                                        <span class="sr-only">Facebook</span>
+                                    </a>
+                                    <a href="https://twitter.com">
+                                        <span class="social-links-two__icon">
+                                            <i class="fab fa-twitter" aria-hidden="true"></i>
+                                        </span>
+                                        <span class="sr-only">Twitter</span>
+                                    </a>
+                                    <a href="https://linkedin.com">
+                                        <span class="social-links-two__icon">
+                                            <i class="fab fa-linkedin-in" aria-hidden="true"></i>
+                                        </span>
+                                        <span class="sr-only">Linkedin</span>
+                                    </a>
+                                </div><!-- /.main-footer__social -->
+                            </div><!-- /.col-md-5 -->
+                            <div class="col-md-7 wow fadeInUp" data-wow-duration="1500ms" data-wow-delay="100ms">
+                                <div class="main-footer__bottom__copyright">
+                                    <p class="main-footer__copyright">
+                                        &copy; Copyright <span class="dynamic-year"></span> par Loan Platform.
+                                    </p>
+                                </div><!-- /.main-footer__bottom__copyright -->
+                            </div><!-- /.col-md-7 -->
+                        </div><!-- /.row -->
+                    </div><!-- /.main-footer__inner -->
+                </div><!-- /.container -->
+            </div><!-- /.main-footer__bottom -->
+        </footer><!-- /.main-footer -->
+        {% endblock %}
+
+    </div><!-- /.page-wrapper -->
+
+    <!-- Mobile Navigation -->
+    <div class="mobile-nav__wrapper">
+        <div class="mobile-nav__overlay mobile-nav__toggler"></div>
+        <div class="mobile-nav__content">
+            <span class="mobile-nav__close mobile-nav__toggler"><i class="icon-close"></i></span>
+            <div class="logo-box logo-retina">
+                <a href="{{ path('home') }}" aria-label="logo image">
+                    <img src="{{ asset('assets/images/logo-light.png') }}" width="155" alt="" />
+                </a>
+            </div>
+            <div class="mobile-nav__container"></div>
+            <ul class="mobile-nav__contact list-unstyled">
+                <li>
+                    <span class="mobile-nav__contact__icon"><i class="fa fa-envelope"></i></span>
+                    <a href="mailto:support@loanplatform.com">support@loanplatform.com</a>
+                </li>
+                <li>
+                    <span class="mobile-nav__contact__icon"><i class="fa fa-phone-alt"></i></span>
+                    <a href="tel:+33123456789">+33 1 23 45 67 89</a>
+                </li>
+            </ul>
+            <div class="mobile-nav__social">
+                <a href="https://facebook.com">
+                    <i class="fab fa-facebook-f" aria-hidden="true"></i>
+                    <span class="sr-only">Facebook</span>
+                </a>
+                <a href="https://twitter.com">
+                    <i class="fab fa-twitter" aria-hidden="true"></i>
+                    <span class="sr-only">Twitter</span>
+                </a>
+                <a href="https://linkedin.com">
+                    <i class="fab fa-linkedin-in" aria-hidden="true"></i>
+                    <span class="sr-only">LinkedIn</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Popup -->
+    <div class="search-popup">
+        <div class="search-popup__overlay search-toggler"></div>
+        <div class="search-popup__content">
+            <form role="search" method="get" class="search-popup__form" action="#">
+                <input type="text" id="search" placeholder="Rechercher..." />
+                <button type="submit" aria-label="search submit" class="easilon-btn">
+                    <span class="easilon-btn__icon"><i class="icon-search"></i></span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Back to top -->
+    <a href="#" data-target="html" class="scroll-to-target scroll-to-top">
+        <span class="scroll-to-top__text">retour haut</span>
+        <span class="scroll-to-top__wrapper"><span class="scroll-to-top__inner"></span></span>
+    </a>
+
+    {% block javascripts %}
+        <!-- Easilon Template JS -->
+        <script src="{{ asset('assets/vendors/jquery/jquery-3.7.0.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/bootstrap-select/bootstrap-select.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/jarallax/jarallax.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/jquery-ui/jquery-ui.js') }}"></script>
+        <script src="{{ asset('assets/vendors/jquery-ajaxchimp/jquery.ajaxchimp.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/jquery-appear/jquery.appear.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/jquery-circle-progress/jquery.circle-progress.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/jquery-magnific-popup/jquery.magnific-popup.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/jquery-validate/jquery.validate.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/nouislider/nouislider.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/tiny-slider/tiny-slider.js') }}"></script>
+        <script src="{{ asset('assets/vendors/wnumb/wNumb.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/owl-carousel/js/owl.carousel.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/slick/slick.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/wow/wow.js') }}"></script>
+        <script src="{{ asset('assets/vendors/imagesloaded/imagesloaded.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/isotope/isotope.js') }}"></script>
+        <script src="{{ asset('assets/vendors/countdown/countdown.min.js') }}"></script>
+        <script src="{{ asset('assets/vendors/jquery-circleType/jquery.circleType.js') }}"></script>
+        <script src="{{ asset('assets/vendors/jquery-lettering/jquery.lettering.min.js') }}"></script>
+        <!-- template js -->
+        <script src="{{ asset('assets/js/easilon.js') }}"></script>
+        
+        <!-- Custom Symfony JS -->
+        {{ encore_entry_script_tags('app') }}
+        
+        <!-- Notifications Script -->
+        {% if app.user %}
+        <script src="{{ asset('assets/js/notifications.js') }}"></script>
+
+            const notificationCount = document.querySelector('.notification-count');
+            const notificationList = document.querySelector('.notification-list');
+            const notificationLoading = document.querySelector('.notification-loading');
+            const notificationEmpty = document.querySelector('.notification-empty');
+            
+            function loadNotifications() {
+                fetch('/notifications/unread')
+                    .then(response => response.json())
+                    .then(data => {
+                        updateNotificationCount(data.unread_count);
+                        displayNotifications(data.notifications);
+                    })
+                    .catch(error => {
+                        console.error('Erreur lors du chargement des notifications:', error);
+                        hideLoading();
+                    });
+            }
+            
+            function updateNotificationCount(count) {
+                if (count > 0) {
+                    notificationCount.textContent = count > 99 ? '99+' : count;
+                    notificationCount.style.display = 'block';
+                } else {
+                    notificationCount.style.display = 'none';
+                }
+            }
+            
+            function displayNotifications(notifications) {
+                hideLoading();
+                notificationList.innerHTML = '';
+                
+                if (notifications.length === 0) {
+                    notificationEmpty.style.display = 'block';
+                    return;
+                }
+                
+                notificationEmpty.style.display = 'none';
+                
+                notifications.forEach(notification => {
+                    const notificationElement = createNotificationElement(notification);
+                    notificationList.appendChild(notificationElement);
+                });
+            }
+            
+            function createNotificationElement(notification) {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <a class="dropdown-item notification-item" href="${notification.actionUrl || '#'}" 
+                       data-notification-id="${notification.id}">
+                        <div class="d-flex">
+                            <div class="notification-icon me-2">
+                                ${getNotificationIcon(notification.type)}
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1 fs-6">${notification.title}</h6>
+                                <p class="mb-1 small text-muted">${notification.message}</p>
+                                <small class="text-muted">${formatDate(notification.createdAt)}</small>
+                                ${notification.priority === 'high' ? '<span class="badge bg-danger ms-2">Urgent</span>' : ''}
+                            </div>
+                        </div>
+                    </a>
+                `;
+                
+                // Marquer comme lu lors du clic
+                li.querySelector('.notification-item').addEventListener('click', function() {
+                    markAsRead(notification.id);
+                });
+                
+                return li;
+            }
+            
+            function getNotificationIcon(type) {
+                const icons = {
+                    'loan_application': '<i class="fas fa-file-alt text-primary"></i>',
+                    'loan_contract': '<i class="fas fa-file-contract text-success"></i>',
+                    'payment': '<i class="fas fa-credit-card text-info"></i>',
+                    'default': '<i class="fas fa-bell text-secondary"></i>'
+                };
+                return icons[type] || icons.default;
+            }
+            
+            function formatDate(dateString) {
+                const date = new Date(dateString);
+                const now = new Date();
+                const diffInMinutes = Math.floor((now - date) / (1000 * 60));
+                
+                if (diffInMinutes < 1) return 'À l\'instant';
+                if (diffInMinutes < 60) return `Il y a ${diffInMinutes} min`;
+                if (diffInMinutes < 1440) return `Il y a ${Math.floor(diffInMinutes / 60)} h`;
+                return date.toLocaleDateString('fr-FR');
+            }
+            
+            function markAsRead(notificationId) {
+                fetch(`/notifications/${notificationId}/read`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Recharger les notifications après un court délai
+                        setTimeout(loadNotifications, 500);
+                    }
+                })
+                .catch(error => console.error('Erreur:', error));
+            }
+            
+            function hideLoading() {
+                notificationLoading.style.display = 'none';
+            }
+            
+            // Charger les notifications au clic sur le dropdown
+            notificationDropdown.addEventListener('click', function() {
+                loadNotifications();
+            });
+            
+            // Charger les notifications au chargement de la page
+            loadNotifications();
+            
+            // Recharger les notifications toutes les 30 secondes
+            setInterval(loadNotifications, 30000);
+        });
+        </script>
+        {% endif %}
+    {% endblock %}
+
+    {% block extra_javascripts %}{% endblock %}
+</body>
+
+</html>
