@@ -122,12 +122,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(mappedBy: 'user', targetEntity: AccountVerification::class)]
     private Collection $verifications;
 
+    #[ORM\OneToMany(mappedBy: 'user', targetEntity: Document::class, orphanRemoval: true)]
+    private Collection $documents;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
         $this->updatedAt = new \DateTimeImmutable();
         $this->loanApplications = new ArrayCollection();
         $this->verifications = new ArrayCollection();
+        $this->documents = new ArrayCollection();
     }
 
     #[ORM\PreUpdate]
@@ -566,6 +570,71 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $data["\0" . self::class . "\0password"] = hash('crc32c', $this->password);
 
         return $data;
+    }
+
+    /**
+     * @return Collection<int, Document>
+     */
+    public function getDocuments(): Collection
+    {
+        return $this->documents;
+    }
+
+    public function addDocument(Document $document): static
+    {
+        if (!$this->documents->contains($document)) {
+            $this->documents->add($document);
+            $document->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDocument(Document $document): static
+    {
+        if ($this->documents->removeElement($document)) {
+            // set the owning side to null (unless already changed)
+            if ($document->getUser() === $this) {
+                $document->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getKycProgress(): array
+    {
+        $requiredDocumentTypes = [
+            Document::TYPE_IDENTITY_CARD,
+            Document::TYPE_PROOF_OF_ADDRESS,
+            Document::TYPE_INCOME_PROOF,
+        ];
+
+        $approvedTypes = [];
+        foreach ($this->documents as $document) {
+            if ($document->getStatus() === Document::STATUS_APPROVED) {
+                $approvedTypes[] = $document->getType();
+            }
+        }
+
+        $progress = (count(array_intersect($requiredDocumentTypes, $approvedTypes)) / count($requiredDocumentTypes)) * 100;
+
+        return [
+            'progress' => round($progress, 2),
+            'approved' => count(array_intersect($requiredDocumentTypes, $approvedTypes)),
+            'required' => count($requiredDocumentTypes),
+            'is_complete' => $progress >= 100
+        ];
+    }
+
+    public function hasApprovedDocument(string $type): bool
+    {
+        foreach ($this->documents as $document) {
+            if ($document->getType() === $type && $document->getStatus() === Document::STATUS_APPROVED) {
+                return true;
+            }
+        }
+        return false;
     }
 
     #[\Deprecated]

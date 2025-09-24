@@ -1,0 +1,122 @@
+{% extends 'emails/base.html.twig' %}
+
+{% block title %}Document expiré{% endblock %}
+
+{% block content %}
+<tr>
+    <td style="padding: 40px 30px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div style="width: 60px; height: 60px; background: #f8f9fa; border: 2px solid #6c757d; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                <svg width="24" height="24" fill="#6c757d" viewBox="0 0 24 24">
+                    <path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+                </svg>
+            </div>
+            <h1 style="color: #2c3e50; font-size: 24px; font-weight: 600; margin: 0 0 10px 0;">
+                Document expiré
+            </h1>
+            <p style="color: #7f8c8d; font-size: 16px; margin: 0;">
+                Un de vos documents a atteint sa date d'expiration
+            </p>
+        </div>
+
+        <div style="background: #f8f9fa; border: 2px solid #6c757d; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+            <h2 style="color: #495057; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+                📋 Document expiré
+            </h2>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 8px 0; color: #6c757d; font-weight: 500; width: 120px;">Nom :</td>
+                    <td style="padding: 8px 0; color: #495057; font-weight: 600;">{{ document.name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #6c757d; font-weight: 500;">Type :</td>
+                    <td style="padding: 8px 0; color: #495057; font-weight: 600;">{{ document.typeLabel }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #6c757d; font-weight: 500;">Expiré le :</td>
+                    <td style="padding: 8px 0; color: #dc3545; font-weight: 600;">{{ document.expiresAt|date('d/m/Y') }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #6c757d; font-weight: 500;">Statut :</td>
+                    <td style="padding: 8px 0;">
+                        <span style="background: #6c757d; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase;">
+                            Expiré
+                        </span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin-bottom: 25px; border-radius: 0 4px 4px 0;">
+            <h3 style="color: #856404; font-size: 16px; font-weight: 600; margin: 0 0 12px 0;">
+                ⚠️ Action requise
+            </h3>
+            <p style="color: #856404; margin: 0; line-height: 1.5;">
+                Ce document a atteint sa date d'expiration et n'est plus valide pour votre dossier KYC. 
+                Pour maintenir votre profil vérifié et continuer à bénéficier de tous nos services, 
+                vous devez <strong>télécharger une version mise à jour</strong> de ce document.
+            </p>
+        </div>
+
+        {% set kyc_progress = user.kycProgress %}
+        {% if not kyc_progress.is_complete %}
+        <div style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 20px; margin-bottom: 25px; border-radius: 0 4px 4px 0;">
+            <h3 style="color: #721c24; font-size: 16px; font-weight: 600; margin: 0 0 12px 0;">
+                🚨 Impact sur votre vérification KYC
+            </h3>
+            <p style="color: #721c24; margin: 0; line-height: 1.5;">
+                L'expiration de ce document affecte votre statut de vérification. 
+                Votre progression KYC est maintenant <strong>{{ kyc_progress.progress|number_format(1) }}% complète</strong>. 
+                Téléchargez un document valide pour retrouver un statut complet.
+            </p>
+        </div>
+        {% endif %}
+
+        <div style="background: #e3f2fd; border-left: 4px solid #1976d2; padding: 20px; margin-bottom: 25px; border-radius: 0 4px 4px 0;">
+            <h3 style="color: #1565c0; font-size: 16px; font-weight: 600; margin: 0 0 12px 0;">
+                📝 Comment renouveler votre document ?
+            </h3>
+            <ol style="color: #1565c0; margin: 0; padding-left: 20px; line-height: 1.6;">
+                <li>Obtenez la <strong>version mise à jour</strong> de votre document</li>
+                <li>Vérifiez qu'il est <strong>lisible</strong> et de <strong>bonne qualité</strong></li>
+                <li>Assurez-vous qu'il n'expire pas dans les <strong>prochains mois</strong></li>
+                <li><strong>Téléchargez-le</strong> sur votre espace personnel</li>
+                <li>Attendez la <strong>validation</strong> sous 24-48h</li>
+            </ol>
+        </div>
+
+        <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+            <h3 style="color: #2c3e50; font-size: 16px; font-weight: 600; margin: 0 0 15px 0;">
+                📤 Rappel des formats acceptés
+            </h3>
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-right: 10px;">PDF</span>
+                <span style="background: #17a2b8; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-right: 10px;">JPG</span>
+                <span style="background: #6f42c1; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">PNG</span>
+            </div>
+            <p style="color: #6c757d; margin: 0; font-size: 14px;">
+                Taille maximum : <strong>10 MB</strong> • 
+                Résolution recommandée : <strong>300 DPI minimum</strong> • 
+                Document complet et lisible requis
+            </p>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+            <a href="{{ url('app_documents_upload') }}" 
+               style="display: inline-block; background: #ffc107; color: #212529; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; margin-right: 10px;">
+                📤 Télécharger un nouveau document
+            </a>
+            <a href="{{ url('app_documents_index') }}" 
+               style="display: inline-block; background: #6c757d; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                📄 Voir mes documents
+            </a>
+        </div>
+
+        <p style="color: #7f8c8d; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0; text-align: center;">
+            N'attendez pas ! Renouvelez votre document dès maintenant pour éviter toute interruption de service.
+            <br>
+            Notre équipe vérifiera votre nouveau document sous 24-48h.
+        </p>
+    </td>
+</tr>
+{% endblock %}

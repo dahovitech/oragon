@@ -512,4 +512,191 @@ class NotificationService
         
         return $sentCount;
     }
+
+    // ========================================
+    // NOTIFICATIONS DOCUMENTS KYC
+    // ========================================
+
+    public function sendDocumentUploaded(\App\Entity\Document $document): void
+    {
+        $user = $document->getUser();
+        
+        try {
+            $email = (new Email())
+                ->from('noreply@edgeloan.fr')
+                ->to($user->getEmail())
+                ->subject('Document téléchargé avec succès - EdgeLoan')
+                ->html($this->twig->render('emails/document_uploaded.html.twig', [
+                    'user' => $user,
+                    'document' => $document
+                ]));
+
+            $this->mailer->send($email);
+            
+            $this->logger->info('Document uploaded notification sent', [
+                'user_id' => $user->getId(),
+                'document_id' => $document->getId(),
+                'document_type' => $document->getType()
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to send document uploaded notification', [
+                'user_id' => $user->getId(),
+                'document_id' => $document->getId(),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function sendDocumentPendingReview(\App\Entity\Document $document): void
+    {
+        // Envoyer aux administrateurs
+        $adminEmails = ['admin@edgeloan.fr', 'kyc@edgeloan.fr'];
+        
+        try {
+            foreach ($adminEmails as $adminEmail) {
+                $email = (new Email())
+                    ->from('noreply@edgeloan.fr')
+                    ->to($adminEmail)
+                    ->subject('Nouveau document à vérifier - EdgeLoan KYC')
+                    ->html($this->twig->render('emails/document_pending_review.html.twig', [
+                        'document' => $document,
+                        'user' => $document->getUser()
+                    ]));
+
+                $this->mailer->send($email);
+            }
+            
+            $this->logger->info('Document pending review notification sent to admins', [
+                'document_id' => $document->getId(),
+                'document_type' => $document->getType(),
+                'user_id' => $document->getUser()->getId()
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to send document pending review notification', [
+                'document_id' => $document->getId(),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function sendDocumentApproved(\App\Entity\Document $document): void
+    {
+        $user = $document->getUser();
+        
+        try {
+            $email = (new Email())
+                ->from('noreply@edgeloan.fr')
+                ->to($user->getEmail())
+                ->subject('Document approuvé - EdgeLoan')
+                ->html($this->twig->render('emails/document_approved.html.twig', [
+                    'user' => $user,
+                    'document' => $document
+                ]));
+
+            $this->mailer->send($email);
+            
+            $this->logger->info('Document approved notification sent', [
+                'user_id' => $user->getId(),
+                'document_id' => $document->getId(),
+                'document_type' => $document->getType()
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to send document approved notification', [
+                'user_id' => $user->getId(),
+                'document_id' => $document->getId(),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function sendDocumentRejected(\App\Entity\Document $document): void
+    {
+        $user = $document->getUser();
+        
+        try {
+            $email = (new Email())
+                ->from('noreply@edgeloan.fr')
+                ->to($user->getEmail())
+                ->subject('Document rejeté - EdgeLoan')
+                ->html($this->twig->render('emails/document_rejected.html.twig', [
+                    'user' => $user,
+                    'document' => $document
+                ]));
+
+            $this->mailer->send($email);
+            
+            $this->logger->info('Document rejected notification sent', [
+                'user_id' => $user->getId(),
+                'document_id' => $document->getId(),
+                'document_type' => $document->getType(),
+                'rejection_reason' => $document->getRejectionReason()
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to send document rejected notification', [
+                'user_id' => $user->getId(),
+                'document_id' => $document->getId(),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function sendDocumentExpired(\App\Entity\Document $document): void
+    {
+        $user = $document->getUser();
+        
+        try {
+            $email = (new Email())
+                ->from('noreply@edgeloan.fr')
+                ->to($user->getEmail())
+                ->subject('Document expiré - EdgeLoan')
+                ->html($this->twig->render('emails/document_expired.html.twig', [
+                    'user' => $user,
+                    'document' => $document
+                ]));
+
+            $this->mailer->send($email);
+            
+            $this->logger->info('Document expired notification sent', [
+                'user_id' => $user->getId(),
+                'document_id' => $document->getId(),
+                'document_type' => $document->getType()
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to send document expired notification', [
+                'user_id' => $user->getId(),
+                'document_id' => $document->getId(),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function sendKycCompleted(User $user): void
+    {
+        try {
+            $email = (new Email())
+                ->from('noreply@edgeloan.fr')
+                ->to($user->getEmail())
+                ->subject('Vérification d\'identité complétée - EdgeLoan')
+                ->html($this->twig->render('emails/kyc_completed.html.twig', [
+                    'user' => $user
+                ]));
+
+            $this->mailer->send($email);
+            
+            $this->logger->info('KYC completed notification sent', [
+                'user_id' => $user->getId()
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to send KYC completed notification', [
+                'user_id' => $user->getId(),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
 }

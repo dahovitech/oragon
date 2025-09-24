@@ -1,0 +1,122 @@
+{% extends 'emails/base.html.twig' %}
+
+{% block title %}Nouveau document à vérifier{% endblock %}
+
+{% block content %}
+<tr>
+    <td style="padding: 40px 30px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div style="width: 60px; height: 60px; background: #fff3cd; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                <svg width="24" height="24" fill="#856404" viewBox="0 0 24 24">
+                    <path d="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
+                </svg>
+            </div>
+            <h1 style="color: #2c3e50; font-size: 24px; font-weight: 600; margin: 0 0 10px 0;">
+                Nouveau document KYC
+            </h1>
+            <p style="color: #7f8c8d; font-size: 16px; margin: 0;">
+                Un document nécessite une vérification
+            </p>
+        </div>
+
+        <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+            <h2 style="color: #2c3e50; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+                👤 Utilisateur
+            </h2>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 8px 0; color: #7f8c8d; font-weight: 500; width: 120px;">Nom :</td>
+                    <td style="padding: 8px 0; color: #2c3e50; font-weight: 600;">{{ user.firstName }} {{ user.lastName }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #7f8c8d; font-weight: 500;">Email :</td>
+                    <td style="padding: 8px 0; color: #2c3e50; font-weight: 600;">{{ user.email }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #7f8c8d; font-weight: 500;">Téléphone :</td>
+                    <td style="padding: 8px 0; color: #2c3e50; font-weight: 600;">{{ user.phoneNumber ?? 'Non renseigné' }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #7f8c8d; font-weight: 500;">Inscription :</td>
+                    <td style="padding: 8px 0; color: #2c3e50; font-weight: 600;">{{ user.createdAt|date('d/m/Y') }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <div style="background: #fff3cd; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+            <h2 style="color: #856404; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+                📄 Document uploadé
+            </h2>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 8px 0; color: #856404; font-weight: 500; width: 120px;">Nom :</td>
+                    <td style="padding: 8px 0; color: #856404; font-weight: 600;">{{ document.name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #856404; font-weight: 500;">Type :</td>
+                    <td style="padding: 8px 0; color: #856404; font-weight: 600;">{{ document.typeLabel }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #856404; font-weight: 500;">Uploadé le :</td>
+                    <td style="padding: 8px 0; color: #856404; font-weight: 600;">{{ document.uploadedAt|date('d/m/Y à H:i') }}</td>
+                </tr>
+                {% if document.fileSize %}
+                <tr>
+                    <td style="padding: 8px 0; color: #856404; font-weight: 500;">Taille :</td>
+                    <td style="padding: 8px 0; color: #856404; font-weight: 600;">{{ (document.fileSize / 1024 / 1024)|number_format(2) }} MB</td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+
+        {% set kyc_progress = user.kycProgress %}
+        <div style="background: #e3f2fd; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+            <h2 style="color: #1565c0; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+                📊 Progression KYC utilisateur
+            </h2>
+            <div style="background: #ffffff; border-radius: 10px; height: 20px; overflow: hidden; margin-bottom: 10px; border: 1px solid #bbdefb;">
+                <div style="background: linear-gradient(90deg, #1976d2, #42a5f5); height: 100%; width: {{ kyc_progress.progress }}%; transition: width 0.3s ease;"></div>
+            </div>
+            <p style="color: #1565c0; margin: 0; font-size: 14px; margin-bottom: 10px;">
+                {{ kyc_progress.approved }}/{{ kyc_progress.required }} documents requis approuvés ({{ kyc_progress.progress|number_format(1) }}%)
+            </p>
+            {% if kyc_progress.is_complete %}
+                <span style="background: #d4edda; color: #155724; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                    ✅ KYC COMPLET
+                </span>
+            {% else %}
+                <span style="background: #fff3cd; color: #856404; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">
+                    ⏳ KYC EN COURS
+                </span>
+            {% endif %}
+        </div>
+
+        <div style="background: #f1f3f4; border-left: 4px solid #9e9e9e; padding: 20px; margin-bottom: 25px; border-radius: 0 4px 4px 0;">
+            <h3 style="color: #424242; font-size: 16px; font-weight: 600; margin: 0 0 12px 0;">
+                ⚡ Action requise
+            </h3>
+            <p style="color: #424242; margin: 0; line-height: 1.5;">
+                Ce document nécessite une vérification manuelle dans les <strong>24-48h</strong>. 
+                L'utilisateur a été informé que son document était en cours de traitement.
+            </p>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+            <a href="{{ url('app_documents_admin_verify', {id: document.id}) }}" 
+               style="display: inline-block; background: #1976d2; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; margin-right: 10px;">
+                Vérifier le document
+            </a>
+            <a href="{{ url('app_documents_admin_index') }}" 
+               style="display: inline-block; background: #6c757d; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                Dashboard admin
+            </a>
+        </div>
+
+        <p style="color: #7f8c8d; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0; text-align: center;">
+            Cette notification automatique vous informe qu'un nouveau document KYC nécessite une vérification.
+            <br>
+            Connectez-vous à l'interface d'administration pour traiter cette demande.
+        </p>
+    </td>
+</tr>
+{% endblock %}

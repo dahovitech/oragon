@@ -1,0 +1,98 @@
+{% extends 'emails/base.html.twig' %}
+
+{% block title %}Document rejeté{% endblock %}
+
+{% block content %}
+<tr>
+    <td style="padding: 40px 30px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div style="width: 60px; height: 60px; background: #f8d7da; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                <svg width="24" height="24" fill="#721c24" viewBox="0 0 24 24">
+                    <path d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z" />
+                </svg>
+            </div>
+            <h1 style="color: #2c3e50; font-size: 24px; font-weight: 600; margin: 0 0 10px 0;">
+                Document rejeté
+            </h1>
+            <p style="color: #7f8c8d; font-size: 16px; margin: 0;">
+                Votre document nécessite une correction
+            </p>
+        </div>
+
+        <div style="background: #f8d7da; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+            <h2 style="color: #721c24; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+                📋 Document concerné
+            </h2>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 8px 0; color: #721c24; font-weight: 500; width: 120px;">Nom :</td>
+                    <td style="padding: 8px 0; color: #721c24; font-weight: 600;">{{ document.name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #721c24; font-weight: 500;">Type :</td>
+                    <td style="padding: 8px 0; color: #721c24; font-weight: 600;">{{ document.typeLabel }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #721c24; font-weight: 500;">Rejeté le :</td>
+                    <td style="padding: 8px 0; color: #721c24; font-weight: 600;">{{ document.verifiedAt|date('d/m/Y à H:i') }}</td>
+                </tr>
+            </table>
+        </div>
+
+        {% if document.rejectionReason %}
+        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin-bottom: 25px; border-radius: 0 4px 4px 0;">
+            <h3 style="color: #856404; font-size: 16px; font-weight: 600; margin: 0 0 12px 0;">
+                📝 Raison du rejet
+            </h3>
+            <p style="color: #856404; margin: 0; line-height: 1.5; font-size: 15px;">
+                {{ document.rejectionReason|nl2br }}
+            </p>
+        </div>
+        {% endif %}
+
+        <div style="background: #e3f2fd; border-left: 4px solid #1976d2; padding: 20px; margin-bottom: 25px; border-radius: 0 4px 4px 0;">
+            <h3 style="color: #1565c0; font-size: 16px; font-weight: 600; margin: 0 0 12px 0;">
+                🔧 Comment corriger ?
+            </h3>
+            <ul style="color: #1565c0; margin: 0; padding-left: 20px; line-height: 1.6;">
+                <li>Vérifiez que votre document est <strong>lisible</strong> et de <strong>bonne qualité</strong></li>
+                <li>Assurez-vous que le document est <strong>complet</strong> et <strong>non masqué</strong></li>
+                <li>Vérifiez que le document n'est <strong>pas expiré</strong></li>
+                <li>Confirmez que le <strong>type de document</strong> correspond à votre sélection</li>
+                <li>Vérifiez que les <strong>informations personnelles</strong> correspondent à votre profil</li>
+            </ul>
+        </div>
+
+        <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+            <h3 style="color: #2c3e50; font-size: 16px; font-weight: 600; margin: 0 0 15px 0;">
+                📤 Formats acceptés
+            </h3>
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-right: 10px;">PDF</span>
+                <span style="background: #17a2b8; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-right: 10px;">JPG</span>
+                <span style="background: #6f42c1; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">PNG</span>
+            </div>
+            <p style="color: #6c757d; margin: 0; font-size: 14px;">
+                Taille maximum : <strong>10 MB</strong> • Qualité recommandée : <strong>300 DPI minimum</strong>
+            </p>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+            <a href="{{ url('app_documents_upload') }}" 
+               style="display: inline-block; background: #dc3545; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; margin-right: 10px;">
+                Télécharger un nouveau document
+            </a>
+            <a href="{{ url('app_documents_index') }}" 
+               style="display: inline-block; background: #6c757d; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                Voir mes documents
+            </a>
+        </div>
+
+        <p style="color: #7f8c8d; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0; text-align: center;">
+            Ne vous inquiétez pas ! Corrigez votre document et téléchargez-le à nouveau.
+            <br>
+            Notre équipe le vérifiera sous 24-48h. Si vous avez des questions, contactez-nous.
+        </p>
+    </td>
+</tr>
+{% endblock %}

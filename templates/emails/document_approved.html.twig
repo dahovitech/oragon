@@ -1,0 +1,105 @@
+{% extends 'emails/base.html.twig' %}
+
+{% block title %}Document approuvé{% endblock %}
+
+{% block content %}
+<tr>
+    <td style="padding: 40px 30px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div style="width: 60px; height: 60px; background: #d4edda; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                <svg width="24" height="24" fill="#155724" viewBox="0 0 24 24">
+                    <path d="M9,20.42L2.79,14.21L5.62,11.38L9,14.77L18.88,4.88L21.71,7.71L9,20.42Z" />
+                </svg>
+            </div>
+            <h1 style="color: #2c3e50; font-size: 24px; font-weight: 600; margin: 0 0 10px 0;">
+                Document approuvé ✅
+            </h1>
+            <p style="color: #7f8c8d; font-size: 16px; margin: 0;">
+                Votre document a été vérifié et approuvé
+            </p>
+        </div>
+
+        <div style="background: #d4edda; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+            <h2 style="color: #155724; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+                📋 Document approuvé
+            </h2>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 8px 0; color: #155724; font-weight: 500; width: 120px;">Nom :</td>
+                    <td style="padding: 8px 0; color: #155724; font-weight: 600;">{{ document.name }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #155724; font-weight: 500;">Type :</td>
+                    <td style="padding: 8px 0; color: #155724; font-weight: 600;">{{ document.typeLabel }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px 0; color: #155724; font-weight: 500;">Vérifié le :</td>
+                    <td style="padding: 8px 0; color: #155724; font-weight: 600;">{{ document.verifiedAt|date('d/m/Y à H:i') }}</td>
+                </tr>
+                {% if document.rejectionReason %}
+                <tr>
+                    <td style="padding: 8px 0; color: #155724; font-weight: 500;">Commentaire :</td>
+                    <td style="padding: 8px 0; color: #155724; font-weight: 500; line-height: 1.5;">{{ document.rejectionReason|nl2br }}</td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+
+        {% set kyc_progress = user.kycProgress %}
+        <div style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+            <h2 style="color: #2c3e50; font-size: 18px; font-weight: 600; margin: 0 0 15px 0;">
+                🔍 Progression KYC
+            </h2>
+            <div style="background: #e9ecef; border-radius: 10px; height: 20px; overflow: hidden; margin-bottom: 10px;">
+                <div style="background: linear-gradient(90deg, #28a745, #20c997); height: 100%; width: {{ kyc_progress.progress }}%; transition: width 0.3s ease;"></div>
+            </div>
+            <p style="color: #6c757d; margin: 0; font-size: 14px;">
+                {{ kyc_progress.approved }}/{{ kyc_progress.required }} documents requis approuvés ({{ kyc_progress.progress|number_format(1) }}%)
+            </p>
+            
+            {% if kyc_progress.is_complete %}
+            <div style="background: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin-top: 15px; border-radius: 0 4px 4px 0;">
+                <h3 style="color: #155724; font-size: 16px; font-weight: 600; margin: 0 0 8px 0;">
+                    🎉 Vérification d'identité complète !
+                </h3>
+                <p style="color: #155724; margin: 0; line-height: 1.5;">
+                    Félicitations ! Votre vérification d'identité est maintenant complète. 
+                    Vous pouvez désormais accéder à tous nos services de prêt.
+                </p>
+            </div>
+            {% else %}
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-top: 15px; border-radius: 0 4px 4px 0;">
+                <h3 style="color: #856404; font-size: 16px; font-weight: 600; margin: 0 0 8px 0;">
+                    📋 Documents restants
+                </h3>
+                <p style="color: #856404; margin: 0; line-height: 1.5;">
+                    Il vous reste quelques documents à fournir pour compléter votre vérification d'identité.
+                    Consultez votre espace personnel pour voir les documents requis.
+                </p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+            <a href="{{ url('app_documents_index') }}" 
+               style="display: inline-block; background: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; margin-right: 10px;">
+                Voir mes documents
+            </a>
+            {% if not kyc_progress.is_complete %}
+            <a href="{{ url('app_documents_upload') }}" 
+               style="display: inline-block; background: #1976d2; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                Ajouter des documents
+            </a>
+            {% endif %}
+        </div>
+
+        <p style="color: #7f8c8d; font-size: 14px; line-height: 1.6; margin: 20px 0 0 0; text-align: center;">
+            {% if kyc_progress.is_complete %}
+                Votre profil est maintenant vérifié. Vous pouvez commencer à faire des demandes de prêt !
+            {% else %}
+                Continuez à télécharger vos documents pour finaliser votre vérification.
+            {% endif %}
+        </p>
+    </td>
+</tr>
+{% endblock %}

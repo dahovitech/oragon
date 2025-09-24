@@ -1,0 +1,310 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Vérification - {{ document.name }} - EdgeLoan{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ path('app_documents_admin_index') }}">Administration</a></li>
+                        <li class="breadcrumb-item"><a href="{{ path('app_documents_admin_all') }}">Documents</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Vérification</li>
+                    </ol>
+                </nav>
+                <h1 class="page-title">🔍 Vérification du Document</h1>
+                <div class="page-subtitle">{{ document.name }} - {{ document.user.firstName }} {{ document.user.lastName }}</div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+<div class="container-xl">
+    <div class="row">
+        
+        {# Informations utilisateur et document #}
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">👤 Utilisateur</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-4"><strong>Nom:</strong></div>
+                        <div class="col-8">{{ document.user.firstName }} {{ document.user.lastName }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4"><strong>Email:</strong></div>
+                        <div class="col-8">{{ document.user.email }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4"><strong>Téléphone:</strong></div>
+                        <div class="col-8">{{ document.user.phoneNumber ?? 'Non renseigné' }}</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4"><strong>Adresse:</strong></div>
+                        <div class="col-8">
+                            {% if document.user.address %}
+                                {{ document.user.address }}<br>
+                                {{ document.user.postalCode }} {{ document.user.city }}
+                            {% else %}
+                                Non renseignée
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h3 class="card-title">📄 Document</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-4"><strong>Type:</strong></div>
+                        <div class="col-8">
+                            <span class="badge bg-light text-dark">{{ document.typeLabel }}</span>
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4"><strong>Statut:</strong></div>
+                        <div class="col-8">
+                            <span class="badge {{ document.statusBadgeClass }}">
+                                {{ document.statusLabel }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4"><strong>Uploadé le:</strong></div>
+                        <div class="col-8">{{ document.uploadedAt|date('d/m/Y à H:i') }}</div>
+                    </div>
+                    {% if document.fileSize %}
+                    <div class="row mb-2">
+                        <div class="col-4"><strong>Taille:</strong></div>
+                        <div class="col-8">{{ (document.fileSize / 1024 / 1024)|number_format(2) }} MB</div>
+                    </div>
+                    {% endif %}
+                    {% if document.expiresAt %}
+                    <div class="row mb-2">
+                        <div class="col-4"><strong>Expire le:</strong></div>
+                        <div class="col-8">
+                            {{ document.expiresAt|date('d/m/Y') }}
+                            {% if document.isExpired %}
+                                <span class="text-danger">(Expiré)</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Formulaire de vérification #}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h3 class="card-title">✅ Vérification</h3>
+                </div>
+                <div class="card-body">
+                    {{ form_start(form) }}
+                    
+                    <div class="mb-3">
+                        {{ form_label(form.status) }}
+                        {{ form_widget(form.status, {'attr': {'class': 'form-select', 'onchange': 'toggleReasonField()'}}) }}
+                        {{ form_errors(form.status) }}
+                    </div>
+
+                    <div class="mb-3" id="reason-field">
+                        {{ form_label(form.rejectionReason) }}
+                        {{ form_widget(form.rejectionReason, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.rejectionReason) }}
+                        {{ form_help(form.rejectionReason) }}
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Enregistrer la Vérification
+                        </button>
+                        <a href="{{ path('app_documents_admin_index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Retour
+                        </a>
+                    </div>
+
+                    {{ form_end(form) }}
+                </div>
+            </div>
+            
+            {# Raccourcis rapides #}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h3 class="card-title">⚡ Actions Rapides</h3>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-success btn-sm" onclick="quickApprove()">
+                            <i class="fas fa-check"></i> Approuver Rapidement
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="showQuickReject()">
+                            <i class="fas fa-times"></i> Motifs de Rejet Courants
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {# Prévisualisation du document #}
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🔍 Document à Vérifier</h3>
+                    <div class="card-actions">
+                        {% if document.filename %}
+                        <a href="{{ vich_uploader_asset(document, 'file') }}" 
+                           class="btn btn-outline-primary btn-sm" 
+                           target="_blank">
+                            <i class="fas fa-external-link-alt"></i> Ouvrir dans un nouvel onglet
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if document.filename %}
+                        {% set file_extension = document.filename|split('.')|last|lower %}
+                        {% if file_extension == 'pdf' %}
+                            {# Prévisualisation PDF #}
+                            <div class="text-center">
+                                <iframe src="{{ vich_uploader_asset(document, 'file') }}" 
+                                        width="100%" 
+                                        height="700" 
+                                        style="border: 1px solid #dee2e6; border-radius: 0.375rem;">
+                                </iframe>
+                            </div>
+                        {% elseif file_extension in ['jpg', 'jpeg', 'png'] %}
+                            {# Prévisualisation image #}
+                            <div class="text-center">
+                                <img src="{{ vich_uploader_asset(document, 'file') }}" 
+                                     alt="{{ document.name }}" 
+                                     class="img-fluid rounded shadow-sm"
+                                     style="max-height: 700px; cursor: zoom-in;"
+                                     onclick="openImageModal(this.src)">
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-file fa-5x text-muted mb-3"></i>
+                                <h4>Prévisualisation non disponible</h4>
+                                <p class="text-muted">Ce type de fichier doit être téléchargé pour être vérifié.</p>
+                                <a href="{{ vich_uploader_asset(document, 'file') }}" 
+                                   class="btn btn-primary" 
+                                   target="_blank">
+                                    <i class="fas fa-download"></i> Télécharger le fichier
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-exclamation-triangle fa-5x text-warning mb-3"></i>
+                            <h4>Fichier non disponible</h4>
+                            <p class="text-muted">Le fichier associé à ce document n'a pas pu être trouvé.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Modal pour les motifs de rejet rapides #}
+<div class="modal fade" id="quickRejectModal" tabindex="-1" aria-labelledby="quickRejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="quickRejectModalLabel">Motifs de Rejet Courants</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <div class="list-group">
+                    <button type="button" class="list-group-item list-group-item-action" 
+                            onclick="setRejectionReason('Document illisible ou de mauvaise qualité')">
+                        Document illisible ou de mauvaise qualité
+                    </button>
+                    <button type="button" class="list-group-item list-group-item-action" 
+                            onclick="setRejectionReason('Document expiré')">
+                        Document expiré
+                    </button>
+                    <button type="button" class="list-group-item list-group-item-action" 
+                            onclick="setRejectionReason('Document incomplet ou partiellement masqué')">
+                        Document incomplet ou partiellement masqué
+                    </button>
+                    <button type="button" class="list-group-item list-group-item-action" 
+                            onclick="setRejectionReason('Type de document non conforme au type sélectionné')">
+                        Type de document non conforme
+                    </button>
+                    <button type="button" class="list-group-item list-group-item-action" 
+                            onclick="setRejectionReason('Informations personnelles non concordantes')">
+                        Informations personnelles non concordantes
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Modal pour agrandir les images #}
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">{{ document.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="{{ document.name }}" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleReasonField() {
+    const statusSelect = document.getElementById('{{ form.status.vars.id }}');
+    const reasonField = document.getElementById('reason-field');
+    
+    if (statusSelect.value === 'rejected') {
+        reasonField.style.display = 'block';
+        document.getElementById('{{ form.rejectionReason.vars.id }}').required = true;
+    } else {
+        reasonField.style.display = 'block'; // Toujours visible pour les commentaires
+        document.getElementById('{{ form.rejectionReason.vars.id }}').required = false;
+    }
+}
+
+function quickApprove() {
+    document.getElementById('{{ form.status.vars.id }}').value = 'approved';
+    toggleReasonField();
+}
+
+function showQuickReject() {
+    document.getElementById('{{ form.status.vars.id }}').value = 'rejected';
+    toggleReasonField();
+    new bootstrap.Modal(document.getElementById('quickRejectModal')).show();
+}
+
+function setRejectionReason(reason) {
+    document.getElementById('{{ form.rejectionReason.vars.id }}').value = reason;
+    bootstrap.Modal.getInstance(document.getElementById('quickRejectModal')).hide();
+}
+
+function openImageModal(imageSrc) {
+    document.getElementById('modalImage').src = imageSrc;
+    new bootstrap.Modal(document.getElementById('imageModal')).show();
+}
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', function() {
+    toggleReasonField();
+});
+</script>
+{% endblock %}

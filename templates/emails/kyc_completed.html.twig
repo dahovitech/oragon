@@ -1,0 +1,129 @@
+{% extends 'emails/base.html.twig' %}
+
+{% block title %}Vérification d'identité complétée{% endblock %}
+
+{% block content %}
+<tr>
+    <td style="padding: 40px 30px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div style="width: 80px; height: 80px; background: #d4edda; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                <svg width="32" height="32" fill="#155724" viewBox="0 0 24 24">
+                    <path d="M12,1L21,5V11C21,16.55 17.16,21.74 12,23C6.84,21.74 3,16.55 3,11V5L12,1M10,17L6,13L7.41,11.59L10,14.17L16.59,7.58L18,9L10,17Z" />
+                </svg>
+            </div>
+            <h1 style="color: #2c3e50; font-size: 28px; font-weight: 700; margin: 0 0 10px 0;">
+                🎉 Félicitations !
+            </h1>
+            <p style="color: #7f8c8d; font-size: 18px; margin: 0; font-weight: 500;">
+                Votre vérification d'identité est complète
+            </p>
+        </div>
+
+        <div style="background: linear-gradient(135deg, #d4edda, #c3e6cb); border-radius: 12px; padding: 30px; margin-bottom: 30px; text-align: center; border: 2px solid #28a745;">
+            <h2 style="color: #155724; font-size: 22px; font-weight: 600; margin: 0 0 15px 0;">
+                ✅ Identité Vérifiée
+            </h2>
+            <p style="color: #155724; margin: 0 0 20px 0; font-size: 16px; line-height: 1.6;">
+                Tous vos documents ont été vérifiés et approuvés avec succès !
+                <br>
+                Votre compte EdgeLoan est maintenant <strong>entièrement vérifié</strong>.
+            </p>
+            <div style="background: rgba(21, 87, 36, 0.1); border-radius: 8px; padding: 20px; margin-top: 20px;">
+                <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 15px;">
+                    <div style="background: #28a745; color: white; border-radius: 50%; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; margin-right: 15px;">
+                        KYC
+                    </div>
+                    <div style="text-align: left;">
+                        <div style="color: #155724; font-weight: 600; font-size: 18px;">Vérification Complète</div>
+                        <div style="color: #155724; font-size: 14px;">Tous les documents requis approuvés</div>
+                    </div>
+                </div>
+                <div style="background: #ffffff; border-radius: 6px; height: 8px; overflow: hidden;">
+                    <div style="background: #28a745; height: 100%; width: 100%; transition: width 0.3s ease;"></div>
+                </div>
+                <div style="color: #155724; margin-top: 8px; font-weight: 600;">100% Complet</div>
+            </div>
+        </div>
+
+        <div style="background: #e3f2fd; border-radius: 8px; padding: 25px; margin-bottom: 25px;">
+            <h2 style="color: #1565c0; font-size: 20px; font-weight: 600; margin: 0 0 20px 0;">
+                🚀 Que pouvez-vous faire maintenant ?
+            </h2>
+            
+            <div style="margin-bottom: 20px;">
+                <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                    <div style="background: #1976d2; color: white; border-radius: 50%; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; flex-shrink: 0;">
+                        1
+                    </div>
+                    <div>
+                        <strong style="color: #1565c0;">Faire une demande de prêt</strong>
+                        <div style="color: #1976d2; font-size: 14px;">Accédez à tous nos produits de financement</div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                    <div style="background: #1976d2; color: white; border-radius: 50%; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; flex-shrink: 0;">
+                        2
+                    </div>
+                    <div>
+                        <strong style="color: #1565c0;">Bénéficier de taux préférentiels</strong>
+                        <div style="color: #1976d2; font-size: 14px;">Profitez de conditions avantageuses</div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; align-items: center;">
+                    <div style="background: #1976d2; color: white; border-radius: 50%; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; flex-shrink: 0;">
+                        3
+                    </div>
+                    <div>
+                        <strong style="color: #1565c0;">Traitement rapide</strong>
+                        <div style="color: #1976d2; font-size: 14px;">Vos demandes seront traitées en priorité</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin-bottom: 25px; border-radius: 0 4px 4px 0;">
+            <h3 style="color: #856404; font-size: 16px; font-weight: 600; margin: 0 0 12px 0;">
+                🔒 Sécurité et Confidentialité
+            </h3>
+            <p style="color: #856404; margin: 0; line-height: 1.5; font-size: 14px;">
+                Vos documents sont stockés de manière sécurisée et conforme aux réglementations RGPD. 
+                Ils ne seront utilisés que dans le cadre de vos services financiers chez EdgeLoan.
+            </p>
+        </div>
+
+        <div style="text-align: center; margin-bottom: 30px;">
+            <a href="{{ url('app_loan_application_new') }}" 
+               style="display: inline-block; background: #28a745; color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 18px; margin-right: 15px;">
+                🏦 Faire une demande de prêt
+            </a>
+            <a href="{{ url('app_dashboard') }}" 
+               style="display: inline-block; background: #1976d2; color: white; padding: 15px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 18px;">
+                📊 Mon tableau de bord
+            </a>
+        </div>
+
+        <div style="text-align: center; background: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+            <h3 style="color: #2c3e50; font-size: 16px; font-weight: 600; margin: 0 0 10px 0;">
+                Besoin d'aide ?
+            </h3>
+            <p style="color: #6c757d; margin: 0 0 15px 0; font-size: 14px;">
+                Notre équipe est là pour vous accompagner dans vos démarches financières.
+            </p>
+            <div style="margin-top: 15px;">
+                <span style="color: #6c757d; font-size: 14px; margin-right: 20px;">
+                    📞 <strong>+33 1 23 45 67 89</strong>
+                </span>
+                <span style="color: #6c757d; font-size: 14px;">
+                    ✉️ <strong>support@edgeloan.fr</strong>
+                </span>
+            </div>
+        </div>
+
+        <p style="color: #7f8c8d; font-size: 14px; line-height: 1.6; margin: 0; text-align: center;">
+            Merci de votre confiance ! L'équipe EdgeLoan est ravie de vous accompagner dans vos projets financiers.
+        </p>
+    </td>
+</tr>
+{% endblock %}

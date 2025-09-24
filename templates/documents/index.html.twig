@@ -1,0 +1,230 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes documents - EdgeLoan{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="page-title">📄 Gestion des Documents</h1>
+                <div class="page-subtitle">Gérez vos documents KYC et suivez votre progression</div>
+            </div>
+            <div class="col-auto">
+                <a href="{{ path('app_documents_upload') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Ajouter un document
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+<div class="container-xl">
+    
+    {# Progression KYC #}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🔍 Progression de la vérification d'identité (KYC)</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="progress progress-lg mb-3">
+                                <div class="progress-bar bg-primary" role="progressbar" 
+                                     style="width: {{ kyc_progress.completion_rate }}%"
+                                     aria-valuenow="{{ kyc_progress.completion_rate }}" 
+                                     aria-valuemin="0" aria-valuemax="100">
+                                    {{ kyc_progress.completion_rate|number_format(1) }}%
+                                </div>
+                            </div>
+                            <div class="text-muted">
+                                {{ kyc_progress.completed_types }}/{{ kyc_progress.total_required }} documents requis approuvés
+                                {% if kyc_progress.is_complete %}
+                                    <span class="badge bg-success ms-2">✓ Vérification complète</span>
+                                {% else %}
+                                    <span class="badge bg-warning ms-2">⏳ En cours</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            {% if kyc_progress.is_complete %}
+                                <div class="text-success">
+                                    <i class="fas fa-check-circle fa-2x"></i>
+                                    <div class="mt-2">Identité vérifiée</div>
+                                </div>
+                            {% else %}
+                                <div class="text-muted">
+                                    <i class="fas fa-clock fa-2x"></i>
+                                    <div class="mt-2">Vérification en cours</div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Documents requis #}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📋 Documents Requis</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for type, info in requirements %}
+                            {% if info.required %}
+                                {% set user_has_approved = false %}
+                                {% for document in documents %}
+                                    {% if document.type == type and document.status == 'approved' %}
+                                        {% set user_has_approved = true %}
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                <div class="col-md-6 col-lg-4 mb-3">
+                                    <div class="card card-sm">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    {% if user_has_approved %}
+                                                        <i class="fas fa-check-circle fa-2x text-success"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-times-circle fa-2x text-muted"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="flex-fill">
+                                                    <div class="font-weight-medium">
+                                                        {{ info.description }}
+                                                    </div>
+                                                    <div class="text-muted small">
+                                                        {% if user_has_approved %}
+                                                            <span class="text-success">Approuvé</span>
+                                                        {% else %}
+                                                            <span class="text-warning">Requis</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Liste des documents #}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📎 Mes Documents</h3>
+                </div>
+                <div class="card-body">
+                    {% if documents %}
+                        <div class="table-responsive">
+                            <table class="table table-vcenter">
+                                <thead>
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Type</th>
+                                        <th>Statut</th>
+                                        <th>Date d'upload</th>
+                                        <th>Taille</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for document in documents %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-file-pdf text-danger me-2"></i>
+                                                {{ document.name }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light text-dark">
+                                                {{ document.typeLabel }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge {{ document.statusBadgeClass }}">
+                                                {{ document.statusLabel }}
+                                            </span>
+                                            {% if document.isExpired %}
+                                                <span class="badge bg-secondary ms-1">Expiré</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{ document.uploadedAt|date('d/m/Y H:i') }}
+                                        </td>
+                                        <td>
+                                            {% if document.fileSize %}
+                                                {{ (document.fileSize / 1024 / 1024)|number_format(2) }} MB
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="{{ path('app_documents_view', {id: document.id}) }}" 
+                                                   class="btn btn-outline-primary">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% if document.status == 'pending' or document.status == 'rejected' %}
+                                                <form method="post" 
+                                                      action="{{ path('app_documents_delete', {id: document.id}) }}" 
+                                                      style="display: inline-block;"
+                                                      onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce document ?');">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_document_' ~ document.id) }}">
+                                                    <button type="submit" class="btn btn-outline-danger">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </form>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% if document.rejectionReason %}
+                                    <tr class="table-warning">
+                                        <td colspan="6">
+                                            <small>
+                                                <strong>Raison du rejet:</strong> {{ document.rejectionReason }}
+                                            </small>
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="empty">
+                            <div class="empty-img">
+                                <i class="fas fa-file-upload fa-5x text-muted"></i>
+                            </div>
+                            <p class="empty-title">Aucun document</p>
+                            <p class="empty-subtitle text-muted">
+                                Commencez par uploader vos documents pour compléter votre vérification d'identité.
+                            </p>
+                            <div class="empty-action">
+                                <a href="{{ path('app_documents_upload') }}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Ajouter votre premier document
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

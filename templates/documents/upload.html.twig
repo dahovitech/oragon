@@ -1,0 +1,205 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Ajouter un document - EdgeLoan{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ path('app_documents_index') }}">Documents</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Ajouter un document</li>
+                    </ol>
+                </nav>
+                <h1 class="page-title">📤 Ajouter un Document</h1>
+                <div class="page-subtitle">Uploadez un nouveau document pour votre vérification KYC</div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+<div class="container-xl">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            
+            {# Instructions #}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title">📝 Instructions</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h4>✅ Documents acceptés</h4>
+                            <ul>
+                                <li><strong>Formats :</strong> PDF, JPG, PNG</li>
+                                <li><strong>Taille max :</strong> 10 MB</li>
+                                <li><strong>Qualité :</strong> Lisible et en couleur</li>
+                                <li><strong>Intégralité :</strong> Document complet visible</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h4>❌ À éviter</h4>
+                            <ul>
+                                <li>Photos floues ou mal cadrées</li>
+                                <li>Documents partiellement cachés</li>
+                                <li>Fichiers trop volumineux</li>
+                                <li>Documents expirés</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Délai de vérification :</strong> Vos documents seront vérifiés sous 24-48h par notre équipe.
+                    </div>
+                </div>
+            </div>
+
+            {# Formulaire d'upload #}
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📎 Nouveau Document</h3>
+                </div>
+                <div class="card-body">
+                    {{ form_start(form) }}
+                    
+                    <div class="mb-3">
+                        {{ form_label(form.type) }}
+                        {{ form_widget(form.type) }}
+                        {{ form_errors(form.type) }}
+                        <div class="form-text">
+                            Sélectionnez le type de document que vous souhaitez uploader.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.name) }}
+                        {{ form_widget(form.name) }}
+                        {{ form_errors(form.name) }}
+                        {{ form_help(form.name) }}
+                    </div>
+
+                    <div class="mb-4">
+                        {{ form_label(form.file) }}
+                        <div class="upload-area border border-2 border-dashed rounded p-4 text-center" 
+                             onclick="document.getElementById('{{ form.file.vars.id }}').click();">
+                            <div class="upload-icon mb-3">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-muted"></i>
+                            </div>
+                            <div class="upload-text">
+                                <h4>Cliquez pour sélectionner un fichier</h4>
+                                <p class="text-muted">ou glissez-déposez votre document ici</p>
+                            </div>
+                            {{ form_widget(form.file, {'attr': {'class': 'd-none', 'onchange': 'displayFileName(this)'}}) }}
+                        </div>
+                        <div id="file-info" class="mt-2 text-muted small" style="display: none;">
+                            <i class="fas fa-file"></i> <span id="file-name"></span>
+                            <span id="file-size" class="ms-2"></span>
+                        </div>
+                        {{ form_errors(form.file) }}
+                        <div class="form-text mt-2">
+                            {{ form_help(form.file) }}
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ path('app_documents_index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Retour
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> Uploader le Document
+                        </button>
+                    </div>
+
+                    {{ form_end(form) }}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+function displayFileName(input) {
+    const fileInfo = document.getElementById('file-info');
+    const fileName = document.getElementById('file-name');
+    const fileSize = document.getElementById('file-size');
+    
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        fileName.textContent = file.name;
+        fileSize.textContent = '(' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
+        fileInfo.style.display = 'block';
+        
+        // Mettre à jour la zone d'upload
+        const uploadArea = document.querySelector('.upload-area');
+        uploadArea.classList.add('border-success');
+        uploadArea.querySelector('.upload-text h4').textContent = 'Fichier sélectionné';
+        uploadArea.querySelector('.upload-text p').textContent = 'Cliquez sur "Uploader" pour continuer';
+        uploadArea.querySelector('.fas').className = 'fas fa-check-circle fa-3x text-success';
+    }
+}
+
+// Drag and drop
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.querySelector('.upload-area');
+    const fileInput = document.getElementById('{{ form.file.vars.id }}');
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight(e) {
+        uploadArea.classList.add('border-primary', 'bg-light');
+    }
+    
+    function unhighlight(e) {
+        uploadArea.classList.remove('border-primary', 'bg-light');
+    }
+    
+    uploadArea.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length) {
+            fileInput.files = files;
+            displayFileName(fileInput);
+        }
+    }
+});
+</script>
+
+<style>
+.upload-area {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+    border-color: var(--bs-primary) !important;
+    background-color: var(--bs-light);
+}
+
+#{{ form.file.vars.id }} {
+    position: absolute !important;
+    left: -9999px !important;
+}
+</style>
+{% endblock %}

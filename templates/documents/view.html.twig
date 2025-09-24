@@ -1,0 +1,218 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ document.name }} - EdgeLoan{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ path('app_documents_index') }}">Documents</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">{{ document.name }}</li>
+                    </ol>
+                </nav>
+                <h1 class="page-title">📄 {{ document.name }}</h1>
+                <div class="page-subtitle">Détails du document</div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+<div class="container-xl">
+    <div class="row">
+        
+        {# Informations du document #}
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">ℹ️ Informations</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>Type:</strong></div>
+                        <div class="col-sm-8">
+                            <span class="badge bg-light text-dark">{{ document.typeLabel }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>Statut:</strong></div>
+                        <div class="col-sm-8">
+                            <span class="badge {{ document.statusBadgeClass }}">
+                                {{ document.statusLabel }}
+                            </span>
+                            {% if document.isExpired %}
+                                <span class="badge bg-secondary ms-1">Expiré</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>Uploadé le:</strong></div>
+                        <div class="col-sm-8">{{ document.uploadedAt|date('d/m/Y à H:i') }}</div>
+                    </div>
+                    
+                    {% if document.fileSize %}
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>Taille:</strong></div>
+                        <div class="col-sm-8">{{ (document.fileSize / 1024 / 1024)|number_format(2) }} MB</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if document.verifiedAt %}
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>Vérifié le:</strong></div>
+                        <div class="col-sm-8">{{ document.verifiedAt|date('d/m/Y à H:i') }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if document.verifiedBy %}
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>Vérifié par:</strong></div>
+                        <div class="col-sm-8">{{ document.verifiedBy.firstName }} {{ document.verifiedBy.lastName }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if document.expiresAt %}
+                    <div class="row mb-3">
+                        <div class="col-sm-4"><strong>Expire le:</strong></div>
+                        <div class="col-sm-8">
+                            {{ document.expiresAt|date('d/m/Y') }}
+                            {% if document.isExpired %}
+                                <span class="text-danger">(Expiré)</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if document.rejectionReason %}
+                    <hr>
+                    <div class="row">
+                        <div class="col-12">
+                            <strong>{% if document.status == 'rejected' %}Raison du rejet:{% else %}Commentaire:{% endif %}</strong>
+                            <div class="mt-2 p-3 bg-light rounded">
+                                {{ document.rejectionReason|nl2br }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {# Actions #}
+            <div class="card mt-4">
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if document.filename %}
+                        <a href="{{ vich_uploader_asset(document, 'file') }}" 
+                           class="btn btn-primary" 
+                           target="_blank">
+                            <i class="fas fa-download"></i> Télécharger
+                        </a>
+                        {% endif %}
+                        
+                        {% if document.user == app.user and (document.status == 'pending' or document.status == 'rejected') %}
+                        <form method="post" 
+                              action="{{ path('app_documents_delete', {id: document.id}) }}"
+                              onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce document ?');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete_document_' ~ document.id) }}">
+                            <button type="submit" class="btn btn-outline-danger">
+                                <i class="fas fa-trash"></i> Supprimer
+                            </button>
+                        </form>
+                        {% endif %}
+                        
+                        <a href="{{ path('app_documents_index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Retour
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {# Prévisualisation du document #}
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🔍 Prévisualisation</h3>
+                </div>
+                <div class="card-body">
+                    {% if document.filename %}
+                        {% set file_extension = document.filename|split('.')|last|lower %}
+                        {% if file_extension == 'pdf' %}
+                            {# Prévisualisation PDF #}
+                            <div class="text-center">
+                                <iframe src="{{ vich_uploader_asset(document, 'file') }}" 
+                                        width="100%" 
+                                        height="600" 
+                                        style="border: none;">
+                                </iframe>
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        Si le PDF ne s'affiche pas correctement, 
+                                        <a href="{{ vich_uploader_asset(document, 'file') }}" target="_blank">cliquez ici pour l'ouvrir dans un nouvel onglet</a>.
+                                    </small>
+                                </div>
+                            </div>
+                        {% elseif file_extension in ['jpg', 'jpeg', 'png'] %}
+                            {# Prévisualisation image #}
+                            <div class="text-center">
+                                <img src="{{ vich_uploader_asset(document, 'file') }}" 
+                                     alt="{{ document.name }}" 
+                                     class="img-fluid rounded shadow-sm"
+                                     style="max-height: 600px; cursor: zoom-in;"
+                                     onclick="openImageModal(this.src)">
+                                <div class="mt-3">
+                                    <small class="text-muted">Cliquez sur l'image pour l'agrandir</small>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-file fa-5x text-muted mb-3"></i>
+                                <h4>Prévisualisation non disponible</h4>
+                                <p class="text-muted">Ce type de fichier ne peut pas être prévisualisé en ligne.</p>
+                                <a href="{{ vich_uploader_asset(document, 'file') }}" 
+                                   class="btn btn-primary" 
+                                   target="_blank">
+                                    <i class="fas fa-download"></i> Télécharger le fichier
+                                </a>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-exclamation-triangle fa-5x text-warning mb-3"></i>
+                            <h4>Fichier non disponible</h4>
+                            <p class="text-muted">Le fichier associé à ce document n'a pas pu être trouvé.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+{# Modal pour agrandir les images #}
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">{{ document.name }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="{{ document.name }}" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openImageModal(imageSrc) {
+    document.getElementById('modalImage').src = imageSrc;
+    new bootstrap.Modal(document.getElementById('imageModal')).show();
+}
+</script>
+{% endblock %}
