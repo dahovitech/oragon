@@ -1,0 +1,465 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Utilisateurs - Admin - EdgeLoan{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ path('app_admin_dashboard') }}">Admin</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Utilisateurs</li>
+                    </ol>
+                </nav>
+                <h1 class="page-title">👥 Gestion des Utilisateurs</h1>
+                <div class="page-subtitle">{{ users|length }} utilisateurs enregistrés</div>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#filterModal">
+                        <i class="fas fa-filter"></i> Filtrer
+                    </button>
+                    <button type="button" class="btn btn-outline-success" onclick="exportUsers()">
+                        <i class="fas fa-download"></i> Exporter
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+<div class="container-xl">
+    
+    {# Statistiques rapides #}
+    <div class="row mb-4">
+        <div class="col-sm-6 col-lg-3 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="subheader">Total utilisateurs</div>
+                        <div class="ms-auto lh-1">
+                            <i class="fas fa-users text-primary"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-0">{{ users|length }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="subheader">Vérifiés</div>
+                        <div class="ms-auto lh-1">
+                            <i class="fas fa-user-check text-success"></i>
+                        </div>
+                    </div>
+                    {% set verified_count = 0 %}
+                    {% for user in users if user.isVerified %}
+                        {% set verified_count = verified_count + 1 %}
+                    {% endfor %}
+                    <div class="h1 mb-0">{{ verified_count }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="subheader">Particuliers</div>
+                        <div class="ms-auto lh-1">
+                            <i class="fas fa-user text-info"></i>
+                        </div>
+                    </div>
+                    {% set individual_count = 0 %}
+                    {% for user in users if user.accountType.value == 'individual' %}
+                        {% set individual_count = individual_count + 1 %}
+                    {% endfor %}
+                    <div class="h1 mb-0">{{ individual_count }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="subheader">Entreprises</div>
+                        <div class="ms-auto lh-1">
+                            <i class="fas fa-building text-warning"></i>
+                        </div>
+                    </div>
+                    {% set business_count = 0 %}
+                    {% for user in users if user.accountType.value == 'business' %}
+                        {% set business_count = business_count + 1 %}
+                    {% endfor %}
+                    <div class="h1 mb-0">{{ business_count }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Table des utilisateurs #}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📋 Liste des Utilisateurs</h3>
+                    <div class="card-actions">
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" placeholder="Rechercher..." id="searchUsers">
+                            <button class="btn btn-outline-primary" type="button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>Utilisateur</th>
+                                    <th>Type de compte</th>
+                                    <th>Statut</th>
+                                    <th>KYC</th>
+                                    <th>Prêts</th>
+                                    <th>Inscription</th>
+                                    <th>Dernière connexion</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr class="user-row" data-user-id="{{ user.id }}">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="avatar me-2 rounded" style="background-image: url({{ asset('img/default-avatar.png') }})"></span>
+                                            <div>
+                                                <div class="font-weight-medium">
+                                                    {{ user.firstName }} {{ user.lastName }}
+                                                    {% if not user.isActive %}
+                                                        <span class="badge bg-secondary ms-1">Inactif</span>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="text-muted small">
+                                                    {{ user.email }}
+                                                    {% if user.phoneNumber %}
+                                                        • {{ user.phoneNumber }}
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if user.accountType.value == 'business' %}
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-building"></i> Entreprise
+                                            </span>
+                                            {% if user.companyName %}
+                                                <div class="text-muted small">{{ user.companyName }}</div>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-user"></i> Particulier
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.isVerified %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check-circle"></i> Vérifié
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-clock"></i> En attente
+                                            </span>
+                                        {% endif %}
+                                        {% if not user.isActive %}
+                                            <span class="badge bg-danger ms-1">
+                                                <i class="fas fa-ban"></i> Suspendu
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set kyc_progress = user.kycProgress %}
+                                        <div class="progress progress-sm">
+                                            <div class="progress-bar" style="width: {{ kyc_progress.progress }}%" 
+                                                 role="progressbar" aria-valuenow="{{ kyc_progress.progress }}" 
+                                                 aria-valuemin="0" aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">{{ kyc_progress.progress|number_format(0) }}%</small>
+                                    </td>
+                                    <td>
+                                        {% set loan_count = user.loanApplications|length %}
+                                        {% if loan_count > 0 %}
+                                            <span class="badge bg-primary">{{ loan_count }}</span>
+                                            {% set approved_count = 0 %}
+                                            {% for loan in user.loanApplications if loan.status == 'approved' %}
+                                                {% set approved_count = approved_count + 1 %}
+                                            {% endfor %}
+                                            {% if approved_count > 0 %}
+                                                <span class="badge bg-success ms-1">{{ approved_count }} approuvé(s)</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">Aucun</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="text-muted">{{ user.createdAt|date('d/m/Y') }}</div>
+                                        <div class="text-muted small">{{ user.createdAt|date('H:i') }}</div>
+                                    </td>
+                                    <td>
+                                        {% if user.lastLoginAt %}
+                                            <div class="text-muted">{{ user.lastLoginAt|date('d/m/Y') }}</div>
+                                            <div class="text-muted small">{{ user.lastLoginAt|date('H:i') }}</div>
+                                        {% else %}
+                                            <span class="text-muted">Jamais connecté</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="btn btn-outline-info" 
+                                                    title="Voir détails" 
+                                                    onclick="viewUserDetails({{ user.id }})">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button type="button" class="btn btn-outline-secondary dropdown-toggle" 
+                                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                                    <i class="fas fa-cog"></i>
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li>
+                                                        <a class="dropdown-item" href="#" 
+                                                           onclick="editUser({{ user.id }})">
+                                                            <i class="fas fa-edit me-1"></i> Modifier
+                                                        </a>
+                                                    </li>
+                                                    {% if user.isActive %}
+                                                    <li>
+                                                        <a class="dropdown-item text-warning" href="#" 
+                                                           onclick="suspendUser({{ user.id }})">
+                                                            <i class="fas fa-ban me-1"></i> Suspendre
+                                                        </a>
+                                                    </li>
+                                                    {% else %}
+                                                    <li>
+                                                        <a class="dropdown-item text-success" href="#" 
+                                                           onclick="activateUser({{ user.id }})">
+                                                            <i class="fas fa-check me-1"></i> Activer
+                                                        </a>
+                                                    </li>
+                                                    {% endif %}
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="#" 
+                                                           onclick="sendEmail({{ user.id }})">
+                                                            <i class="fas fa-envelope me-1"></i> Envoyer email
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a class="dropdown-item" href="{{ path('app_documents_index') }}">
+                                                            <i class="fas fa-file-alt me-1"></i> Voir documents
+                                                        </a>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <a class="dropdown-item text-danger" href="#" 
+                                                           onclick="deleteUser({{ user.id }})">
+                                                            <i class="fas fa-trash me-1"></i> Supprimer
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <small class="text-muted">Affichage de {{ users|length }} utilisateurs</small>
+                        </div>
+                        <div class="col-auto">
+                            {# Pagination si nécessaire #}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Modal de filtrage #}
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filterModalLabel">Filtres Avancés</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <form id="filterForm">
+                    <div class="mb-3">
+                        <label for="statusFilter" class="form-label">Statut de vérification</label>
+                        <select class="form-select" id="statusFilter">
+                            <option value="">Tous</option>
+                            <option value="verified">Vérifiés</option>
+                            <option value="pending">En attente</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="accountTypeFilter" class="form-label">Type de compte</label>
+                        <select class="form-select" id="accountTypeFilter">
+                            <option value="">Tous</option>
+                            <option value="individual">Particulier</option>
+                            <option value="business">Entreprise</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="activityFilter" class="form-label">Activité</label>
+                        <select class="form-select" id="activityFilter">
+                            <option value="">Tous</option>
+                            <option value="active">Actifs</option>
+                            <option value="inactive">Inactifs</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="registrationDateFilter" class="form-label">Inscrit depuis</label>
+                        <select class="form-select" id="registrationDateFilter">
+                            <option value="">Toutes les dates</option>
+                            <option value="today">Aujourd'hui</option>
+                            <option value="week">Cette semaine</option>
+                            <option value="month">Ce mois</option>
+                            <option value="year">Cette année</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="clearFilters()">Effacer</button>
+                <button type="button" class="btn btn-primary" onclick="applyFilters()">Appliquer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Modal de détails utilisateur #}
+<div class="modal fade" id="userDetailsModal" tabindex="-1" aria-labelledby="userDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userDetailsModalLabel">Détails Utilisateur</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body" id="userDetailsContent">
+                <!-- Le contenu sera chargé dynamiquement -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Fonctions JavaScript pour la gestion des utilisateurs
+function viewUserDetails(userId) {
+    // Charger les détails de l'utilisateur via AJAX
+    fetch(`/admin/users/${userId}/details`)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('userDetailsContent').innerHTML = html;
+            new bootstrap.Modal(document.getElementById('userDetailsModal')).show();
+        });
+}
+
+function editUser(userId) {
+    // Rediriger vers la page d'édition
+    window.location.href = `/admin/users/${userId}/edit`;
+}
+
+function suspendUser(userId) {
+    if (confirm('Êtes-vous sûr de vouloir suspendre cet utilisateur ?')) {
+        fetch(`/admin/users/${userId}/suspend`, {method: 'POST'})
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                }
+            });
+    }
+}
+
+function activateUser(userId) {
+    fetch(`/admin/users/${userId}/activate`, {method: 'POST'})
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            }
+        });
+}
+
+function deleteUser(userId) {
+    if (confirm('ATTENTION: Cette action supprimera définitivement l\'utilisateur et toutes ses données. Continuer ?')) {
+        fetch(`/admin/users/${userId}/delete`, {method: 'DELETE'})
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                }
+            });
+    }
+}
+
+function sendEmail(userId) {
+    // Ouvrir modal d'envoi d'email
+    window.location.href = `/admin/users/${userId}/send-email`;
+}
+
+function exportUsers() {
+    // Exporter la liste des utilisateurs
+    window.location.href = '/admin/users/export';
+}
+
+// Recherche en temps réel
+document.getElementById('searchUsers').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#usersTable tbody .user-row');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+});
+
+// Filtres
+function applyFilters() {
+    const statusFilter = document.getElementById('statusFilter').value;
+    const accountTypeFilter = document.getElementById('accountTypeFilter').value;
+    const activityFilter = document.getElementById('activityFilter').value;
+    const registrationDateFilter = document.getElementById('registrationDateFilter').value;
+    
+    const rows = document.querySelectorAll('#usersTable tbody .user-row');
+    
+    rows.forEach(row => {
+        let visible = true;
+        
+        // Appliquer les filtres
+        // (logique de filtrage basée sur les données)
+        
+        row.style.display = visible ? '' : 'none';
+    });
+    
+    bootstrap.Modal.getInstance(document.getElementById('filterModal')).hide();
+}
+
+function clearFilters() {
+    document.getElementById('filterForm').reset();
+    const rows = document.querySelectorAll('#usersTable tbody .user-row');
+    rows.forEach(row => row.style.display = '');
+}
+</script>
+{% endblock %}

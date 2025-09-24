@@ -1,0 +1,689 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Analytics Avancées - Admin - EdgeLoan{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ path('app_admin_dashboard') }}">Admin</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Analytics</li>
+                    </ol>
+                </nav>
+                <h1 class="page-title">📊 Analytics Avancées</h1>
+                <div class="page-subtitle">Tableau de bord analytique complet</div>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#dateRangeModal">
+                        <i class="fas fa-calendar"></i> Période
+                    </button>
+                    <button type="button" class="btn btn-outline-success" onclick="exportAnalytics()">
+                        <i class="fas fa-download"></i> Exporter
+                    </button>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-info dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="fas fa-share"></i> Partager
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="generateReport()">Générer rapport PDF</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="scheduleReport()">Programmer rapport</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="shareByEmail()">Partager par email</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+<div class="container-xl">
+    
+    {# Indicateurs clés de performance #}
+    <div class="row mb-4">
+        <div class="col-sm-6 col-lg-3 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="subheader">Croissance utilisateurs</div>
+                        <div class="ms-auto lh-1">
+                            <span class="text-green d-inline-flex align-items-center lh-1">
+                                +12% <i class="fas fa-arrow-up ms-1"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="h1 mb-3">{{ analytics_data.user_growth.current_month|default(0) }}</div>
+                    <div class="d-flex mb-2">
+                        <div>Ce mois</div>
+                        <div class="ms-auto">
+                            <span class="text-muted">vs {{ analytics_data.user_growth.previous_month|default(0) }} le mois dernier</span>
+                        </div>
+                    </div>
+                    <div class="progress progress-sm">
+                        <div class="progress-bar bg-primary" style="width: 75%" role="progressbar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="subheader">Taux d'approbation</div>
+                        <div class="ms-auto lh-1">
+                            <span class="text-green d-inline-flex align-items-center lh-1">
+                                +3% <i class="fas fa-arrow-up ms-1"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="h1 mb-3">{{ analytics_data.loan_trends.approval_rate|default(0) }}%</div>
+                    <div class="d-flex mb-2">
+                        <div>Moyenne mensuelle</div>
+                        <div class="ms-auto">
+                            <span class="text-muted">Objectif: 75%</span>
+                        </div>
+                    </div>
+                    <div class="progress progress-sm">
+                        <div class="progress-bar bg-success" style="width: {{ analytics_data.loan_trends.approval_rate|default(0) }}%" role="progressbar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="subheader">Revenus projetés</div>
+                        <div class="ms-auto lh-1">
+                            <i class="fas fa-euro-sign text-success"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-3">{{ (analytics_data.revenue_projection.monthly|default(0) / 1000)|number_format(0) }}K€</div>
+                    <div class="d-flex mb-2">
+                        <div>Ce mois</div>
+                        <div class="ms-auto">
+                            <span class="text-green">+8%</span>
+                        </div>
+                    </div>
+                    <div class="progress progress-sm">
+                        <div class="progress-bar bg-warning" style="width: 85%" role="progressbar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-sm-6 col-lg-3 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="subheader">Temps vérification KYC</div>
+                        <div class="ms-auto lh-1">
+                            <span class="text-green d-inline-flex align-items-center lh-1">
+                                -15% <i class="fas fa-arrow-down ms-1"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="h1 mb-3">{{ analytics_data.document_verification.avg_processing_time|default(24) }}h</div>
+                    <div class="d-flex mb-2">
+                        <div>Temps moyen</div>
+                        <div class="ms-auto">
+                            <span class="text-muted">Objectif: <24h</span>
+                        </div>
+                    </div>
+                    <div class="progress progress-sm">
+                        <div class="progress-bar bg-info" style="width: 60%" role="progressbar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        {# Graphique de croissance des utilisateurs #}
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📈 Croissance des Utilisateurs (12 derniers mois)</h3>
+                    <div class="card-actions">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <input type="radio" class="btn-check" name="growth-chart" id="growth-users" checked>
+                            <label for="growth-users" class="btn btn-outline-primary">Utilisateurs</label>
+                            
+                            <input type="radio" class="btn-check" name="growth-chart" id="growth-revenue">
+                            <label for="growth-revenue" class="btn btn-outline-primary">Revenus</label>
+                            
+                            <input type="radio" class="btn-check" name="growth-chart" id="growth-loans">
+                            <label for="growth-loans" class="btn btn-outline-primary">Prêts</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="growthChart" width="100%" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        {# Distribution géographique #}
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🗺️ Répartition Géographique</h3>
+                </div>
+                <div class="card-body">
+                    <canvas id="geographicChart" width="100%" height="300"></canvas>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-borderless">
+                        <tbody>
+                            {% for region in analytics_data.geographic_distribution|default([]) %}
+                            <tr>
+                                <td class="text-muted">{{ region.name }}</td>
+                                <td class="text-end">{{ region.users }}</td>
+                                <td class="text-end text-green">{{ region.percentage }}%</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        {# Analyse des segments clients #}
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">👥 Segments Clients</h3>
+                    <div class="card-actions">
+                        <a href="#" class="btn btn-primary btn-sm">Voir détails</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="customerSegmentsChart" width="100%" height="250"></canvas>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Segment</th>
+                                <th>Utilisateurs</th>
+                                <th>Revenus moy.</th>
+                                <th>Taux d'approbation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for segment in analytics_data.customer_segments|default([]) %}
+                            <tr>
+                                <td>
+                                    <span class="avatar avatar-xs me-2 rounded" style="background-color: {{ segment.color }}"></span>
+                                    {{ segment.name }}
+                                </td>
+                                <td>{{ segment.users|number_format }}</td>
+                                <td>{{ segment.avg_income|number_format(0, ',', ' ') }}€</td>
+                                <td>
+                                    <span class="badge bg-success">{{ segment.approval_rate }}%</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {# Performance des prêts #}
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">💰 Performance des Prêts</h3>
+                    <div class="card-actions">
+                        <div class="dropdown">
+                            <a href="#" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                                Par montant
+                            </a>
+                            <div class="dropdown-menu">
+                                <a class="dropdown-item" href="#">Par montant</a>
+                                <a class="dropdown-item" href="#">Par durée</a>
+                                <a class="dropdown-item" href="#">Par type</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="loanPerformanceChart" width="100%" height="250"></canvas>
+                </div>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h4 mb-0 text-success">{{ analytics_data.loan_trends.avg_amount|default(0)|number_format(0, ',', ' ') }}€</div>
+                            <div class="text-muted small">Montant moyen</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h4 mb-0 text-info">{{ analytics_data.loan_trends.avg_duration|default(0) }} mois</div>
+                            <div class="text-muted small">Durée moyenne</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Tableau de bord temps réel #}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">⏱️ Activité en Temps Réel</h3>
+                    <div class="card-actions">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
+                            <label class="form-check-label" for="autoRefresh">Actualisation auto</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <canvas id="realTimeChart" width="100%" height="200"></canvas>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="list-group list-group-flush" id="recentActivity">
+                                <!-- Activités récentes chargées dynamiquement -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Alertes et recommandations #}
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">⚠️ Alertes Système</h3>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-exclamation-triangle text-warning fa-lg"></i>
+                                </div>
+                                <div class="flex-fill">
+                                    <strong>Temps de vérification élevé</strong>
+                                    <div class="text-muted small">
+                                        Le temps moyen de vérification KYC a augmenté de 25% cette semaine
+                                    </div>
+                                </div>
+                                <div class="text-muted small">Il y a 2h</div>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-info-circle text-info fa-lg"></i>
+                                </div>
+                                <div class="flex-fill">
+                                    <strong>Pic de demandes de prêts</strong>
+                                    <div class="text-muted small">
+                                        +40% de demandes par rapport à la moyenne
+                                    </div>
+                                </div>
+                                <div class="text-muted small">Il y a 1j</div>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <i class="fas fa-check-circle text-success fa-lg"></i>
+                                </div>
+                                <div class="flex-fill">
+                                    <strong>Objectif de revenus atteint</strong>
+                                    <div class="text-muted small">
+                                        Revenus mensuels dépassent l'objectif de 15%
+                                    </div>
+                                </div>
+                                <div class="text-muted small">Il y a 3j</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">💡 Recommandations</h3>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <div class="avatar avatar-sm bg-primary-lt">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-fill">
+                                    <strong>Optimiser l'onboarding</strong>
+                                    <div class="text-muted small">
+                                        Réduire les étapes de vérification pour améliorer la conversion
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="badge bg-success">Impact élevé</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <div class="avatar avatar-sm bg-warning-lt">
+                                        <i class="fas fa-clock"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-fill">
+                                    <strong>Automatiser la vérification</strong>
+                                    <div class="text-muted small">
+                                        Utiliser l'IA pour pré-valider 60% des documents
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="badge bg-warning">Impact moyen</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="list-group-item">
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <div class="avatar avatar-sm bg-info-lt">
+                                        <i class="fas fa-chart-line"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-fill">
+                                    <strong>Marketing ciblé</strong>
+                                    <div class="text-muted small">
+                                        Concentrer les efforts sur le segment "Jeunes professionnels"
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="badge bg-info">Impact moyen</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Modal de sélection de période #}
+<div class="modal fade" id="dateRangeModal" tabindex="-1" aria-labelledby="dateRangeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dateRangeModalLabel">Sélectionner une Période</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <form id="dateRangeForm">
+                    <div class="mb-3">
+                        <label class="form-label">Période prédéfinie</label>
+                        <div class="btn-group-vertical w-100" role="group">
+                            <input type="radio" class="btn-check" name="predefined" id="last7days" value="7d">
+                            <label class="btn btn-outline-primary" for="last7days">7 derniers jours</label>
+                            
+                            <input type="radio" class="btn-check" name="predefined" id="last30days" value="30d" checked>
+                            <label class="btn btn-outline-primary" for="last30days">30 derniers jours</label>
+                            
+                            <input type="radio" class="btn-check" name="predefined" id="last3months" value="3m">
+                            <label class="btn btn-outline-primary" for="last3months">3 derniers mois</label>
+                            
+                            <input type="radio" class="btn-check" name="predefined" id="last12months" value="12m">
+                            <label class="btn btn-outline-primary" for="last12months">12 derniers mois</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Période personnalisée</label>
+                        <div class="row">
+                            <div class="col">
+                                <input type="date" class="form-control" id="startDate">
+                            </div>
+                            <div class="col">
+                                <input type="date" class="form-control" id="endDate">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" onclick="applyDateRange()">Appliquer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Chart.js et scripts #}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    startRealTimeUpdates();
+});
+
+function initializeCharts() {
+    // Graphique de croissance
+    const growthCtx = document.getElementById('growthChart').getContext('2d');
+    new Chart(growthCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
+            datasets: [{
+                label: 'Nouveaux utilisateurs',
+                data: [45, 52, 68, 84, 102, 95, 87, 94, 115, 132, 148, 165],
+                borderColor: '#1976d2',
+                backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    // Graphique géographique (doughnut)
+    const geoCtx = document.getElementById('geographicChart').getContext('2d');
+    new Chart(geoCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Île-de-France', 'AURA', 'PACA', 'Occitanie', 'Autres'],
+            datasets: [{
+                data: [35, 18, 15, 12, 20],
+                backgroundColor: ['#1976d2', '#388e3c', '#f57c00', '#d32f2f', '#7b1fa2']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    // Graphique des segments clients
+    const segmentsCtx = document.getElementById('customerSegmentsChart').getContext('2d');
+    new Chart(segmentsCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Jeunes Pro', 'Familles', 'Entrepreneurs', 'Retraités'],
+            datasets: [{
+                label: 'Nombre d\'utilisateurs',
+                data: [450, 320, 180, 95],
+                backgroundColor: ['#1976d2', '#388e3c', '#f57c00', '#7b1fa2']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+    // Graphique de performance des prêts
+    const loanCtx = document.getElementById('loanPerformanceChart').getContext('2d');
+    new Chart(loanCtx, {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun'],
+            datasets: [
+                {
+                    label: 'Approuvés',
+                    data: [28, 32, 45, 38, 42, 48],
+                    borderColor: '#388e3c',
+                    backgroundColor: 'rgba(56, 142, 60, 0.1)'
+                },
+                {
+                    label: 'Rejetés',
+                    data: [12, 8, 15, 11, 9, 7],
+                    borderColor: '#d32f2f',
+                    backgroundColor: 'rgba(211, 47, 47, 0.1)'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+
+    // Graphique temps réel
+    const realTimeCtx = document.getElementById('realTimeChart').getContext('2d');
+    window.realTimeChart = new Chart(realTimeCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Activité en temps réel',
+                data: [],
+                borderColor: '#1976d2',
+                backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { display: false },
+                y: { beginAtZero: true }
+            },
+            plugins: {
+                legend: { display: false }
+            },
+            animation: { duration: 0 }
+        }
+    });
+}
+
+function startRealTimeUpdates() {
+    setInterval(updateRealTimeData, 30000); // Mise à jour toutes les 30 secondes
+    updateRecentActivity();
+}
+
+function updateRealTimeData() {
+    if (!document.getElementById('autoRefresh').checked) return;
+    
+    // Simuler des données temps réel
+    const now = new Date();
+    const timeLabel = now.toLocaleTimeString();
+    const value = Math.floor(Math.random() * 20) + 5;
+    
+    const chart = window.realTimeChart;
+    chart.data.labels.push(timeLabel);
+    chart.data.datasets[0].data.push(value);
+    
+    // Garder seulement les 20 derniers points
+    if (chart.data.labels.length > 20) {
+        chart.data.labels.shift();
+        chart.data.datasets[0].data.shift();
+    }
+    
+    chart.update();
+}
+
+function updateRecentActivity() {
+    const activities = [
+        'Nouvelle inscription: Marie Dubois',
+        'Prêt approuvé: 15,000€ pour Jean Martin',
+        'Document vérifié: Carte d\'identité',
+        'Nouveau prêt demandé: 8,500€',
+        'KYC complété: Sophie Bernard'
+    ];
+    
+    const container = document.getElementById('recentActivity');
+    container.innerHTML = activities.map(activity => `
+        <div class="list-group-item">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <div class="avatar avatar-sm bg-primary-lt">
+                        <i class="fas fa-bell"></i>
+                    </div>
+                </div>
+                <div class="flex-fill">
+                    <div class="text-truncate">${activity}</div>
+                    <div class="text-muted small">Il y a ${Math.floor(Math.random() * 60)} min</div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Fonctions d'export et de partage
+function exportAnalytics() {
+    window.location.href = '/admin/analytics/export';
+}
+
+function generateReport() {
+    window.location.href = '/admin/analytics/report/pdf';
+}
+
+function scheduleReport() {
+    // Ouvrir modal de programmation de rapport
+    alert('Fonctionnalité de programmation de rapport à implémenter');
+}
+
+function shareByEmail() {
+    // Ouvrir modal de partage par email
+    alert('Fonctionnalité de partage par email à implémenter');
+}
+
+function applyDateRange() {
+    // Appliquer la nouvelle période et recharger les données
+    const period = document.querySelector('input[name="predefined"]:checked').value;
+    window.location.href = `/admin/analytics?period=${period}`;
+}
+</script>
+{% endblock %}

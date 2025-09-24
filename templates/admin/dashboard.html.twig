@@ -1,132 +1,615 @@
 {% extends 'admin/base.html.twig' %}
 
-{% block title %}{{ 'dashboard.title'|trans({}, 'admin') }} - Administration - Oragon{% endblock %}
+{% block title %}Dashboard Administrateur - Oragon{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="page-title">🏠 Dashboard Administrateur</h1>
+                <div class="page-subtitle">Vue d'ensemble de la plateforme Oragon</div>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group" role="group">
+                    <a href="{{ path('app_admin_users') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-users"></i> Utilisateurs
+                    </a>
+                    <a href="{{ path('app_admin_loan_applications') }}" class="btn btn-outline-success">
+                        <i class="fas fa-hand-holding-usd"></i> Prêts
+                    </a>
+                    <a href="{{ path('app_admin_documents') }}" class="btn btn-outline-info">
+                        <i class="fas fa-file-alt"></i> Documents
+                    </a>
+                    <a href="{{ path('app_admin_analytics') }}" class="btn btn-outline-warning">
+                        <i class="fas fa-chart-line"></i> Analytics
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
 
 {% block body %}
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">
-        <i class="bi bi-house-fill me-2 text-primary"></i>{{ 'dashboard.title'|trans({}, 'admin') }}
-    </h1>
-</div>
+<div class="container-xl">
+    
+    {# KPI Cards #}
+    <div class="row mb-4">
+        {% for kpi in kpis %}
+        <div class="col-sm-6 col-lg-3 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="subheader">{{ kpi.label }}</div>
+                        <div class="ms-auto lh-1">
+                            <i class="fas fa-{{ kpi.icon }} text-{{ kpi.color }}"></i>
+                        </div>
+                    </div>
+                    <div class="h1 mb-3">{{ kpi.value }}</div>
+                    <div class="d-flex mb-2">
+                        {% if kpi.subtitle is defined %}
+                            <div>{{ kpi.subtitle }}</div>
+                        {% endif %}
+                        {% if kpi.change is defined %}
+                            <div class="ms-auto">
+                                <span class="text-{{ kpi.change >= 0 ? 'green' : 'red' }} d-inline-flex align-items-center lh-1">
+                                    {{ kpi.change > 0 ? '+' : '' }}{{ kpi.change }}%
+                                    <i class="fas fa-arrow-{{ kpi.change >= 0 ? 'up' : 'down' }} ms-1"></i>
+                                </span>
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% if kpi.change is defined %}
+                        <div class="progress progress-sm">
+                            <div class="progress-bar bg-{{ kpi.color }}" style="width: {{ ((kpi.change + 100) / 2)|min(100) }}%" role="progressbar"></div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 
-{# Statistics cards #}
-<div class="row mb-4">
-    <div class="col-xl-4 col-md-6 mb-4">
-        <div class="card border-left-success shadow h-100 py-2 stats-card">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">{{ 'dashboard.languages_count'|trans({}, 'admin') }}</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ languages|length }}</div>
+    <div class="row mb-4">
+        {# Graphiques principaux #}
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📈 Tendances d'activité</h3>
+                    <div class="card-actions">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <input type="radio" class="btn-check" name="chart-type" id="chart-users" checked>
+                            <label for="chart-users" class="btn btn-outline-primary">Utilisateurs</label>
+                            
+                            <input type="radio" class="btn-check" name="chart-type" id="chart-loans">
+                            <label for="chart-loans" class="btn btn-outline-success">Prêts</label>
+                            
+                            <input type="radio" class="btn-check" name="chart-type" id="chart-amounts">
+                            <label for="chart-amounts" class="btn btn-outline-warning">Montants</label>
+                        </div>
                     </div>
-                    <div class="col-auto">
-                        <i class="bi bi-globe fa-2x text-success"></i>
+                </div>
+                <div class="card-body">
+                    <canvas id="mainChart" width="100%" height="400"></canvas>
+                </div>
+            </div>
+        </div>
+
+        {# Vue d'ensemble rapide #}
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📊 Vue d'ensemble</h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Utilisateurs actifs</span>
+                            <strong>{{ overview.users.active|number_format }}</strong>
+                        </div>
+                        <div class="progress progress-sm mt-1">
+                            <div class="progress-bar bg-primary" style="width: {{ (overview.users.active / overview.users.total * 100)|round }}%"></div>
+                        </div>
                     </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Prêts approuvés</span>
+                            <strong>{{ overview.loans.approved|number_format }}</strong>
+                        </div>
+                        <div class="progress progress-sm mt-1">
+                            <div class="progress-bar bg-success" style="width: {{ overview.approval_rate.approval_rate }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Documents en attente</span>
+                            <strong>{{ document_stats.pending|number_format }}</strong>
+                        </div>
+                        <div class="progress progress-sm mt-1">
+                            <div class="progress-bar bg-warning" style="width: {{ (document_stats.pending / document_stats.total * 100)|round }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Montant total approuvé</span>
+                        </div>
+                        <div class="h4 text-success">{{ overview.amounts.approved|number_format(0, ',', ' ') }} FCFA</div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Montant moyen par prêt</span>
+                        </div>
+                        <div class="h5">{{ overview.amounts.average|number_format(0, ',', ' ') }} FCFA</div>
+                    </div>
+                </div>
+            </div>
+
+            {# Actions rapides #}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h3 class="card-title">⚡ Actions Rapides</h3>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ path('app_admin_documents') }}" class="btn btn-warning">
+                            <i class="fas fa-file-check"></i>
+                            Vérifier Documents ({{ document_stats.pending }})
+                        </a>
+                        <a href="{{ path('app_admin_loan_applications') }}" class="btn btn-success">
+                            <i class="fas fa-hand-holding-usd"></i>
+                            Traiter Prêts ({{ overview.loans.pending }})
+                        </a>
+                        <a href="{{ path('app_admin_users') }}" class="btn btn-info">
+                            <i class="fas fa-user-plus"></i>
+                            Gérer Utilisateurs
+                        </a>
+                        <a href="{{ path('app_admin_reports') }}" class="btn btn-primary">
+                            <i class="fas fa-file-export"></i>
+                            Générer Rapport
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Activités récentes et notifications #}
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🕐 Activités Récentes</h3>
+                    <div class="card-actions">
+                        <select class="form-select form-select-sm" id="activity-filter">
+                            <option value="all">Toutes les activités</option>
+                            <option value="user_registration">Inscriptions</option>
+                            <option value="loan_application">Demandes de prêts</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if recent_activities %}
+                        <div class="list-group list-group-flush">
+                            {% for activity in recent_activities %}
+                            <div class="list-group-item activity-item" data-type="{{ activity.type }}">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3">
+                                        {% if activity.type == 'user_registration' %}
+                                            <div class="avatar avatar-sm bg-primary text-white">
+                                                <i class="fas fa-user-plus"></i>
+                                            </div>
+                                        {% elseif activity.type == 'loan_application' %}
+                                            <div class="avatar avatar-sm bg-success text-white">
+                                                <i class="fas fa-hand-holding-usd"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-fill">
+                                        {% if activity.type == 'user_registration' %}
+                                            <div class="font-weight-medium">
+                                                {{ activity.user.firstName }} {{ activity.user.lastName }} s'est inscrit(e)
+                                            </div>
+                                            <div class="text-muted small">{{ activity.user.email }}</div>
+                                        {% elseif activity.type == 'loan_application' %}
+                                            <div class="font-weight-medium">
+                                                Demande de prêt de {{ activity.data.requestedAmount|number_format(0, ',', ' ') }} FCFA
+                                            </div>
+                                            <div class="text-muted small">
+                                                Par {{ activity.user.firstName }} {{ activity.user.lastName }}
+                                                - Statut: 
+                                                <span class="badge bg-{{ activity.data.status.value == 'approved' ? 'success' : (activity.data.status.value == 'rejected' ? 'danger' : 'warning') }}">
+                                                    {{ activity.data.status.value|title }}
+                                                </span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-muted small">
+                                        {{ activity.date|date('d/m H:i') }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">Aucune activité récente.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            {# Alertes et notifications #}
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">🚨 Alertes & Notifications</h3>
+                </div>
+                <div class="card-body">
+                    {% set alerts = [] %}
+                    
+                    {% if document_stats.pending > 10 %}
+                        {% set alerts = alerts|merge([{
+                            'type': 'warning',
+                            'icon': 'fas fa-exclamation-triangle',
+                            'message': document_stats.pending ~ ' documents en attente de vérification',
+                            'action': path('app_admin_documents')
+                        }]) %}
+                    {% endif %}
+                    
+                    {% if overview.loans.pending > 5 %}
+                        {% set alerts = alerts|merge([{
+                            'type': 'info',
+                            'icon': 'fas fa-info-circle',
+                            'message': overview.loans.pending ~ ' demandes de prêt en attente',
+                            'action': path('app_admin_loan_applications')
+                        }]) %}
+                    {% endif %}
+                    
+                    {% if overview.users.total - overview.users.active > 50 %}
+                        {% set alerts = alerts|merge([{
+                            'type': 'danger',
+                            'icon': 'fas fa-user-times',
+                            'message': (overview.users.total - overview.users.active) ~ ' utilisateurs inactifs',
+                            'action': path('app_admin_users')
+                        }]) %}
+                    {% endif %}
+                    
+                    {% if overview.approval_rate.approval_rate < 50 %}
+                        {% set alerts = alerts|merge([{
+                            'type': 'warning',
+                            'icon': 'fas fa-chart-line-down',
+                            'message': 'Taux d\'approbation faible: ' ~ overview.approval_rate.approval_rate ~ '%',
+                            'action': path('app_admin_analytics')
+                        }]) %}
+                    {% endif %}
+                    
+                    {% if alerts %}
+                        {% for alert in alerts %}
+                        <div class="alert alert-{{ alert.type }} alert-dismissible" role="alert">
+                            <div class="d-flex">
+                                <div class="flex-fill">
+                                    <i class="{{ alert.icon }}"></i>
+                                    {{ alert.message }}
+                                </div>
+                                <div class="ms-auto">
+                                    <a href="{{ alert.action }}" class="btn btn-{{ alert.type }} btn-sm">Traiter</a>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-success" role="alert">
+                            <i class="fas fa-check-circle"></i>
+                            Aucune alerte système. Tout fonctionne parfaitement !
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# Statistiques rapides #}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h3 class="card-title">📈 Stats ce mois</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="h3 text-primary">{{ overview.users.new_this_month }}</div>
+                            <div class="text-muted small">Nouveaux utilisateurs</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="h3 text-success">{{ overview.loans.this_month }}</div>
+                            <div class="text-muted small">Demandes de prêts</div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="text-center">
+                        <div class="h4 text-warning">{{ (overview.amounts.pending / 1000000)|number_format(1) }}M</div>
+                        <div class="text-muted small">FCFA en attente</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Chart data from backend
+    const chartData = {{ chart_data|json_encode|raw }};
+    
+    // Initialize main chart
+    const ctx = document.getElementById('mainChart').getContext('2d');
+    let currentChart = null;
+    
+    function createChart(type) {
+        if (currentChart) {
+            currentChart.destroy();
+        }
+        
+        let data, label, color;
+        
+        switch(type) {
+            case 'users':
+                data = chartData.user_registration.data;
+                label = 'Inscriptions utilisateurs';
+                color = 'rgba(54, 162, 235, 0.8)';
+                break;
+            case 'loans':
+                data = chartData.loan_applications.data;
+                label = 'Demandes de prêts';
+                color = 'rgba(75, 192, 192, 0.8)';
+                break;
+            case 'amounts':
+                data = chartData.loan_amounts.data;
+                label = 'Montants demandés (FCFA)';
+                color = 'rgba(255, 206, 86, 0.8)';
+                break;
+        }
+        
+        currentChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.user_registration.labels,
+                datasets: [{
+                    label: label,
+                    data: data,
+                    borderColor: color,
+                    backgroundColor: color.replace('0.8', '0.2'),
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+    
+    // Initialize with users chart
+    createChart('users');
+    
+    // Chart type switcher
+    document.querySelectorAll('input[name="chart-type"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.checked) {
+                const type = this.id.replace('chart-', '');
+                createChart(type);
+            }
+        });
+    });
+    
+    // Activity filter
+    document.getElementById('activity-filter').addEventListener('change', function() {
+        const filterType = this.value;
+        const activities = document.querySelectorAll('.activity-item');
+        
+        activities.forEach(item => {
+            if (filterType === 'all' || item.dataset.type === filterType) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
+                        <a href="{{ path('app_admin_loan_applications') }}" class="btn btn-primary btn-sm">Voir toutes</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if recent_loan_applications %}
+                        <div class="list-group list-group-flush">
+                            {% for application in recent_loan_applications %}
+                            <div class="list-group-item">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-fill">
+                                        <div class="font-weight-medium">
+                                            {{ application.user.firstName }} {{ application.user.lastName }}
+                                        </div>
+                                        <div class="text-muted small">
+                                            {{ application.amount|number_format(0, ',', ' ') }}€ - {{ application.duration }} mois
+                                        </div>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge {{ application.statusBadgeClass }}">
+                                            {{ application.statusLabel }}
+                                        </span>
+                                        <div class="text-muted small">{{ application.submittedAt|date('d/m') }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">Aucune demande de prêt récente.</p>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
     
-    <div class="col-xl-4 col-md-6 mb-4">
-        <div class="card border-left-info shadow h-100 py-2 stats-card">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">{{ 'dashboard.translations_count'|trans({}, 'admin') }}</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
+    {# Documents en attente #}
+    {% if pending_documents %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📄 Documents Prioritaires à Vérifier</h3>
+                    <div class="card-actions">
+                        <a href="{{ path('app_documents_admin_index') }}" class="btn btn-warning btn-sm">
+                            Voir tous ({{ document_stats.pending }})
+                        </a>
                     </div>
-                    <div class="col-auto">
-                        <i class="bi bi-translate fa-2x text-info"></i>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter">
+                            <thead>
+                                <tr>
+                                    <th>Utilisateur</th>
+                                    <th>Document</th>
+                                    <th>Type</th>
+                                    <th>Uploadé</th>
+                                    <th>Priorité</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for document in pending_documents %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="avatar avatar-sm me-2 rounded"></span>
+                                            <div>
+                                                <div class="font-weight-medium">
+                                                    {{ document.user.firstName }} {{ document.user.lastName }}
+                                                </div>
+                                                <div class="text-muted small">{{ document.user.email }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ document.name }}</td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">{{ document.typeLabel }}</span>
+                                    </td>
+                                    <td>
+                                        {{ document.uploadedAt|date('d/m/Y H:i') }}
+                                        {% set days_ago = date().diff(document.uploadedAt).days %}
+                                        {% if days_ago > 2 %}
+                                            <span class="badge bg-danger ms-1">{{ days_ago }}j</span>
+                                        {% elseif days_ago > 0 %}
+                                            <span class="badge bg-warning ms-1">{{ days_ago }}j</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set days_ago = date().diff(document.uploadedAt).days %}
+                                        {% if days_ago > 3 %}
+                                            <span class="badge bg-danger">Urgent</span>
+                                        {% elseif days_ago > 1 %}
+                                            <span class="badge bg-warning">Élevée</span>
+                                        {% else %}
+                                            <span class="badge bg-info">Normale</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{{ path('app_documents_view', {id: document.id}) }}" 
+                                               class="btn btn-outline-info" title="Visualiser">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ path('app_documents_admin_verify', {id: document.id}) }}" 
+                                               class="btn btn-outline-primary" title="Vérifier">
+                                                <i class="fas fa-check"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    {% endif %}
+</div>
+
+{# Chart.js pour les graphiques #}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Configuration du graphique d'activité
+    const ctx = document.getElementById('activityChart').getContext('2d');
     
-    <div class="col-xl-4 col-md-6 mb-4">
-        <div class="card border-left-warning shadow h-100 py-2 stats-card">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">{{ 'dashboard.completion'|trans({}, 'admin') }}</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">100%</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="bi bi-bar-chart fa-2x text-warning"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+    const activityChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: {{ chart_data.labels|json_encode|raw }},
+            datasets: [{
+                label: 'Inscriptions',
+                data: {{ chart_data.user_registrations|json_encode|raw }},
+                borderColor: '#1976d2',
+                backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                tension: 0.4
+            }, {
+                label: 'Demandes de prêt',
+                data: {{ chart_data.loan_applications|json_encode|raw }},
+                borderColor: '#388e3c',
+                backgroundColor: 'rgba(56, 142, 60, 0.1)',
+                tension: 0.4
+            }, {
+                label: 'Documents vérifiés',
+                data: {{ chart_data.document_verifications|json_encode|raw }},
+                borderColor: '#f57c00',
+                backgroundColor: 'rgba(245, 124, 0, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            }
+        }
+    });
 
-{# Quick Actions #}
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-lightning-fill me-2"></i>{{ 'dashboard.quick_actions'|trans({}, 'admin') }}
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6 col-lg-6 mb-3">
-                        <a href="{{ path('admin_language_new') }}" class="btn btn-success w-100">
-                            <i class="bi bi-plus-circle me-2"></i>{{ 'common.actions.new_language'|trans({}, 'admin') }}
-                        </a>
-                    </div>
-                    <div class="col-md-6 col-lg-6 mb-3">
-                        <a href="{{ path('homepage') }}" class="btn btn-outline-success w-100" target="_blank">
-                            <i class="bi bi-eye me-2"></i>{{ 'common.actions.view_site'|trans({}, 'admin') }}
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-{# Languages Section #}
-<div class="row">
-    <div class="col-12 mb-4">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">
-                    <i class="bi bi-globe me-2"></i>{{ 'dashboard.configured_languages'|trans({}, 'admin') }}
-                </h5>
-                <a href="{{ path('admin_language_index') }}" class="btn btn-sm btn-outline-success">
-                    {{ 'dashboard.manage'|trans({}, 'admin') }}
-                </a>
-            </div>
-            <div class="card-body">
-                {% if languages|length > 0 %}
-                    {% for language in languages %}
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div>
-                            <strong>{{ language.name }}</strong>
-                            {% if language.default %}
-                                <span class="badge bg-primary ms-1">{{ 'common.status.default'|trans({}, 'admin') }}</span>
-                            {% endif %}
-                        </div>
-                        <div>
-                            <span class="badge bg-{{ language.active ? 'success' : 'secondary' }}">
-                                {{ language.active ? ('common.status.active'|trans({}, 'admin')) : ('common.status.inactive'|trans({}, 'admin')) }}
-                            </span>
-                        </div>
-                    </div>
-                    {% endfor %}
-                {% else %}
-                    <div class="text-center py-3">
-                        <i class="bi bi-globe text-muted"></i>
-                        <p class="text-muted mb-2">{{ 'dashboard.no_language_configured'|trans({}, 'admin') }}</p>
-                        <a href="{{ path('admin_language_new') }}" class="btn btn-sm btn-success">
-                            <i class="bi bi-plus-circle me-1"></i>{{ 'dashboard.add_language'|trans({}, 'admin') }}
-                        </a>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
+    // Auto-refresh de la page toutes les 5 minutes
+    setTimeout(function() {
+        location.reload();
+    }, 300000); // 5 minutes
+});
+</script>
 {% endblock %}

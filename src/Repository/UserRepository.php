@@ -141,4 +141,139 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * Count total users
+     */
+    public function countTotalUsers(): int
+    {
+        return $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Count new users this month
+     */
+    public function countNewUsersThisMonth(): int
+    {
+        $firstDayOfMonth = new \DateTimeImmutable('first day of this month 00:00:00');
+        
+        return $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->andWhere('u.createdAt >= :date')
+            ->setParameter('date', $firstDayOfMonth)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Count active users
+     */
+    public function countActiveUsers(): int
+    {
+        return $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->andWhere('u.isActive = :active')
+            ->setParameter('active', true)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Count users registered in the last N days
+     */
+    public function countUsersRegisteredInLastDays(int $days): int
+    {
+        $date = new \DateTimeImmutable("-{$days} days");
+        
+        return $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->andWhere('u.createdAt >= :date')
+            ->setParameter('date', $date)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Get users registration trend (last 12 months)
+     */
+    public function getUsersRegistrationTrend(): array
+    {
+        $qb = $this->getEntityManager()->createQueryBuilder();
+        
+        return $qb->select('DATE_FORMAT(u.createdAt, \'%Y-%m\') as month, COUNT(u.id) as count')
+            ->from(User::class, 'u')
+            ->andWhere('u.createdAt >= :date')
+            ->setParameter('date', new \DateTimeImmutable('-12 months'))
+            ->groupBy('month')
+            ->orderBy('month', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
+    }
+
+    /**
+     * Get users registration by day (last 30 days)
+     */
+    public function getUsersRegistrationByDay(): array
+    {
+        $qb = $this->getEntityManager()->createQueryBuilder();
+        
+        return $qb->select('DATE(u.createdAt) as date, COUNT(u.id) as count')
+            ->from(User::class, 'u')
+            ->andWhere('u.createdAt >= :date')
+            ->setParameter('date', new \DateTimeImmutable('-30 days'))
+            ->groupBy('date')
+            ->orderBy('date', 'ASC')
+            ->getQuery()
+            ->getArrayResult();
+    }
+
+    /**
+     * Find users with recent activity (last login in last N days)
+     */
+    public function findUsersWithRecentActivity(int $days = 30, int $limit = 50): array
+    {
+        $date = new \DateTimeImmutable("-{$days} days");
+        
+        return $this->createQueryBuilder('u')
+            ->andWhere('u.lastLoginAt >= :date')
+            ->setParameter('date', $date)
+            ->orderBy('u.lastLoginAt', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Get user activity statistics
+     */
+    public function getUserActivityStatistics(): array
+    {
+        $qb = $this->createQueryBuilder('u');
+        
+        $totalUsers = $qb->select('COUNT(u.id)')->getQuery()->getSingleScalarResult();
+        
+        $activeLastWeek = $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->andWhere('u.lastLoginAt >= :date')
+            ->setParameter('date', new \DateTimeImmutable('-7 days'))
+            ->getQuery()
+            ->getSingleScalarResult();
+            
+        $activeLastMonth = $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->andWhere('u.lastLoginAt >= :date')
+            ->setParameter('date', new \DateTimeImmutable('-30 days'))
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return [
+            'total_users' => $totalUsers,
+            'active_last_week' => $activeLastWeek,
+            'active_last_month' => $activeLastMonth,
+            'inactive_users' => $totalUsers - $activeLastMonth,
+        ];
+    }
 }
