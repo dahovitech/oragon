@@ -56,4 +56,13 @@ class LanguageRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    /**
+     * Find all active languages
+     * Alias for findActiveOrdered() to maintain compatibility
+     */
+    public function findActiveLanguages(): array
+    {
+        return $this->findActiveOrdered();
+    }
 }
