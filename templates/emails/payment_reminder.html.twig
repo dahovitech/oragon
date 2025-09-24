@@ -1,0 +1,126 @@
+{% extends "emails/base.html.twig" %}
+
+{% block title %}Rappel d'échéance - EdgeLoan{% endblock %}
+
+{% block header_title %}⏰ Rappel d'échéance{% endblock %}
+
+{% block content %}
+<h2>Bonjour {{ user.firstName }} {{ user.lastName }},</h2>
+
+<p>
+    Nous vous informons qu'une ou plusieurs échéances de votre prêt EdgeLoan sont arrivées à échéance.
+</p>
+
+<div class="info-box warning">
+    <h3>📋 Contrat concerné</h3>
+    <p><strong>Numéro :</strong> {{ contract.contractNumber }}</p>
+    <p><strong>Montant initial :</strong> {{ contract.initialAmount|number_format(0, ',', ' ') }} €</p>
+    <p><strong>Capital restant dû :</strong> {{ contract.remainingBalance|number_format(2, ',', ' ') }} €</p>
+</div>
+
+<div class="info-box error">
+    <h3>💰 Échéances en retard</h3>
+    {% set totalOverdue = 0 %}
+    {% for payment in overduePayments %}
+        {% set totalOverdue = totalOverdue + payment.amount %}
+        <div class="detail-row">
+            <span class="detail-label">{{ payment.dueDate|date('d/m/Y') }} :</span>
+            <span class="detail-value"><strong>{{ payment.amount|number_format(2, ',', ' ') }} €</strong></span>
+        </div>
+    {% endfor %}
+    
+    <hr style="margin: 15px 0;">
+    <div class="detail-row">
+        <span class="detail-label"><strong>TOTAL À RÉGLER :</strong></span>
+        <span class="detail-value" style="color: #dc3545;"><strong>{{ totalOverdue|number_format(2, ',', ' ') }} €</strong></span>
+    </div>
+</div>
+
+<div class="info-box">
+    <h3>📅 Historique des paiements</h3>
+    <p>Nombre d'échéances en retard : <strong>{{ overduePayments|length }}</strong></p>
+    <p>Retard le plus ancien : <strong>{{ overduePayments|first.dueDate|date('d/m/Y') }}</strong></p>
+</div>
+
+<p style="text-align: center;">
+    <a href="{{ url('user_payments') }}" class="btn">Effectuer un paiement</a>
+</p>
+
+<div class="info-box warning">
+    <h3>⚠️ Conséquences du retard de paiement</h3>
+    <ul>
+        <li>Pénalités de retard selon les conditions contractuelles</li>
+        <li>Impact possible sur votre historique de crédit</li>
+        <li>Frais supplémentaires de recouvrement</li>
+        <li>Risque de résiliation du contrat en cas de retard prolongé</li>
+    </ul>
+</div>
+
+<div class="info-box">
+    <h3>💡 Solutions de paiement disponibles</h3>
+    <ul>
+        <li><strong>Paiement en ligne</strong> - Immédiat via votre espace client</li>
+        <li><strong>Virement bancaire</strong> - RIB disponible dans votre espace</li>
+        <li><strong>Prélèvement automatique</strong> - Activez cette option pour éviter les oublis</li>
+        <li><strong>Paiement par téléphone</strong> - Appelez nos conseillers</li>
+    </ul>
+</div>
+
+<div class="application-details">
+    <h3>🏦 Coordonnées pour virement</h3>
+    
+    <div class="detail-row">
+        <span class="detail-label">Bénéficiaire :</span>
+        <span class="detail-value">EdgeLoan SAS</span>
+    </div>
+    
+    <div class="detail-row">
+        <span class="detail-label">IBAN :</span>
+        <span class="detail-value">FR76 1234 5678 9012 3456 7890 123</span>
+    </div>
+    
+    <div class="detail-row">
+        <span class="detail-label">BIC :</span>
+        <span class="detail-value">EDGEFRPPXXX</span>
+    </div>
+    
+    <div class="detail-row">
+        <span class="detail-label">Référence :</span>
+        <span class="detail-value">{{ contract.contractNumber }} - {{ user.lastName|upper }}</span>
+    </div>
+</div>
+
+<div class="info-box success">
+    <h3>🤝 Difficultés de paiement ?</h3>
+    <p>
+        Si vous traversez une période difficile, <strong>contactez-nous rapidement</strong>. 
+        Nous pouvons étudier ensemble des solutions adaptées :
+    </p>
+    <ul>
+        <li>Report d'échéances temporaire</li>
+        <li>Révision du plan de remboursement</li>
+        <li>Solutions d'accompagnement personnalisé</li>
+    </ul>
+</div>
+
+<p>
+    <strong>Régularisation urgente :</strong><br>
+    Pour éviter des frais supplémentaires et préserver votre crédit, nous vous invitons 
+    à régulariser votre situation dans les <strong>5 jours ouvrés</strong>.
+</p>
+
+<p>
+    <strong>Contact privilégié :</strong><br>
+    Pour toute question relative à vos paiements, contactez directement notre service recouvrement 
+    au <strong>01 23 45 67 90</strong> ou par email à <strong>recouvrement@edgeloan.fr</strong>.
+</p>
+
+<p>
+    Merci de votre compréhension et de votre collaboration.
+</p>
+
+<p>
+    Cordialement,<br>
+    <strong>Le Service Recouvrement EdgeLoan</strong>
+</p>
+{% endblock %}

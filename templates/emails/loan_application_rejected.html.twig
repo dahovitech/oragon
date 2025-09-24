@@ -1,0 +1,104 @@
+{% extends "emails/base.html.twig" %}
+
+{% block title %}Information sur votre demande - EdgeLoan{% endblock %}
+
+{% block header_title %}Votre demande de prêt{% endblock %}
+
+{% block content %}
+<h2>Bonjour {{ user.firstName }} {{ user.lastName }},</h2>
+
+<p>
+    Nous vous remercions de la confiance que vous nous avez accordée en soumettant votre demande de prêt. 
+    Après un examen attentif de votre dossier, nous revenons vers vous concernant votre demande.
+</p>
+
+<div class="info-box">
+    <h3>📋 Votre demande</h3>
+    <p><strong>Référence :</strong> #{{ application.id }}</p>
+    <p><strong>Montant demandé :</strong> {{ application.requestedAmount|number_format(0, ',', ' ') }} €</p>
+    <p><strong>Date d'étude :</strong> {{ "now"|date('d/m/Y') }}</p>
+</div>
+
+<div class="info-box error">
+    <h3>📊 Résultat de l'analyse</h3>
+    <p>
+        Malheureusement, <strong>nous ne pouvons pas donner une suite favorable</strong> à votre demande dans sa forme actuelle.
+    </p>
+    {% if rejectionReason %}
+    <p><strong>Motif principal :</strong></p>
+    <p>{{ rejectionReason }}</p>
+    {% endif %}
+</div>
+
+<div class="info-box">
+    <h3>💡 Cela ne signifie pas un refus définitif !</h3>
+    <p>
+        Cette décision est basée sur votre situation actuelle et nos critères d'évaluation. 
+        Votre profil peut évoluer et nous restons ouverts à une future collaboration.
+    </p>
+</div>
+
+<div class="info-box success">
+    <h3>🔄 Nouvelles opportunités</h3>
+    <p><strong>Vous pourrez déposer une nouvelle demande :</strong></p>
+    <ul>
+        <li>Dans <strong>3 mois minimum</strong> après amélioration de votre situation</li>
+        <li>Avec un <strong>montant différent</strong> plus adapté à votre profil</li>
+        <li>Après optimisation de votre <strong>taux d'endettement</strong></li>
+        <li>Avec des <strong>justificatifs complémentaires</strong></li>
+    </ul>
+</div>
+
+<div class="info-box">
+    <h3>🎯 Conseils pour une future demande</h3>
+    <ul>
+        <li>Améliorer votre historique de crédit</li>
+        <li>Augmenter vos revenus réguliers</li>
+        <li>Réduire vos charges mensuelles</li>
+        <li>Constituer un apport personnel plus important</li>
+        <li>Considérer un co-emprunteur si applicable</li>
+    </ul>
+</div>
+
+<div class="info-box warning">
+    <h3>⚠️ Solutions alternatives</h3>
+    <p>
+        En attendant, vous pouvez explorer d'autres options de financement :
+    </p>
+    <ul>
+        <li>Prêts à taux préférentiel (employeur, CE, mutuelles)</li>
+        <li>Aides publiques selon votre situation</li>
+        <li>Micro-crédit social si éligible</li>
+        <li>Révision de votre projet (montant, timing)</li>
+    </ul>
+</div>
+
+<p style="text-align: center;">
+    <a href="{{ url('loan_application_new') }}" class="btn" style="background: #6c757d;">Nouvelle demande (dans 3 mois)</a>
+</p>
+
+<p>
+    <strong>Besoin de conseils personnalisés ?</strong><br>
+    Nos conseillers restent à votre disposition pour vous expliquer cette décision 
+    et vous orienter. Contactez-nous au <strong>01 23 45 67 89</strong> ou par email 
+    à <strong>contact@edgeloan.fr</strong>.
+</p>
+
+<div class="info-box">
+    <h3>📞 Entretien conseil gratuit</h3>
+    <p>
+        Si vous le souhaitez, nous pouvons vous proposer un <strong>entretien téléphonique gratuit</strong> 
+        avec un de nos conseillers pour analyser votre situation et vous donner des pistes d'amélioration.
+    </p>
+</div>
+
+<p>
+    Nous vous remercions encore pour votre intérêt et restons à votre écoute 
+    pour vos futurs projets de financement.
+</p>
+
+<p>
+    Cordialement,<br>
+    <strong>L'équipe EdgeLoan</strong>
+</p>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends "emails/base.html.twig" %}
+
+{% block title %}Documents requis pour votre demande - EdgeLoan{% endblock %}
+
+{% block header_title %}Documents requis{% endblock %}
+
+{% block content %}
+<h2>Bonjour {{ user.firstName }} {{ user.lastName }},</h2>
+
+<p>
+    Bonne nouvelle ! L'étude de votre demande de prêt progresse bien. 
+    Pour poursuivre le processus, nous avons besoin de quelques documents complémentaires.
+</p>
+
+<div class="info-box warning">
+    <h3>📄 Documents requis pour finaliser votre dossier</h3>
+    <p><strong>Référence de votre demande :</strong> #{{ application.id }}</p>
+    <p><strong>Montant :</strong> {{ application.requestedAmount|number_format(0, ',', ' ') }} €</p>
+</div>
+
+<div class="info-box">
+    <h3>📋 Liste des documents à fournir :</h3>
+    <ul>
+    {% for document in requiredDocuments %}
+        <li><strong>{{ document.name }}</strong>
+        {% if document.description %}
+            <br><small style="color: #6c757d;">{{ document.description }}</small>
+        {% endif %}
+        </li>
+    {% endfor %}
+    </ul>
+</div>
+
+<div class="info-box success">
+    <h3>📤 Comment envoyer vos documents ?</h3>
+    <ol>
+        <li><strong>Via votre espace client</strong> (recommandé) - Upload sécurisé et rapide</li>
+        <li><strong>Par email</strong> à documents@edgeloan.fr (format PDF uniquement)</li>
+        <li><strong>Par courrier</strong> à l'adresse EdgeLoan - Service Documents - 75001 Paris</li>
+    </ol>
+</div>
+
+<p style="text-align: center;">
+    <a href="{{ url('user_dashboard') }}" class="btn">Envoyer mes documents</a>
+</p>
+
+<div class="info-box warning">
+    <h3>⏰ Délai important</h3>
+    <p>
+        Merci de nous transmettre ces documents dans les <strong>7 jours ouvrés</strong> 
+        pour éviter tout retard dans le traitement de votre dossier.
+    </p>
+</div>
+
+<div class="info-box">
+    <h3>💡 Conseils pour vos documents</h3>
+    <ul>
+        <li><strong>Qualité :</strong> Documents lisibles, en couleur si possible</li>
+        <li><strong>Format :</strong> PDF ou images haute définition (JPG/PNG)</li>
+        <li><strong>Validité :</strong> Documents récents (moins de 3 mois)</li>
+        <li><strong>Intégralité :</strong> Documents complets (toutes les pages)</li>
+    </ul>
+</div>
+
+<div class="application-details">
+    <h3>📊 Statut de votre demande</h3>
+    
+    <div class="detail-row">
+        <span class="detail-label">Statut actuel :</span>
+        <span class="detail-value" style="color: #f39c12; font-weight: bold;">En attente de documents</span>
+    </div>
+    
+    <div class="detail-row">
+        <span class="detail-label">Documents reçus :</span>
+        <span class="detail-value">{{ (application.totalDocuments ?? 0) - requiredDocuments|length }} / {{ application.totalDocuments ?? requiredDocuments|length }}</span>
+    </div>
+    
+    <div class="detail-row">
+        <span class="detail-label">Délai de réception :</span>
+        <span class="detail-value">7 jours ouvrés</span>
+    </div>
+</div>
+
+<div class="info-box success">
+    <h3>🚀 Après réception des documents</h3>
+    <p>
+        Dès que nous aurons reçu tous les documents requis :
+    </p>
+    <ul>
+        <li><strong>Vérification immédiate</strong> - Contrôle de conformité</li>
+        <li><strong>Finalisation de l'étude</strong> - Analyse complète sous 24-48h</li>
+        <li><strong>Décision finale</strong> - Communication par email et SMS</li>
+        <li><strong>Prochaines étapes</strong> - Contrat ou informations complémentaires</li>
+    </ul>
+</div>
+
+<p>
+    <strong>Questions sur les documents requis ?</strong><br>
+    Notre équipe est disponible pour vous aider au <strong>01 23 45 67 89</strong> 
+    du lundi au vendredi de 9h à 18h, ou par email à <strong>documents@edgeloan.fr</strong>.
+</p>
+
+<p>
+    <strong>Problème technique avec l'upload ?</strong><br>
+    Contactez notre support technique : <strong>support@edgeloan.fr</strong>
+</p>
+
+<p>
+    Merci de votre collaboration et de votre confiance.
+</p>
+
+<p>
+    Cordialement,<br>
+    <strong>L'équipe EdgeLoan</strong>
+</p>
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends "emails/base.html.twig" %}
+
+{% block title %}Félicitations ! Contrat signé - EdgeLoan{% endblock %}
+
+{% block header_title %}🎉 Contrat signé avec succès !{% endblock %}
+
+{% block content %}
+<h2>Félicitations {{ user.firstName }} {{ user.lastName }} !</h2>
+
+<p>
+    <strong>Excellente nouvelle !</strong> Votre contrat de prêt a été signé avec succès. 
+    Votre projet devient maintenant réalité ! 🚀
+</p>
+
+<div class="info-box success">
+    <h3>✅ Signature confirmée</h3>
+    <p><strong>Contrat :</strong> {{ contract.contractNumber }}</p>
+    <p><strong>Date de signature :</strong> {{ contract.signedAt|date('d/m/Y à H:i') ?? "now"|date('d/m/Y à H:i') }}</p>
+    <p><strong>Statut :</strong> <span style="color: #28a745; font-weight: bold;">Actif</span></p>
+</div>
+
+<div class="amount">
+    {{ application.requestedAmount|number_format(0, ',', ' ') }} €
+</div>
+<p style="text-align: center; color: #28a745; font-weight: bold;">ACCORDÉS - CONTRAT SIGNÉ</p>
+
+<div class="application-details">
+    <h3>💰 Détails de votre prêt actif</h3>
+    
+    <div class="detail-row">
+        <span class="detail-label">Capital accordé :</span>
+        <span class="detail-value"><strong>{{ application.requestedAmount|number_format(0, ',', ' ') }} €</strong></span>
+    </div>
+    
+    <div class="detail-row">
+        <span class="detail-label">Durée :</span>
+        <span class="detail-value">{{ application.loanTerm }} mois</span>
+    </div>
+    
+    {% if application.monthlyPayment %}
+    <div class="detail-row">
+        <span class="detail-label">Mensualité :</span>
+        <span class="detail-value"><strong>{{ application.monthlyPayment|number_format(2, ',', ' ') }} €</strong></span>
+    </div>
+    {% endif %}
+    
+    {% if application.interestRate %}
+    <div class="detail-row">
+        <span class="detail-label">Taux (TAEG) :</span>
+        <span class="detail-value">{{ application.interestRate }}%</span>
+    </div>
+    {% endif %}
+    
+    <div class="detail-row">
+        <span class="detail-label">Première échéance :</span>
+        <span class="detail-value">{{ contract.firstPaymentDate|date('d/m/Y') ?? ("+1 month"|date('d/m/Y')) }}</span>
+    </div>
+</div>
+
+<div class="info-box success">
+    <h3>💸 Déblocage des fonds - Étapes finales</h3>
+    <ol>
+        <li><strong>Validation finale</strong> - Vérification administrative (2-4h)</li>
+        <li><strong>Préparation du virement</strong> - Ordre de virement généré</li>
+        <li><strong>Déblocage effectif</strong> - <strong>Virement sous 24-48h maximum</strong></li>
+        <li><strong>Confirmation</strong> - Email de confirmation du virement</li>
+    </ol>
+</div>
+
+<div class="info-box">
+    <h3>🏦 Coordonnées bancaires</h3>
+    <p><strong>Le virement sera effectué sur le compte :</strong></p>
+    <p style="font-family: monospace; background-color: #f8f9fa; padding: 10px; border-radius: 4px;">
+        {% if user.bankAccount %}
+            IBAN: {{ user.bankAccount.iban|upper }}<br>
+            Titulaire: {{ user.firstName }} {{ user.lastName }}
+        {% else %}
+            Selon les coordonnées fournies lors de votre demande
+        {% endif %}
+    </p>
+</div>
+
+<p style="text-align: center;">
+    <a href="{{ url('user_dashboard') }}" class="btn">Accéder à mon espace client</a>
+</p>
+
+<div class="info-box warning">
+    <h3>📋 Vos prochaines obligations</h3>
+    <p><strong>Première mensualité :</strong></p>
+    <ul>
+        <li>Date de prélèvement : <strong>{{ contract.firstPaymentDate|date('d/m/Y') ?? ("+1 month"|date('d/m/Y')) }}</strong></li>
+        <li>Montant : <strong>{{ application.monthlyPayment|number_format(2, ',', ' ') ?? 'Voir contrat' }} €</strong></li>
+        <li>Mode : Prélèvement automatique</li>
+    </ul>
+</div>
+
+<div class="info-box">
+    <h3>📱 Gestion de votre prêt</h3>
+    <p>Depuis votre espace client, vous pouvez :</p>
+    <ul>
+        <li>Consulter votre échéancier complet</li>
+        <li>Suivre vos remboursements</li>
+        <li>Simuler un remboursement anticipé</li>
+        <li>Télécharger vos documents</li>
+        <li>Modifier vos coordonnées</li>
+        <li>Contacter votre conseiller</li>
+    </ul>
+</div>
+
+<div class="info-box">
+    <h3>⚠️ Important - Assurance emprunteur</h3>
+    {% if contract.hasInsurance %}
+        <p>Votre prêt est couvert par une assurance emprunteur pour votre sécurité.</p>
+    {% else %}
+        <p>
+            Nous vous rappelons l'importance de souscrire une assurance emprunteur 
+            pour protéger votre famille en cas d'imprévu.
+        </p>
+    {% endif %}
+</div>
+
+<div class="info-box success">
+    <h3>🎯 Conseils pour bien gérer votre prêt</h3>
+    <ul>
+        <li>Assurez-vous d'avoir des provisions suffisantes sur votre compte</li>
+        <li>Notez la date de prélèvement dans votre calendrier</li>
+        <li>Conservez tous les documents relatifs à votre prêt</li>
+        <li>N'hésitez pas à nous contacter en cas de difficulté</li>
+        <li>Informez-nous de tout changement dans votre situation</li>
+    </ul>
+</div>
+
+<p>
+    <strong>Questions ou besoin d'aide ?</strong><br>
+    Votre conseiller EdgeLoan reste à votre disposition tout au long de votre prêt. 
+    Contactez-nous au <strong>01 23 45 67 89</strong> ou par email à <strong>suivi@edgeloan.fr</strong>.
+</p>
+
+<p>
+    Merci de votre confiance et félicitations encore pour la concrétisation de votre projet !
+</p>
+
+<p>
+    Cordialement,<br>
+    <strong>L'équipe EdgeLoan</strong>
+</p>
+{% endblock %}

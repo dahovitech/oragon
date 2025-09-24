@@ -1,0 +1,101 @@
+{% extends "emails/base.html.twig" %}
+
+{% block title %}Mise à jour de votre demande - EdgeLoan{% endblock %}
+
+{% block header_title %}Mise à jour importante{% endblock %}
+
+{% block content %}
+<h2>Bonjour {{ user.firstName }} {{ user.lastName }},</h2>
+
+<p>Nous vous informons d'une mise à jour concernant votre demande de prêt.</p>
+
+<div class="info-box">
+    <h3>📋 Informations sur votre demande</h3>
+    <p><strong>Référence :</strong> #{{ application.id }}</p>
+    <p><strong>Montant :</strong> {{ application.requestedAmount|number_format(0, ',', ' ') }} €</p>
+    <p><strong>Date de la mise à jour :</strong> {{ "now"|date('d/m/Y à H:i') }}</p>
+</div>
+
+<div class="info-box 
+{% if newStatus == 'approved' %}success
+{% elseif newStatus == 'rejected' %}error
+{% elseif newStatus == 'under_review' %}warning
+{% else %}
+{% endif %}">
+    <h3>📊 Nouveau statut</h3>
+    <p style="font-size: 18px; font-weight: bold;">
+        {% if newStatus == 'submitted' %}
+            ✅ Demande soumise
+        {% elseif newStatus == 'under_review' %}
+            🔍 En cours d'étude
+        {% elseif newStatus == 'pending_documents' %}
+            📄 En attente de documents
+        {% elseif newStatus == 'approved' %}
+            🎉 Approuvée
+        {% elseif newStatus == 'rejected' %}
+            ❌ Non retenue
+        {% elseif newStatus == 'contract_generated' %}
+            📝 Contrat généré
+        {% elseif newStatus == 'contract_signed' %}
+            ✍️ Contrat signé
+        {% else %}
+            {{ newStatus|title }}
+        {% endif %}
+    </p>
+</div>
+
+<div class="info-box">
+    <h3>ℹ️ Que signifie ce statut ?</h3>
+    <p>
+        {% if newStatus == 'submitted' %}
+            Votre demande a été enregistrée avec succès et sera étudiée prochainement.
+        {% elseif newStatus == 'under_review' %}
+            Notre équipe examine actuellement votre dossier en détail.
+        {% elseif newStatus == 'pending_documents' %}
+            Des documents complémentaires sont requis pour poursuivre l'étude.
+        {% elseif newStatus == 'approved' %}
+            Félicitations ! Votre demande a été approuvée par nos services.
+        {% elseif newStatus == 'rejected' %}
+            Votre demande ne peut être acceptée dans sa forme actuelle.
+        {% elseif newStatus == 'contract_generated' %}
+            Votre contrat est prêt et disponible pour signature.
+        {% elseif newStatus == 'contract_signed' %}
+            Votre contrat a été signé, les fonds seront bientôt débloqués.
+        {% else %}
+            Le statut de votre demande a été mis à jour.
+        {% endif %}
+    </p>
+</div>
+
+{% if newStatus == 'approved' or newStatus == 'contract_generated' %}
+<div class="info-box success">
+    <h3>🚀 Prochaines étapes</h3>
+    <p>Un email détaillé va vous être envoyé dans les prochaines minutes avec toutes les informations nécessaires.</p>
+</div>
+{% elseif newStatus == 'pending_documents' %}
+<div class="info-box warning">
+    <h3>📄 Action requise</h3>
+    <p>Vous allez recevoir un email détaillant les documents à fournir.</p>
+</div>
+{% elseif newStatus == 'under_review' %}
+<div class="info-box">
+    <h3>⏰ Délai de traitement</h3>
+    <p>Nous vous tiendrons informé de l'avancement de votre dossier dans les 24-72h.</p>
+</div>
+{% endif %}
+
+<p style="text-align: center;">
+    <a href="{{ url('user_dashboard') }}" class="btn">Consulter mon dossier</a>
+</p>
+
+<p>
+    <strong>Questions ?</strong><br>
+    Notre équipe reste à votre disposition au <strong>01 23 45 67 89</strong> 
+    ou par email à <strong>contact@edgeloan.fr</strong>.
+</p>
+
+<p>
+    Cordialement,<br>
+    <strong>L'équipe EdgeLoan</strong>
+</p>
+{% endblock %}

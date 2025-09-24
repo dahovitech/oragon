@@ -246,6 +246,166 @@ class NotificationService
         }
     }
 
+    public function sendLoanApplicationSubmitted(LoanApplication $application): void
+    {
+        $user = $application->getUser();
+        
+        try {
+            $email = (new Email())
+                ->from('noreply@edgeloan.fr')
+                ->to($user->getEmail())
+                ->subject('Votre demande de prêt a été soumise - EdgeLoan')
+                ->html($this->twig->render('emails/loan_application_submitted.html.twig', [
+                    'user' => $user,
+                    'application' => $application
+                ]));
+
+            $this->mailer->send($email);
+            
+            // Notification interne
+            $this->sendInternalNotification('loan_application_submitted', [
+                'user' => $user,
+                'application' => $application
+            ]);
+            
+            $this->logger->info('Loan application submitted notification sent', [
+                'user_id' => $user->getId(),
+                'application_id' => $application->getId()
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to send loan application submitted notification', [
+                'user_id' => $user->getId(),
+                'application_id' => $application->getId(),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function sendLoanApplicationUnderReview(LoanApplication $application): void
+    {
+        $user = $application->getUser();
+        
+        try {
+            $email = (new Email())
+                ->from('noreply@edgeloan.fr')
+                ->to($user->getEmail())
+                ->subject('Votre demande de prêt est en cours d\'étude - EdgeLoan')
+                ->html($this->twig->render('emails/loan_application_under_review.html.twig', [
+                    'user' => $user,
+                    'application' => $application
+                ]));
+
+            $this->mailer->send($email);
+            
+            $this->logger->info('Loan application under review notification sent', [
+                'user_id' => $user->getId(),
+                'application_id' => $application->getId()
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to send loan application under review notification', [
+                'user_id' => $user->getId(),
+                'application_id' => $application->getId(),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function sendLoanApplicationApproved(LoanApplication $application): void
+    {
+        $user = $application->getUser();
+        
+        try {
+            $email = (new Email())
+                ->from('noreply@edgeloan.fr')
+                ->to($user->getEmail())
+                ->subject('Félicitations ! Votre demande de prêt a été approuvée - EdgeLoan')
+                ->html($this->twig->render('emails/loan_application_approved.html.twig', [
+                    'user' => $user,
+                    'application' => $application
+                ]));
+
+            $this->mailer->send($email);
+            
+            $this->logger->info('Loan application approved notification sent', [
+                'user_id' => $user->getId(),
+                'application_id' => $application->getId()
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to send loan application approved notification', [
+                'user_id' => $user->getId(),
+                'application_id' => $application->getId(),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function sendLoanApplicationRejected(LoanApplication $application, string $reason = ''): void
+    {
+        $user = $application->getUser();
+        
+        try {
+            $email = (new Email())
+                ->from('noreply@edgeloan.fr')
+                ->to($user->getEmail())
+                ->subject('Information concernant votre demande de prêt - EdgeLoan')
+                ->html($this->twig->render('emails/loan_application_rejected.html.twig', [
+                    'user' => $user,
+                    'application' => $application,
+                    'rejectionReason' => $reason
+                ]));
+
+            $this->mailer->send($email);
+            
+            $this->logger->info('Loan application rejected notification sent', [
+                'user_id' => $user->getId(),
+                'application_id' => $application->getId(),
+                'reason' => $reason
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to send loan application rejected notification', [
+                'user_id' => $user->getId(),
+                'application_id' => $application->getId(),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    public function sendLoanApplicationPendingDocuments(LoanApplication $application, array $requiredDocuments): void
+    {
+        $user = $application->getUser();
+        
+        try {
+            $email = (new Email())
+                ->from('noreply@edgeloan.fr')
+                ->to($user->getEmail())
+                ->subject('Documents requis pour votre demande de prêt - EdgeLoan')
+                ->html($this->twig->render('emails/loan_application_pending_documents.html.twig', [
+                    'user' => $user,
+                    'application' => $application,
+                    'requiredDocuments' => $requiredDocuments
+                ]));
+
+            $this->mailer->send($email);
+            
+            $this->logger->info('Loan application pending documents notification sent', [
+                'user_id' => $user->getId(),
+                'application_id' => $application->getId(),
+                'documents_count' => count($requiredDocuments)
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to send loan application pending documents notification', [
+                'user_id' => $user->getId(),
+                'application_id' => $application->getId(),
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
     public function sendWelcomeEmail(User $user): void
     {
         try {

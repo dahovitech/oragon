@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification interne - EdgeLoan</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #dc3545 0%, #6f42c1 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+            border-left: 4px solid #dc3545;
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .info-section {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .data-table th {
+            background-color: #e9ecef;
+            font-weight: bold;
+        }
+        .timestamp {
+            color: #6c757d;
+            font-size: 14px;
+            font-style: italic;
+        }
+        .priority-high {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .priority-medium {
+            color: #fd7e14;
+            font-weight: bold;
+        }
+        .priority-low {
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔔 Notification Interne EdgeLoan</h1>
+            <div class="timestamp">{{ timestamp|date('d/m/Y à H:i:s') }}</div>
+        </div>
+        
+        <div class="content">
+            <div class="alert">
+                <h2>{{ type|upper }}</h2>
+                <p>Une action ou événement important nécessite votre attention.</p>
+            </div>
+
+            {% if type == 'loan_application_submitted' %}
+                <div class="info-section">
+                    <h3>📝 Nouvelle demande de prêt soumise</h3>
+                    <p><strong>Action requise :</strong> Examen et validation du dossier</p>
+                </div>
+
+                <table class="data-table">
+                    <tr>
+                        <th>Référence demande</th>
+                        <td>#{{ data.application.id }}</td>
+                    </tr>
+                    <tr>
+                        <th>Client</th>
+                        <td>{{ data.user.firstName }} {{ data.user.lastName }} ({{ data.user.email }})</td>
+                    </tr>
+                    <tr>
+                        <th>Montant</th>
+                        <td>{{ data.application.requestedAmount|number_format(0, ',', ' ') }} €</td>
+                    </tr>
+                    <tr>
+                        <th>Type</th>
+                        <td>{{ data.application.loanType }}</td>
+                    </tr>
+                    <tr>
+                        <th>Durée</th>
+                        <td>{{ data.application.loanTerm }} mois</td>
+                    </tr>
+                    <tr>
+                        <th>Date soumission</th>
+                        <td>{{ data.application.createdAt|date('d/m/Y à H:i') }}</td>
+                    </tr>
+                </table>
+
+            {% elseif type == 'contract_signed' %}
+                <div class="info-section">
+                    <h3>✍️ Contrat signé</h3>
+                    <p><strong>Action requise :</strong> Préparation du déblocage des fonds</p>
+                </div>
+
+                <table class="data-table">
+                    <tr>
+                        <th>Contrat</th>
+                        <td>{{ data.contract.contractNumber }}</td>
+                    </tr>
+                    <tr>
+                        <th>Client</th>
+                        <td>{{ data.user.firstName }} {{ data.user.lastName }}</td>
+                    </tr>
+                    <tr>
+                        <th>Montant</th>
+                        <td>{{ data.application.requestedAmount|number_format(0, ',', ' ') }} €</td>
+                    </tr>
+                    <tr>
+                        <th>Date signature</th>
+                        <td>{{ data.contract.signedAt|date('d/m/Y à H:i') ?? 'Maintenant' }}</td>
+                    </tr>
+                </table>
+
+            {% else %}
+                <div class="info-section">
+                    <h3>📊 Détails de la notification</h3>
+                    <pre>{{ data|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+                </div>
+            {% endif %}
+
+            {% if type == 'loan_application_submitted' %}
+                <div class="info-section">
+                    <h3>🔍 Actions à effectuer</h3>
+                    <ul>
+                        <li><strong class="priority-high">Vérifier l'éligibilité du client</strong></li>
+                        <li><strong class="priority-high">Contrôler les informations saisies</strong></li>
+                        <li><strong class="priority-medium">Demander des documents si nécessaire</strong></li>
+                        <li><strong class="priority-low">Envoyer une confirmation au client</strong></li>
+                    </ul>
+                </div>
+
+            {% elseif type == 'contract_signed' %}
+                <div class="info-section">
+                    <h3>💰 Actions à effectuer</h3>
+                    <ul>
+                        <li><strong class="priority-high">Préparer l'ordre de virement</strong></li>
+                        <li><strong class="priority-high">Valider les coordonnées bancaires</strong></li>
+                        <li><strong class="priority-medium">Archiver le contrat signé</strong></li>
+                        <li><strong class="priority-low">Programmer les échéances</strong></li>
+                    </ul>
+                </div>
+            {% endif %}
+
+            <div class="info-section">
+                <h3>📧 Cette notification a été générée automatiquement</h3>
+                <p>
+                    <strong>Plateforme :</strong> EdgeLoan - Système de gestion des prêts<br>
+                    <strong>Module :</strong> NotificationService<br>
+                    <strong>Environnement :</strong> {{ app.environment|default('production') }}
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,91 @@
+{% extends "emails/base.html.twig" %}
+
+{% block title %}Demande en cours d'étude - EdgeLoan{% endblock %}
+
+{% block header_title %}Votre demande est à l'étude{% endblock %}
+
+{% block content %}
+<h2>Bonjour {{ user.firstName }} {{ user.lastName }},</h2>
+
+<p>Bonne nouvelle ! Votre demande de prêt est maintenant <strong>en cours d'étude approfondie</strong> par notre équipe d'experts.</p>
+
+<div class="info-box">
+    <h3>🔍 Statut de votre demande</h3>
+    <p><strong>Référence :</strong> #{{ application.id }}</p>
+    <p><strong>Nouveau statut :</strong> <span style="color: #f39c12; font-weight: bold;">En cours d'étude</span></p>
+    <p><strong>Mis à jour le :</strong> {{ "now"|date('d/m/Y à H:i') }}</p>
+</div>
+
+<div class="application-details">
+    <h3>📊 Rappel de votre demande</h3>
+    
+    <div class="detail-row">
+        <span class="detail-label">Montant :</span>
+        <span class="detail-value">{{ application.requestedAmount|number_format(0, ',', ' ') }} €</span>
+    </div>
+    
+    <div class="detail-row">
+        <span class="detail-label">Durée :</span>
+        <span class="detail-value">{{ application.loanTerm }} mois</span>
+    </div>
+    
+    <div class="detail-row">
+        <span class="detail-label">Type :</span>
+        <span class="detail-value">
+            {% if application.loanType == 'personal' %}
+                Prêt personnel
+            {% elseif application.loanType == 'auto' %}
+                Prêt automobile
+            {% elseif application.loanType == 'home' %}
+                Prêt immobilier
+            {% else %}
+                {{ application.loanType|title }}
+            {% endif %}
+        </span>
+    </div>
+</div>
+
+<div class="info-box warning">
+    <h3>⚡ Que se passe-t-il maintenant ?</h3>
+    <p>
+        Notre équipe d'analystes examine actuellement tous les aspects de votre demande :
+    </p>
+    <ul>
+        <li>Vérification de votre profil financier</li>
+        <li>Analyse de votre capacité de remboursement</li>
+        <li>Évaluation des risques</li>
+        <li>Préparation de notre proposition</li>
+    </ul>
+</div>
+
+<div class="info-box success">
+    <h3>⏰ Délai de traitement</h3>
+    <p>
+        <strong>Vous recevrez notre réponse sous 24 à 72 heures maximum.</strong><br>
+        Nous nous engageons à traiter votre demande dans les plus brefs délais.
+    </p>
+</div>
+
+<p style="text-align: center;">
+    <a href="{{ url('user_dashboard') }}" class="btn">Consulter mon espace client</a>
+</p>
+
+<div class="info-box">
+    <h3>💡 Conseil</h3>
+    <p>
+        Pendant que nous étudions votre dossier, assurez-vous que vos documents sont à jour 
+        dans votre espace client. Cela accélérera le processus si nous avons besoin d'informations complémentaires.
+    </p>
+</div>
+
+<p>
+    <strong>Une question urgente ?</strong><br>
+    Notre service client reste disponible au <strong>01 23 45 67 89</strong> 
+    du lundi au vendredi de 9h à 18h.
+</p>
+
+<p>
+    Cordialement,<br>
+    <strong>L'équipe EdgeLoan</strong>
+</p>
+{% endblock %}

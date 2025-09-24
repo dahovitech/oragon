@@ -1,0 +1,126 @@
+{% extends "emails/base.html.twig" %}
+
+{% block title %}Votre contrat est prêt - EdgeLoan{% endblock %}
+
+{% block header_title %}📝 Votre contrat est disponible{% endblock %}
+
+{% block content %}
+<h2>Excellente nouvelle, {{ user.firstName }} {{ user.lastName }} !</h2>
+
+<p>
+    Votre contrat de prêt a été préparé et est maintenant <strong>disponible pour signature</strong>. 
+    Nous sommes ravis de concrétiser votre projet avec vous !
+</p>
+
+<div class="info-box success">
+    <h3>✅ Contrat généré avec succès</h3>
+    <p><strong>Numéro de contrat :</strong> {{ contract.contractNumber }}</p>
+    <p><strong>Date de génération :</strong> {{ contract.generatedAt|date('d/m/Y à H:i') ?? "now"|date('d/m/Y à H:i') }}</p>
+</div>
+
+<div class="application-details">
+    <h3>📋 Détails de votre prêt</h3>
+    
+    <div class="detail-row">
+        <span class="detail-label">Montant accordé :</span>
+        <span class="detail-value"><strong>{{ application.requestedAmount|number_format(0, ',', ' ') }} €</strong></span>
+    </div>
+    
+    <div class="detail-row">
+        <span class="detail-label">Durée :</span>
+        <span class="detail-value">{{ application.loanTerm }} mois</span>
+    </div>
+    
+    {% if application.monthlyPayment %}
+    <div class="detail-row">
+        <span class="detail-label">Mensualité :</span>
+        <span class="detail-value"><strong>{{ application.monthlyPayment|number_format(2, ',', ' ') }} €</strong></span>
+    </div>
+    {% endif %}
+    
+    {% if application.interestRate %}
+    <div class="detail-row">
+        <span class="detail-label">Taux (TAEG) :</span>
+        <span class="detail-value">{{ application.interestRate }}%</span>
+    </div>
+    {% endif %}
+    
+    <div class="detail-row">
+        <span class="detail-label">Première échéance :</span>
+        <span class="detail-value">{{ contract.firstPaymentDate|date('d/m/Y') ?? ("+1 month"|date('d/m/Y')) }}</span>
+    </div>
+</div>
+
+<div class="info-box">
+    <h3>✍️ Signature électronique sécurisée</h3>
+    <p>
+        Votre contrat utilise une <strong>signature électronique certifiée</strong> qui a la même valeur légale 
+        qu'une signature manuscrite. Le processus est simple, rapide et 100% sécurisé.
+    </p>
+</div>
+
+<p style="text-align: center;">
+    <a href="{{ url('loan_contract_sign', {'contractNumber': contract.contractNumber}) }}" class="btn">
+        📝 Consulter et signer mon contrat
+    </a>
+</p>
+
+<div class="info-box warning">
+    <h3>⏰ Important : Délai de signature</h3>
+    <p>
+        Merci de signer votre contrat dans les <strong>7 jours</strong> suivant sa réception. 
+        Passé ce délai, nous pourrions être amenés à revoir les conditions proposées.
+    </p>
+</div>
+
+<div class="info-box">
+    <h3>🔍 Que contient votre contrat ?</h3>
+    <ul>
+        <li>Conditions financières détaillées (montant, taux, durée)</li>
+        <li>Échéancier complet de remboursement</li>
+        <li>Vos droits et obligations</li>
+        <li>Conditions d'assurance le cas échéant</li>
+        <li>Modalités de remboursement anticipé</li>
+        <li>Informations légales et réglementaires</li>
+    </ul>
+</div>
+
+<div class="info-box success">
+    <h3>🚀 Après signature</h3>
+    <ol>
+        <li><strong>Validation automatique</strong> - Votre signature est vérifiée instantanément</li>
+        <li><strong>Activation du contrat</strong> - Votre prêt entre en vigueur</li>
+        <li><strong>Préparation du virement</strong> - Nous préparons le versement des fonds</li>
+        <li><strong>Déblocage des fonds</strong> - Virement sous 24-48h sur votre compte</li>
+    </ol>
+</div>
+
+<div class="info-box">
+    <h3>💡 Droit de rétractation</h3>
+    <p>
+        Conformément à la loi, vous disposez d'un <strong>délai de rétractation de 14 jours</strong> 
+        à compter de la signature de votre contrat pour changer d'avis, sans frais ni justification.
+    </p>
+</div>
+
+<p>
+    <strong>Des questions avant de signer ?</strong><br>
+    Notre équipe juridique est à votre disposition pour clarifier tous les aspects de votre contrat. 
+    Contactez-nous au <strong>01 23 45 67 89</strong> ou par email à <strong>contrat@edgeloan.fr</strong>.
+</p>
+
+<p>
+    <strong>Problème technique ?</strong><br>
+    Si vous rencontrez des difficultés pour accéder ou signer votre contrat, 
+    contactez notre support technique : <strong>support@edgeloan.fr</strong>
+</p>
+
+<p>
+    Nous sommes fiers de vous accompagner dans ce projet important !
+</p>
+
+<p>
+    Cordialement,<br>
+    <strong>L'équipe EdgeLoan</strong>
+</p>
+{% endblock %}

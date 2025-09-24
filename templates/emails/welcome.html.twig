@@ -1,0 +1,114 @@
+{% extends "emails/base.html.twig" %}
+
+{% block title %}Bienvenue chez EdgeLoan !{% endblock %}
+
+{% block header_title %}🎉 Bienvenue dans la famille EdgeLoan !{% endblock %}
+
+{% block content %}
+<h2>Bonjour {{ user.firstName }} {{ user.lastName }},</h2>
+
+<p>
+    <strong>Bienvenue chez EdgeLoan !</strong> 🎉<br>
+    Nous sommes ravis de vous accueillir parmi nos clients et nous vous remercions de la confiance que vous nous accordez.
+</p>
+
+<div class="info-box success">
+    <h3>✅ Votre compte a été créé avec succès</h3>
+    <p><strong>Email :</strong> {{ user.email }}</p>
+    <p><strong>Date d'inscription :</strong> {{ user.createdAt|date('d/m/Y à H:i') }}</p>
+</div>
+
+<div class="info-box">
+    <h3>🚀 Que pouvez-vous faire maintenant ?</h3>
+    <ul>
+        <li><strong>Déposer une demande de prêt</strong> - Processus 100% en ligne</li>
+        <li><strong>Utiliser notre simulateur</strong> - Calculez vos mensualités en temps réel</li>
+        <li><strong>Gérer vos documents</strong> - Upload sécurisé dans votre espace</li>
+        <li><strong>Suivre vos demandes</strong> - Statut en temps réel</li>
+        <li><strong>Contacter nos conseillers</strong> - Support personnalisé</li>
+    </ul>
+</div>
+
+<p style="text-align: center;">
+    <a href="{{ url('user_dashboard') }}" class="btn">Accéder à mon espace client</a>
+</p>
+
+<div class="info-box">
+    <h3>💡 EdgeLoan, votre partenaire de confiance</h3>
+    <p>
+        Avec EdgeLoan, bénéficiez de :
+    </p>
+    <ul>
+        <li>🏆 <strong>Excellence</strong> - Plus de 10 ans d'expérience dans le crédit</li>
+        <li>⚡ <strong>Rapidité</strong> - Réponse en 24-72h maximum</li>
+        <li>🔒 <strong>Sécurité</strong> - Vos données sont protégées</li>
+        <li>🎯 <strong>Personnalisation</strong> - Solutions adaptées à vos besoins</li>
+        <li>📞 <strong>Accompagnement</strong> - Conseillers dédiés disponibles</li>
+    </ul>
+</div>
+
+<div class="info-box warning">
+    <h3>🔐 Sécurité de votre compte</h3>
+    <p>
+        <strong>Quelques conseils de sécurité :</strong>
+    </p>
+    <ul>
+        <li>Ne partagez jamais vos identifiants de connexion</li>
+        <li>Utilisez un mot de passe fort et unique</li>
+        <li>Déconnectez-vous après chaque session</li>
+        <li>Contactez-nous immédiatement en cas d'activité suspecte</li>
+    </ul>
+</div>
+
+<div class="application-details">
+    <h3>📞 Vos contacts EdgeLoan</h3>
+    
+    <div class="detail-row">
+        <span class="detail-label">Service client :</span>
+        <span class="detail-value">01 23 45 67 89</span>
+    </div>
+    
+    <div class="detail-row">
+        <span class="detail-label">Email général :</span>
+        <span class="detail-value">contact@edgeloan.fr</span>
+    </div>
+    
+    <div class="detail-row">
+        <span class="detail-label">Support technique :</span>
+        <span class="detail-value">support@edgeloan.fr</span>
+    </div>
+    
+    <div class="detail-row">
+        <span class="detail-label">Documents :</span>
+        <span class="detail-value">documents@edgeloan.fr</span>
+    </div>
+    
+    <div class="detail-row">
+        <span class="detail-label">Horaires :</span>
+        <span class="detail-value">Lun-Ven 9h-18h</span>
+    </div>
+</div>
+
+<div class="info-box success">
+    <h3>🎁 Offre spéciale nouveaux clients</h3>
+    <p>
+        Pour fêter votre arrivée, bénéficiez de <strong>conditions préférentielles</strong> 
+        sur votre première demande de prêt pendant <strong>30 jours</strong> !
+    </p>
+</div>
+
+<p>
+    <strong>Prêt à commencer ?</strong><br>
+    N'hésitez pas à explorer toutes les fonctionnalités de votre espace client 
+    et à nous contacter si vous avez la moindre question.
+</p>
+
+<p>
+    Nous avons hâte de vous accompagner dans la réalisation de vos projets !
+</p>
+
+<p>
+    Cordialement,<br>
+    <strong>L'équipe EdgeLoan</strong>
+</p>
+{% endblock %}

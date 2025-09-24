@@ -1,0 +1,112 @@
+{% extends "emails/base.html.twig" %}
+
+{% block title %}Félicitations ! Demande approuvée - EdgeLoan{% endblock %}
+
+{% block header_title %}🎉 Votre demande est approuvée !{% endblock %}
+
+{% block content %}
+<h2>Félicitations {{ user.firstName }} {{ user.lastName }} !</h2>
+
+<div class="info-box success">
+    <h3>✅ EXCELLENT ! Votre demande de prêt a été approuvée</h3>
+    <p style="font-size: 18px; text-align: center; margin: 20px 0;">
+        <strong>Nous sommes ravis de vous accompagner dans votre projet !</strong>
+    </p>
+</div>
+
+<div class="amount">
+    {{ application.requestedAmount|number_format(0, ',', ' ') }} €
+</div>
+<p style="text-align: center; color: #28a745; font-weight: bold;">APPROUVÉS</p>
+
+<div class="application-details">
+    <h3>📋 Détails de votre prêt approuvé</h3>
+    
+    <div class="detail-row">
+        <span class="detail-label">Référence :</span>
+        <span class="detail-value">#{{ application.id }}</span>
+    </div>
+    
+    <div class="detail-row">
+        <span class="detail-label">Montant approuvé :</span>
+        <span class="detail-value"><strong>{{ application.requestedAmount|number_format(0, ',', ' ') }} €</strong></span>
+    </div>
+    
+    <div class="detail-row">
+        <span class="detail-label">Durée :</span>
+        <span class="detail-value">{{ application.loanTerm }} mois</span>
+    </div>
+    
+    {% if application.monthlyPayment %}
+    <div class="detail-row">
+        <span class="detail-label">Mensualité :</span>
+        <span class="detail-value"><strong>{{ application.monthlyPayment|number_format(2, ',', ' ') }} €</strong></span>
+    </div>
+    {% endif %}
+    
+    <div class="detail-row">
+        <span class="detail-label">Taux d'intérêt :</span>
+        <span class="detail-value">
+            {% if application.interestRate %}
+                {{ application.interestRate }}% (TAEG)
+            {% else %}
+                À confirmer dans le contrat
+            {% endif %}
+        </span>
+    </div>
+    
+    <div class="detail-row">
+        <span class="detail-label">Date d'approbation :</span>
+        <span class="detail-value">{{ "now"|date('d/m/Y à H:i') }}</span>
+    </div>
+</div>
+
+<div class="info-box">
+    <h3>🚀 Prochaines étapes importantes</h3>
+    <ol>
+        <li><strong>Préparation du contrat</strong> - Nous finalisons votre contrat de prêt (24-48h)</li>
+        <li><strong>Signature électronique</strong> - Vous recevrez le lien pour signer en ligne</li>
+        <li><strong>Vérification finale</strong> - Validation de tous les éléments</li>
+        <li><strong>Déblocage des fonds</strong> - Virement sous 24h après signature</li>
+    </ol>
+</div>
+
+<div class="info-box warning">
+    <h3>⚠️ Important : Validité de cette approbation</h3>
+    <p>
+        Cette approbation est valable <strong>30 jours</strong> à compter de ce jour. 
+        Passé ce délai, une nouvelle étude pourra être nécessaire.
+    </p>
+</div>
+
+<p style="text-align: center;">
+    <a href="{{ url('user_dashboard') }}" class="btn">Accéder à mon contrat</a>
+</p>
+
+<div class="info-box success">
+    <h3>💼 Votre conseiller dédié</h3>
+    <p>
+        Un conseiller EdgeLoan vous contactera dans les prochaines 24h pour :
+    </p>
+    <ul>
+        <li>Vous expliquer les dernières étapes</li>
+        <li>Répondre à toutes vos questions</li>
+        <li>Vous accompagner jusqu'au déblocage des fonds</li>
+    </ul>
+</div>
+
+<p>
+    <strong>Questions ou besoin d'aide ?</strong><br>
+    N'hésitez pas à nous contacter dès maintenant au <strong>01 23 45 67 89</strong> 
+    ou par email à <strong>contact@edgeloan.fr</strong>.
+</p>
+
+<p>
+    Nous sommes fiers de vous accompagner dans la réalisation de votre projet !
+</p>
+
+<p>
+    Cordialement,<br>
+    <strong>L'équipe EdgeLoan</strong>
+</p>
+{% endblock %}

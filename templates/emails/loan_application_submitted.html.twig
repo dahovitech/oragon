@@ -1,0 +1,79 @@
+{% extends "emails/base.html.twig" %}
+
+{% block title %}Demande de prêt soumise - EdgeLoan{% endblock %}
+
+{% block header_title %}Demande reçue avec succès{% endblock %}
+
+{% block content %}
+<h2>Bonjour {{ user.firstName }} {{ user.lastName }},</h2>
+
+<p>Nous avons bien reçu votre demande de prêt et nous vous remercions de votre confiance !</p>
+
+<div class="info-box success">
+    <h3>✅ Votre demande a été enregistrée</h3>
+    <p><strong>Numéro de référence :</strong> #{{ application.id }}</p>
+    <p><strong>Date de soumission :</strong> {{ application.createdAt|date('d/m/Y à H:i') }}</p>
+</div>
+
+<div class="application-details">
+    <h3>📋 Détails de votre demande</h3>
+    
+    <div class="detail-row">
+        <span class="detail-label">Type de prêt :</span>
+        <span class="detail-value">
+            {% if application.loanType == 'personal' %}
+                Prêt personnel
+            {% elseif application.loanType == 'auto' %}
+                Prêt automobile
+            {% elseif application.loanType == 'home' %}
+                Prêt immobilier
+            {% else %}
+                {{ application.loanType|title }}
+            {% endif %}
+        </span>
+    </div>
+    
+    <div class="detail-row">
+        <span class="detail-label">Montant demandé :</span>
+        <span class="detail-value">{{ application.requestedAmount|number_format(0, ',', ' ') }} €</span>
+    </div>
+    
+    <div class="detail-row">
+        <span class="detail-label">Durée :</span>
+        <span class="detail-value">{{ application.loanTerm }} mois</span>
+    </div>
+    
+    {% if application.monthlyPayment %}
+    <div class="detail-row">
+        <span class="detail-label">Mensualité estimée :</span>
+        <span class="detail-value">{{ application.monthlyPayment|number_format(2, ',', ' ') }} €</span>
+    </div>
+    {% endif %}
+</div>
+
+<div class="info-box">
+    <h3>⏱️ Prochaines étapes</h3>
+    <ol>
+        <li><strong>Étude de votre dossier</strong> - Notre équipe examine votre demande (24-48h)</li>
+        <li><strong>Vérification des informations</strong> - Nous pourrions vous contacter pour des précisions</li>
+        <li><strong>Décision</strong> - Vous recevrez notre réponse par email</li>
+        <li><strong>Finalisation</strong> - Si approuvé, préparation du contrat</li>
+    </ol>
+</div>
+
+<p style="text-align: center;">
+    <a href="{{ url('user_dashboard') }}" class="btn">Suivre ma demande</a>
+</p>
+
+<p>
+    <strong>Questions ?</strong><br>
+    Notre équipe est à votre disposition pour répondre à toutes vos questions. 
+    N'hésitez pas à nous contacter au <strong>01 23 45 67 89</strong> ou par email à 
+    <strong>contact@edgeloan.fr</strong>.
+</p>
+
+<p>
+    Cordialement,<br>
+    <strong>L'équipe EdgeLoan</strong>
+</p>
+{% endblock %}

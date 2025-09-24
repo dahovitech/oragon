@@ -9,6 +9,7 @@ use App\Form\LoanApplicationFormType;
 use App\Repository\LoanApplicationRepository;
 use App\Repository\LoanTypeRepository;
 use App\Service\LoanCalculatorService;
+use App\Service\NotificationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -24,7 +25,8 @@ class LoanApplicationController extends AbstractController
         private EntityManagerInterface $entityManager,
         private LoanApplicationRepository $loanApplicationRepository,
         private LoanTypeRepository $loanTypeRepository,
-        private LoanCalculatorService $loanCalculatorService
+        private LoanCalculatorService $loanCalculatorService,
+        private NotificationService $notificationService
     ) {}
 
     #[Route('/', name: 'loan_application_index')]
@@ -172,9 +174,10 @@ class LoanApplicationController extends AbstractController
         $loanApplication->setStatus(LoanApplicationStatus::SUBMITTED);
         $this->entityManager->flush();
 
-        $this->addFlash('success', 'Votre demande de prêt a été soumise avec succès. Notre équipe l\'examinera dans les plus brefs délais.');
+        // Envoyer notification par email au client et à l'équipe admin
+        $this->notificationService->sendLoanApplicationSubmitted($loanApplication);
 
-        // TODO: Envoyer notification par email à l'équipe admin
+        $this->addFlash('success', 'Votre demande de prêt a été soumise avec succès. Notre équipe l\'examinera dans les plus brefs délais.');
 
         return $this->redirectToRoute('loan_application_show', ['id' => $loanApplication->getId()]);
     }
