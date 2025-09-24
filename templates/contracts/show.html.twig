@@ -1,0 +1,395 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Contrat {{ contract.contractNumber }} - Oragon{% endblock %}
+
+{% block page_header %}
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="page-title">📄 Contrat {{ contract.contractNumber }}</h1>
+                <div class="page-subtitle">
+                    <span class="badge {{ contract.statusBadgeClass }} text-white me-2">{{ contract.statusDisplayName }}</span>
+                    Généré le {{ contract.generatedAt|date('d/m/Y à H:i') }}
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="btn-list">
+                    <a href="{{ path('app_contracts_index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Retour
+                    </a>
+                    {% if contract.filePath %}
+                        <a href="{{ path('app_contracts_download', {'id': contract.id}) }}" class="btn btn-success">
+                            <i class="fas fa-download"></i> Télécharger PDF
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+<div class="container-xl">
+    
+    {% if contract.status == 'sent' and not contract.isSigned %}
+        <div class="alert alert-important alert-warning" role="alert">
+            <div class="d-flex">
+                <div>
+                    <i class="fas fa-signature me-2"></i>
+                </div>
+                <div>
+                    <h4>Signature requise</h4>
+                    <div class="text-secondary">Votre contrat est prêt et attend votre signature électronique. Veuillez le signer pour finaliser votre prêt.</div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Informations principales -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📋 Informations du contrat</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <div class="info-label">Numéro de contrat</div>
+                                <div class="info-value h5">{{ contract.contractNumber }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <div class="info-label">Type de prêt</div>
+                                <div class="info-value">{{ loan_application.loanType|title }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <div class="info-label">Montant du prêt</div>
+                                <div class="info-value h4 text-primary">{{ contract.contractAmount|number_format(0, ',', ' ') }} FCFA</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <div class="info-label">Montant total à rembourser</div>
+                                <div class="info-value h5">{{ contract.totalAmount|number_format(0, ',', ' ') }} FCFA</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="info-item">
+                                <div class="info-label">Mensualité</div>
+                                <div class="info-value h5 text-success">{{ contract.monthlyPayment|number_format(0, ',', ' ') }} FCFA</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-item">
+                                <div class="info-label">Taux d'intérêt</div>
+                                <div class="info-value">{{ contract.interestRate }}% / an</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="info-item">
+                                <div class="info-label">Durée</div>
+                                <div class="info-value">{{ contract.durationMonths }} mois</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <div class="info-label">Date de début</div>
+                                <div class="info-value">{{ contract.startDate|date('d/m/Y') }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-item">
+                                <div class="info-label">Date de fin</div>
+                                <div class="info-value">{{ contract.endDate|date('d/m/Y') }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <div class="info-label">Coût total du crédit</div>
+                        <div class="info-value text-warning">
+                            {{ (contract.totalAmount - contract.contractAmount)|number_format(0, ',', ' ') }} FCFA
+                        </div>
+                        <div class="text-muted small">
+                            (Différence entre le montant total à rembourser et le capital emprunté)
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conditions et termes -->
+            {% if contract.conditions or contract.terms %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3 class="card-title">📜 Conditions du contrat</h3>
+                </div>
+                <div class="card-body">
+                    {% if contract.conditions %}
+                        <div class="mb-3">
+                            <h4>Conditions spéciales</h4>
+                            <div class="text-content">{{ contract.conditions|nl2br }}</div>
+                        </div>
+                    {% endif %}
+                    
+                    {% if contract.terms %}
+                        <div>
+                            <h4>Termes généraux</h4>
+                            <div class="text-content">{{ contract.terms|nl2br }}</div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar - Actions et statuts -->
+        <div class="col-lg-4">
+            <!-- Statut et actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">⚡ Actions</h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="form-label">Statut actuel</div>
+                        <span class="status-indicator status-{{ contract.status }}">
+                            <span class="status-indicator-circle">
+                                <span class="status-indicator-center"></span>
+                            </span>
+                            {{ contract.statusDisplayName }}
+                        </span>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        {% if contract.filePath %}
+                            <a href="{{ path('app_contracts_download', {'id': contract.id}) }}" class="btn btn-success">
+                                <i class="fas fa-download"></i> Télécharger le contrat
+                            </a>
+                        {% endif %}
+
+                        {% if contract.status == 'sent' and not contract.isSigned %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                Pour signer ce contrat, veuillez télécharger le PDF, le signer et nous le retourner.
+                            </div>
+                        {% endif %}
+
+                        {% if contract.isSigned %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle"></i>
+                                Contrat signé le {{ contract.signedAt|date('d/m/Y à H:i') }}
+                            </div>
+                        {% endif %}
+
+                        {% if contract.isActive %}
+                            <div class="alert alert-primary">
+                                <i class="fas fa-play-circle"></i>
+                                Contrat actif depuis le {{ contract.startDate|date('d/m/Y') }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informations de la demande -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3 class="card-title">📋 Demande associée</h3>
+                </div>
+                <div class="card-body">
+                    <div class="info-item mb-2">
+                        <div class="info-label small">Demande n°</div>
+                        <div class="info-value">{{ loan_application.id }}</div>
+                    </div>
+                    <div class="info-item mb-2">
+                        <div class="info-label small">Soumise le</div>
+                        <div class="info-value">{{ loan_application.submittedAt|date('d/m/Y') }}</div>
+                    </div>
+                    <div class="info-item mb-2">
+                        <div class="info-label small">Approuvée le</div>
+                        <div class="info-value">{{ loan_application.reviewedAt|date('d/m/Y') }}</div>
+                    </div>
+                    {% if loan_application.purpose %}
+                    <div class="info-item">
+                        <div class="info-label small">Objet du prêt</div>
+                        <div class="info-value">{{ loan_application.purpose }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Historique des actions -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h3 class="card-title">📅 Chronologie</h3>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-badge bg-primary">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Contrat généré</div>
+                                <div class="timeline-time">{{ contract.generatedAt|date('d/m/Y à H:i') }}</div>
+                            </div>
+                        </div>
+
+                        {% if contract.status != 'generated' %}
+                        <div class="timeline-item">
+                            <div class="timeline-badge bg-info">
+                                <i class="fas fa-paper-plane"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Contrat envoyé</div>
+                                <div class="timeline-time">{{ contract.updatedAt|date('d/m/Y à H:i') }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if contract.isSigned %}
+                        <div class="timeline-item">
+                            <div class="timeline-badge bg-success">
+                                <i class="fas fa-signature"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Contrat signé</div>
+                                <div class="timeline-time">{{ contract.signedAt|date('d/m/Y à H:i') }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if contract.isActive %}
+                        <div class="timeline-item">
+                            <div class="timeline-badge bg-warning">
+                                <i class="fas fa-play"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-title">Contrat activé</div>
+                                <div class="timeline-time">{{ contract.startDate|date('d/m/Y') }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section signature (si nécessaire) -->
+    {% if contract.status == 'sent' and not contract.isSigned %}
+    <div class="row mt-4" id="sign">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">✍️ Signature électronique</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info mb-4">
+                        <i class="fas fa-info-circle"></i>
+                        Pour des raisons légales, la signature doit être effectuée sur le document PDF téléchargé. Veuillez télécharger le contrat, le signer électroniquement ou physiquement, puis nous le retourner.
+                    </div>
+                    
+                    <form method="post" action="{{ path('app_contracts_sign', {'id': contract.id}) }}">
+                        <div class="mb-3">
+                            <label class="form-label">Confirmation de signature</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="confirm-signature" name="confirm_signature" required>
+                                <label class="form-check-label" for="confirm-signature">
+                                    Je confirme avoir lu, compris et signé le contrat de prêt n° {{ contract.contractNumber }}
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="signature" class="form-label">Votre nom complet (signature électronique)</label>
+                            <input type="text" class="form-control" id="signature" name="signature" 
+                                   value="{{ app.user.firstName ~ ' ' ~ app.user.lastName }}" required>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-signature"></i> Confirmer la signature
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block stylesheets %}
+<style>
+.info-item {
+    margin-bottom: 1rem;
+}
+.info-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+.info-value {
+    font-weight: 600;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 1rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+.timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+.timeline-badge {
+    position: absolute;
+    left: -2rem;
+    top: 0;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.75rem;
+}
+.timeline-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+.timeline-time {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.text-content {
+    white-space: pre-line;
+    line-height: 1.6;
+}
+</style>
+{% endblock %}

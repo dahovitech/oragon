@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Contrat de Prêt - {{ contract.contractNumber }}</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            color: #333;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            font-size: 24pt;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        
+        .contract-title {
+            font-size: 18pt;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .contract-number {
+            font-size: 12pt;
+            color: #666;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+        }
+        
+        .section-title {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #007bff;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+        
+        .info-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+        
+        .info-row {
+            display: table-row;
+        }
+        
+        .info-label {
+            display: table-cell;
+            width: 40%;
+            padding: 8px 10px 8px 0;
+            font-weight: bold;
+            vertical-align: top;
+        }
+        
+        .info-value {
+            display: table-cell;
+            padding: 8px 0;
+            border-bottom: 1px dotted #ccc;
+            vertical-align: top;
+        }
+        
+        .amount-box {
+            background-color: #f8f9fa;
+            border: 2px solid #007bff;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .amount-title {
+            font-size: 14pt;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .amount-value {
+            font-size: 20pt;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .payment-schedule {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .payment-schedule th,
+        .payment-schedule td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        
+        .payment-schedule th {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .terms-list {
+            list-style: none;
+            counter-reset: term-counter;
+        }
+        
+        .terms-list li {
+            counter-increment: term-counter;
+            margin-bottom: 10px;
+            padding-left: 25px;
+            position: relative;
+        }
+        
+        .terms-list li::before {
+            content: counter(term-counter) ".";
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            color: #007bff;
+        }
+        
+        .signature-section {
+            margin-top: 40px;
+            page-break-inside: avoid;
+        }
+        
+        .signature-grid {
+            display: table;
+            width: 100%;
+            margin-top: 30px;
+        }
+        
+        .signature-cell {
+            display: table-cell;
+            width: 50%;
+            text-align: center;
+            vertical-align: top;
+        }
+        
+        .signature-line {
+            border-bottom: 2px solid #333;
+            width: 200px;
+            margin: 30px auto 10px;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 9pt;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 15px;
+        }
+        
+        .page-break {
+            page-break-before: always;
+        }
+        
+        .highlight {
+            background-color: #fff3cd;
+            padding: 10px;
+            border-left: 4px solid #ffc107;
+            margin: 15px 0;
+        }
+        
+        @media print {
+            body { padding: 0; }
+            .page-break { page-break-before: always; }
+        }
+    </style>
+</head>
+<body>
+    <!-- En-tête du contrat -->
+    <div class="header">
+        <div class="logo">ORAGON</div>
+        <div style="font-size: 10pt; margin-bottom: 15px;">
+            Société de Crédit et de Financement<br>
+            Dakar, Sénégal | contact@oragon.sn
+        </div>
+        <div class="contract-title">CONTRAT DE PRÊT</div>
+        <div class="contract-number">N° {{ contract.contractNumber }}</div>
+    </div>
+
+    <!-- Informations générales -->
+    <div class="section">
+        <div class="section-title">PARTIES CONTRACTANTES</div>
+        
+        <div style="margin-bottom: 20px;">
+            <strong>LE PRÊTEUR :</strong> Oragon, société de crédit et de financement, 
+            ayant son siège social à Dakar, Sénégal.
+        </div>
+        
+        <div>
+            <strong>L'EMPRUNTEUR :</strong>
+            <div class="info-grid">
+                <div class="info-row">
+                    <div class="info-label">Nom complet :</div>
+                    <div class="info-value">{{ user.firstName }} {{ user.lastName }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Email :</div>
+                    <div class="info-value">{{ user.email }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Téléphone :</div>
+                    <div class="info-value">{{ user.phoneNumber ?? 'Non renseigné' }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Adresse :</div>
+                    <div class="info-value">{{ user.address ?? 'Non renseignée' }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Profession :</div>
+                    <div class="info-value">{{ user.profession ?? 'Non renseignée' }}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">Revenus mensuels :</div>
+                    <div class="info-value">{{ loanApplication.monthlyIncome|number_format(0, ',', ' ') }} FCFA</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Détails du prêt -->
+    <div class="section">
+        <div class="section-title">CARACTÉRISTIQUES DU PRÊT</div>
+        
+        <div class="info-grid">
+            <div class="info-row">
+                <div class="info-label">Type de prêt :</div>
+                <div class="info-value">{{ loanApplication.loanType|title }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Objet du prêt :</div>
+                <div class="info-value">{{ loanApplication.purpose ?? 'Usage personnel' }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Date d'octroi :</div>
+                <div class="info-value">{{ contract.startDate|date('d/m/Y') }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Date d'échéance finale :</div>
+                <div class="info-value">{{ contract.endDate|date('d/m/Y') }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Durée du prêt :</div>
+                <div class="info-value">{{ contract.durationMonths }} mois</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Taux d'intérêt annuel :</div>
+                <div class="info-value">{{ contract.interestRate }}% (fixe)</div>
+            </div>
+        </div>
+
+        <div class="amount-box">
+            <div class="amount-title">MONTANT DU CAPITAL EMPRUNTÉ</div>
+            <div class="amount-value">{{ contract.contractAmount|number_format(0, ',', ' ') }} FCFA</div>
+        </div>
+    </div>
+
+    <!-- Modalités de remboursement -->
+    <div class="section">
+        <div class="section-title">MODALITÉS DE REMBOURSEMENT</div>
+        
+        <div class="info-grid">
+            <div class="info-row">
+                <div class="info-label">Mensualité :</div>
+                <div class="info-value">{{ contract.monthlyPayment|number_format(0, ',', ' ') }} FCFA</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Montant total à rembourser :</div>
+                <div class="info-value">{{ contract.totalAmount|number_format(0, ',', ' ') }} FCFA</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Coût total du crédit :</div>
+                <div class="info-value">{{ (contract.totalAmount - contract.contractAmount)|number_format(0, ',', ' ') }} FCFA</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">Modalité de prélèvement :</div>
+                <div class="info-value">Prélèvement automatique le 5 de chaque mois</div>
+            </div>
+        </div>
+
+        <div class="highlight">
+            <strong>Important :</strong> Le premier prélèvement aura lieu le {{ contract.startDate|date_modify('+1 month')|date('5/m/Y') }}.
+            L'emprunteur doit s'assurer de la provision suffisante de son compte.
+        </div>
+    </div>
+
+    <!-- Tableau d'amortissement simplifié -->
+    <div class="section">
+        <div class="section-title">ÉCHÉANCIER INDICATIF</div>
+        
+        <table class="payment-schedule">
+            <thead>
+                <tr>
+                    <th>Période</th>
+                    <th>Mensualité</th>
+                    <th>Capital</th>
+                    <th>Intérêts</th>
+                    <th>Capital restant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% set monthlyInterest = contract.contractAmount * (contract.interestRate / 100 / 12) %}
+                {% set monthlyCapital = contract.monthlyPayment - monthlyInterest %}
+                {% set remainingCapital = contract.contractAmount %}
+                
+                {% for month in 1..3 %}
+                    {% set currentMonthlyInterest = remainingCapital * (contract.interestRate / 100 / 12) %}
+                    {% set currentMonthlyCapital = contract.monthlyPayment - currentMonthlyInterest %}
+                    {% set remainingCapital = remainingCapital - currentMonthlyCapital %}
+                    
+                    <tr>
+                        <td>{{ month }}</td>
+                        <td>{{ contract.monthlyPayment|number_format(0, ',', ' ') }}</td>
+                        <td>{{ currentMonthlyCapital|number_format(0, ',', ' ') }}</td>
+                        <td>{{ currentMonthlyInterest|number_format(0, ',', ' ') }}</td>
+                        <td>{{ remainingCapital|number_format(0, ',', ' ') }}</td>
+                    </tr>
+                {% endfor %}
+                
+                <tr style="border-top: 2px solid #333;">
+                    <td><strong>...</strong></td>
+                    <td><strong>...</strong></td>
+                    <td><strong>...</strong></td>
+                    <td><strong>...</strong></td>
+                    <td><strong>...</strong></td>
+                </tr>
+                
+                <tr>
+                    <td><strong>{{ contract.durationMonths }}</strong></td>
+                    <td><strong>{{ contract.monthlyPayment|number_format(0, ',', ' ') }}</strong></td>
+                    <td><strong>Solde</strong></td>
+                    <td><strong>-</strong></td>
+                    <td><strong>0</strong></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div style="font-size: 9pt; margin-top: 10px; color: #666;">
+            * Échéancier indicatif. L'échéancier détaillé sera fourni séparément.
+        </div>
+    </div>
+
+    <!-- Nouvelle page pour les conditions -->
+    <div class="page-break"></div>
+
+    <!-- Conditions générales -->
+    <div class="section">
+        <div class="section-title">CONDITIONS GÉNÉRALES</div>
+        
+        <ol class="terms-list">
+            <li><strong>Utilisation des fonds :</strong> L'emprunteur s'engage à utiliser les fonds conformément à l'objet déclaré du prêt.</li>
+            
+            <li><strong>Remboursement :</strong> Les échéances sont payables d'avance, le 5 de chaque mois. Tout retard entraînera l'application d'une pénalité de 2% du montant de l'échéance impayée.</li>
+            
+            <li><strong>Remboursement anticipé :</strong> L'emprunteur peut rembourser par anticipation, totalement ou partiellement, sans indemnité.</li>
+            
+            <li><strong>Défaillance :</strong> En cas de non-paiement de trois échéances consécutives, Oragon se réserve le droit d'exiger le remboursement immédiat du capital restant dû.</li>
+            
+            <li><strong>Assurance :</strong> L'emprunteur s'engage à maintenir une assurance décès-invalidité couvrant le montant du prêt.</li>
+            
+            <li><strong>Modification :</strong> Toute modification du présent contrat doit faire l'objet d'un avenant écrit et signé des deux parties.</li>
+            
+            <li><strong>Confidentialité :</strong> Les parties s'engagent à respecter la confidentialité des informations échangées.</li>
+            
+            <li><strong>Litiges :</strong> Tout litige sera soumis à la juridiction compétente de Dakar.</li>
+        </ol>
+    </div>
+
+    <!-- Conditions spécifiques -->
+    {% if contract.conditions %}
+    <div class="section">
+        <div class="section-title">CONDITIONS SPÉCIFIQUES</div>
+        <div style="white-space: pre-line;">{{ contract.conditions }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Informations importantes -->
+    <div class="section">
+        <div class="section-title">INFORMATIONS IMPORTANTES</div>
+        
+        <div class="highlight">
+            <strong>Droit de rétractation :</strong> Conformément à la réglementation, l'emprunteur dispose d'un délai de 14 jours calendaires pour renoncer au présent contrat de crédit, à compter de sa signature.
+        </div>
+        
+        <div style="margin-top: 15px;">
+            <strong>Contact Oragon :</strong><br>
+            Email : contrats@oragon.sn<br>
+            Téléphone : +221 33 XXX XX XX<br>
+            Adresse : [Adresse complète à Dakar]
+        </div>
+    </div>
+
+    <!-- Signatures -->
+    <div class="signature-section">
+        <div class="section-title">SIGNATURES</div>
+        
+        <p style="margin-bottom: 30px; text-align: center;">
+            <em>Lu et approuvé - Bon pour accord</em>
+        </p>
+        
+        <div class="signature-grid">
+            <div class="signature-cell">
+                <div><strong>L'EMPRUNTEUR</strong></div>
+                <div class="signature-line"></div>
+                <div>{{ user.firstName }} {{ user.lastName }}</div>
+                <div style="font-size: 9pt; margin-top: 5px;">
+                    Date : _______________
+                </div>
+            </div>
+            
+            <div class="signature-cell">
+                <div><strong>ORAGON</strong></div>
+                <div class="signature-line"></div>
+                <div>Le Directeur Général</div>
+                <div style="font-size: 9pt; margin-top: 5px;">
+                    Date : {{ generated_date|date('d/m/Y') }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pied de page -->
+    <div class="footer">
+        <div>
+            Document généré automatiquement le {{ generated_date|date('d/m/Y à H:i') }}
+        </div>
+        <div style="margin-top: 5px;">
+            Oragon - Société de Crédit et de Financement | RC Dakar | Agrément BCEAO
+        </div>
+    </div>
+</body>
+</html>
