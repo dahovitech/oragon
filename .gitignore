@@ -898,3 +898,7 @@
 
 # Exclude browser extension files
 /browser/
+
+# Exclude non-Symfony directories
+/external_api/
+/oragon/
