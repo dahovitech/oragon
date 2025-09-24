@@ -895,3 +895,6 @@
 # uploads/
 # downloads/
 
+
+# Exclude browser extension files
+/browser/
